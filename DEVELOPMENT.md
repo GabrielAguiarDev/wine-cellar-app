@@ -1,7 +1,7 @@
 # IL DiVino — Adega Prime · Contexto de Desenvolvimento
 
 > Arquivo mantido pelo agente **mobile-senior-dev**. Leia isto antes de continuar o desenvolvimento.
-> **Última atualização: Fase 2 concluída — 2026-07-23**
+> **Última atualização: Fase 3 concluída — 2026-07-23**
 > Fonte de design em uso: pasta **`design/`** → `design/project/IL DiVino.dc.html` (export Claude Design). É a fonte da verdade visual; reconstruir pixel-perfect, sem copiar a estrutura interna do protótipo.
 
 ---
@@ -47,8 +47,8 @@ assets/                   # fonts/images/lottie (mantidos na raiz)
 - [x] **Fase 0 — Fundação** — Expo+Router reestruturado p/ `src/`, deps, aliases, env(zod), **tema restyle** (palette+semantic+textVariants+spacing+radii), fontes carregando com splash hold, providers, primitivos `Box`/`Text`, tela placeholder. **Typecheck limpo + `expo export` iOS OK.**
 - [x] **Fase 1 — Design System & primitivos** — `Icon`(12 ícones SVG), `StarRating`, `BottleGraphic`(+premium/full), `Button`(primary/outline/outlineGold), `Pill`, `Chip`, `SectionTitle`, `WineCard`, `WineRow`(claro/escuro), `SegmentedToggle`, `Toggle`, `Toast`, `ScreenHeader`, `Screen`(+gradiente/scroll/footer). Catálogo temporário em `app/index.tsx`. **Typecheck+lint+export OK.**
 - [x] **Fase 2 — Dados & estado** — data/ (10 vinhos, reviews, quiz, ocasiões), tipos, formatters (`brl`/`nf`), regras de preço, seletores (rails/busca/carrinho), view-model mappers, stores zustand (cart/favorites/user/toast). **27 testes (jest) + typecheck + lint OK.**
-- [ ] **Fase 3 — Navegação & shell** — PRÓXIMA. tab bar flutuante custom, rotas, visibilidade por tela
-- [ ] Fase 4 — Onboarding (Quiz) — splash animada Lottie já pronta na fundação; falta o Quiz + navegação AnimatedSplash→Quiz→Home
+- [x] **Fase 3 — Navegação & shell** — Stack único (sem Tabs) + **TabBar flutuante custom como overlay** (visibilidade + aba ativa por rota + badge da sacola), Toast global (`ToastHost`+store), 15 rotas como stubs navegáveis (`DevStub`), catálogo do DS movido p/ `/catalog`, `index`→redirect `/quiz`. **typecheck+lint+export OK.**
+- [ ] **Fase 4 — Onboarding (Quiz)** — PRÓXIMA. Substituir o stub `app/quiz.tsx` pelo quiz real (3 perguntas, progresso, dots, pular) gravando `paladar` no `useUserStore`; fluxo AnimatedSplash→Quiz→Home.
 - [ ] Fase 5 — Home
 - [ ] Fase 6 — Busca/Coleção (vinho/prato/filtros)
 - [ ] Fase 7 — Produto (Padrão + Premium)
@@ -76,15 +76,16 @@ Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos
 - **`src/utils/`** (barrel `@utils`): `format.ts` (`brl`/`nf`), `pricing.ts` (`pointsDiscount`/`frete`/`checkoutTotal` + constantes), `wineViewModel.ts` (`toWineCardData`/`toWineRowData`/`tipoUva`/`categoriaCompleta`/`capColorFor`).
 - **`src/store/`** (barrel `@store`, zustand): `useCartStore` (items + addToCart/setQty/removeFromCart/clear), `useFavoritesStore` (favs + toggleFav/isFav; inicia com lumiere-blanche+corona-reale), `useUserStore` (paladar/points/setPaladar), `useToastStore` (message + show(auto-dismiss ~2,2s)/hide).
 - `src/**/__tests__/` — 27 testes de lógica pura (format, pricing, selectors).
-- `app/_layout.tsx` (providers+splash) + `app/index.tsx` (**catálogo temporário do DS** — some na Fase 3/4).
+- **Navegação (Fase 3):** `src/components/TabBar.tsx` (overlay, lê `usePathname`, `VISIBLE_ON`/`ACTIVE_TAB`, badge via `useCartStore`), `ToastHost.tsx` (consome `useToastStore`), `DevStub.tsx` (esqueleto TEMPORÁRIO das telas — remover ao implementar cada tela real).
+- **Rotas `app/`:** `_layout.tsx` (Stack `headerShown:false`, `animation:'fade'` + `<TabBar/>` + `<ToastHost/>` + `<AnimatedSplash/>`), `index.tsx` (→`/quiz`), `quiz.tsx`, `home/search/favorites/bag/profile.tsx`, `sommelier.tsx`, `product/[id].tsx`, `reviews/[id].tsx`, `checkout.tsx`, `tracking.tsx`, `loyalty.tsx`, `vip.tsx`, `catalog.tsx` (revisão do DS). **Todas stubs, exceto navegação/tab bar reais.**
 
 ## 6. Pendências & próximos passos
 
-1. **Iniciar a Fase 3 (Navegação & shell).** Criar a estrutura de rotas (ver "Mapa de telas" abaixo): `app/quiz`, `app/(tabs)/{home,search,favorites,bag,profile}`, `app/sommelier`, `app/product/[id]`, `app/reviews/[id]`, `app/checkout`, `app/tracking`, `app/loyalty`, `app/vip`. Telas podem ficar como stubs navegáveis.
-2. **Tab bar flutuante custom** no `app/(tabs)/_layout.tsx` (não a padrão): 5 ícones (`Icon`), estado ativo em bordô, badge de contagem na Sacola via `useCartStore`+`cartCount`. Regra de visibilidade por rota (ver Notas).
-3. Ligar o `Toast` global (via `useToastStore`) num ponto único (provavelmente no `_layout` ou num overlay), consumido pelas telas.
-4. Só depois (Fase 4+) preencher as telas com dados reais via seletores + `toWineCardData`/`toWineRowData`.
-5. Pendência menor de UI: revisar o catálogo rodando o app (`npx expo start`) para calibrar `letterSpacing`/proporções das garrafas.
+1. **Iniciar a Fase 4 (Onboarding/Quiz).** Substituir `app/quiz.tsx` pelo quiz real: 3 perguntas do `QUIZ` (`@data`), progresso "x / 3", opções (label+hint), dots animados, botão "Pular". Ao responder a última, gravar `paladar` (do valor de `corpo`, default 'encorpado') via `useUserStore.setPaladar` e `router.replace('/home')`.
+2. Usar `Screen` com gradiente escuro (`[wineAlt, wine, wineDeep]`), `Button` outlineGold, tipografia serif. Sem tab bar (quiz não está em `VISIBLE_ON`).
+3. A Home (Fase 5) já tem stub navegável; ao chegar nela, começar a preencher rails com `railSelecionados`/`railMaisVendidos` + `toWineCardData`/`toWineRowData` e `WineCard`/`WineRow`.
+4. Ao implementar cada tela real, **remover o uso de `DevStub`** naquela rota (e apagar `DevStub.tsx` quando não restar nenhuma).
+5. Pendência menor de UI: revisar rodando o app (Expo Go) para calibrar `letterSpacing`/proporções das garrafas e a posição da tab bar sobre telas escuras.
 
 ## 7. Notas / armadilhas
 

@@ -4,7 +4,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
-import { AnimatedSplash, AppProviders } from '@components/index';
+import {
+  AnimatedSplash,
+  AppProviders,
+  TabBar,
+  ToastHost,
+} from '@components/index';
 import { useAppFonts } from '@hooks/useAppFonts';
 
 // Mantém o splash nativo (cor sólida bordô) visível enquanto as fontes carregam.
@@ -17,8 +22,6 @@ export default function RootLayout() {
   const ready = fontsLoaded || fontError;
 
   useEffect(() => {
-    // Assim que o app está pronto, esconde o splash nativo. O overlay
-    // AnimatedSplash (mesma cor) já está por cima → transição sem flash.
     if (ready) {
       SplashScreen.hideAsync();
     }
@@ -31,7 +34,9 @@ export default function RootLayout() {
   return (
     <AppProviders>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      <TabBar />
+      <ToastHost />
       {!splashFinished && (
         <AnimatedSplash onFinish={() => setSplashFinished(true)} />
       )}
