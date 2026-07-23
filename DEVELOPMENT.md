@@ -1,438 +1,165 @@
-# IL DiVino — Adega Prime · Plano de Desenvolvimento
+# IL DiVino — Adega Prime · Contexto de Desenvolvimento
 
-> Documento de referência para iniciar o desenvolvimento do app **IL DiVino** em Expo (SDK 57).
-> Extraído integralmente do protótipo de design em `design/project/IL DiVino.dc.html` (Claude Design handoff).
-> O protótipo é HTML/CSS/JS — serve como **fonte da verdade visual**. Reconstruir pixel-perfect em React Native, sem copiar a estrutura interna do protótipo.
-
----
-
-## 0. Antes de escrever qualquer código (obrigatório)
-
-- **Ler os docs versionados do Expo SDK 57** antes de codar: <https://docs.expo.dev/versions/v57.0.0/> (o `AGENTS.md` do projeto exige isso — a API do Expo mudou).
-- Stack confirmada do SDK 57: **React Native 0.86**, **React 19.2.3**, **Node ≥ 22.13**.
-- Criar projeto e instalar libs sempre com `npx create-expo-app` / `npx expo install`.
-
-### ⚠️ Decisão de arquitetura sobre "Expo UI" (`@expo/ui`)
-
-O `@expo/ui` renderiza componentes **nativos** (SwiftUI no iOS / Jetpack Compose no Android) que **seguem a aparência da plataforma** e, segundo a própria doc, **não é adequado para UIs de marca fortemente customizadas**. O design do IL DiVino é justamente isso: identidade visual própria (creme + bordô + dourado), tipografia serif (Cormorant Garamond), garrafas desenhadas proceduralmente, cards e botões com estilo autoral. **Não dá para atingir esse visual com componentes nativos puros.**
-
-**Estratégia adotada:**
-
-- **Camada visual de marca** → React Native padrão (`View`/`Text`/`Pressable` + `StyleSheet`), com tokens de tema próprios. É aqui que vive 90% das telas.
-- **`@expo/ui` usado de forma cirúrgica**, só onde o primitivo nativo ajuda e não quebra a marca:
-  - `DateTimePicker` → data de entrega no gifting (checkout).
-  - `BottomSheet` → filtros da busca, seleção de endereço/pagamento (opcional).
-  - `Switch`/`Toggle` → "usar pontos", "é presente", "ocultar preço".
-  - `ContextMenu`/`SwipeActions` → ações em itens da sacola/favoritos (opcional).
-  - Listas de alta performance quando necessário (`List`/`LazyColumn`).
-- Se em qualquer ponto o componente nativo comprometer o visual, usar a versão custom em RN.
-
-> Registrar essa decisão para o backend/time e revalidar cada componente `@expo/ui` contra a doc v57 no momento de usar.
+> Arquivo mantido pelo agente **mobile-senior-dev**. Leia isto antes de continuar o desenvolvimento.
+> **Última atualização: Fase 2 concluída — 2026-07-23**
+> Fonte de design em uso: pasta **`design/`** → `design/project/IL DiVino.dc.html` (export Claude Design). É a fonte da verdade visual; reconstruir pixel-perfect, sem copiar a estrutura interna do protótipo.
 
 ---
 
-## 1. Identidade visual (Design System)
+## 1. Visão geral
 
-### 1.1 Paleta de cores
+App mobile de **adega premium (e-commerce de vinhos)** — catálogo curado, quiz de paladar, sommelier virtual por ocasião, busca por vinho/prato, sacola, checkout com gifting, acompanhamento de pedido, favoritos, perfil, fidelidade e acesso VIP. Estética de marca: **luxo sóbrio** (creme + bordô + dourado, tipografia serif). Público: consumidores de vinho de ticket alto. 15 telas + tab bar.
 
-| Token | Hex | Uso |
+## 2. Stack & decisões
+
+- **Expo SDK 57** (managed) + **Expo Router** (file-based) + **TypeScript strict**. React Native 0.86 / React 19.2.3 / Node ≥22.13.
+- **Estilização: `@shopify/restyle`** (tema tipado). Decisão do usuário. Substitui o `StyleSheet` do plano original.
+- **Estado: `zustand` agora** (carrinho/favoritos/quiz/pontos são mock) → **migrar para `@tanstack/react-query` + Context na Fase 16** (backend real). Decisão do usuário.
+- **`@expo/ui` NÃO é usado para a UI de marca** (componentes nativos seguem a aparência da plataforma e não reproduzem o visual creme/bordô/dourado). Reservado só para primitivos pontuais quando fizer sentido (ex.: date picker do gifting). Preferir componentes custom em RN + restyle.
+- **Tema de marca fixo** (NÃO dirigido pelo modo claro/escuro do SO): o design define fundo claro vs. escuro **por tela** (ex.: splash/quiz/produto premium são dark; home/busca são creme), não por preferência do sistema. Por isso há um único `theme` com tokens claros e escuros disponíveis simultaneamente.
+- **Splash animada = Lottie** (`assets/lottie/wine.json`, ~5,4s/60fps, vetor puro). Fluxo: splash nativo **só cor sólida bordô** (sem logo) → ao carregar o JS, overlay `AnimatedSplash` (mesma cor, sem flash) toca o Lottie 1x em tela cheia (**sem texto/logo**) via `lottie-react-native` → **fade out** (reanimated) revela o app. Decisão do usuário: o Lottie **é** a splash (não há tela de marca "Entrar"; o fluxo do design que tinha Splash→Quiz vira **AnimatedSplash→Quiz**). `speed` ~1.8x (~3s) — ajustável em `AnimatedSplash.tsx`.
+- Gradientes via **`expo-linear-gradient`**; ícones e garrafas via **`react-native-svg`** (garrafas serão desenhadas com Views/SVG, não imagens). Animações: **`react-native-reanimated` 4** (plugin `react-native-worklets/plugin` no babel). Gestos: **`react-native-gesture-handler`**. Fontes: **`@expo-google-fonts/cormorant-garamond` + `@expo-google-fonts/jost`** via `expo-font`. Env validado com **`zod`**.
+- **Desvio consciente da persona**: a arquitetura padrão dela é *RN bare + react-navigation + yarn*; aqui o usuário pediu explicitamente **Expo + Expo Router** (npm). Mantidos: TS strict, restyle, aliases `@`, domínio Api/Adapter/Service/useCases (Fase 16), pt-BR, barrels.
+
+## 3. Estrutura & convenções específicas deste projeto
+
+- **Rotas em `app/`** (raiz — padrão Expo Router). **Todo o resto em `src/`.**
+```
+app/                      # rotas expo-router
+  _layout.tsx             # splash hold + providers + Stack (headerShown:false)
+  index.tsx               # placeholder Fase 0 (vira Splash na Fase 4)
+src/
+  components/             # design system + AppProviders  (Box, Text, ...)
+  theme/                  # palette.ts (bruta+alpha) · theme.ts (restyle) · index.ts
+  config/                 # env.ts + env.schema.ts (zod)
+  hooks/                  # useAppTheme, useAppFonts
+  data/ domain/ services/ store/ utils/   # (vazios — próximas fases)
+assets/                   # fonts/images/lottie (mantidos na raiz)
+```
+- **Path aliases** (tsconfig, resolvidos pelo Metro do Expo): `@/*`→`src/*`, `@components`, `@theme`, `@config`, `@data`, `@domain`, `@services`, `@store`, `@hooks`, `@utils`, `@assets`. Sem `baseUrl` (deprecado no TS 6).
+- **restyle**: usar `Box`/`TouchableOpacityBox`/`PressableBox` e `Text` (variantes). Props de tema (`padding="s22"`, `backgroundColor="surface"`). `spacing` = `sNN` em px; `borderRadii` = `rNN`; cores **sempre semânticas** (nunca hex direto — a paleta bruta e os rgba estão mapeados em `theme.colors`).
+- **Fontes** (chaves registradas): serif `CormorantGaramond_{400,500,600,700}[_Italic]`; sans `Jost_{300,400,500,600}`. Aliases em `theme/theme.ts → fonts`.
+- **Testes**: `jest` puro (config em `jest.config.js`, `babel-jest` + aliases; **sem** preset jest-expo pois testamos lógica pura). Co-localizados em `__tests__/`, importam globals de `@jest/globals`. Rodar: `npm test`. Typecheck: `npm run typecheck`.
+- Componentes: **functional + named export** (`export function Nome`), sem default (exceto telas expo-router, que exigem default export). Prettier: aspas simples, `trailingComma:all`, `arrowParens:avoid`, `bracketSameLine:true`. ESLint flat (`eslint-config-expo`) + `import/order`. **Strings de UI em pt-BR.**
+
+## 4. Mapa de progresso (fases)
+
+- [x] **Fase 0 — Fundação** — Expo+Router reestruturado p/ `src/`, deps, aliases, env(zod), **tema restyle** (palette+semantic+textVariants+spacing+radii), fontes carregando com splash hold, providers, primitivos `Box`/`Text`, tela placeholder. **Typecheck limpo + `expo export` iOS OK.**
+- [x] **Fase 1 — Design System & primitivos** — `Icon`(12 ícones SVG), `StarRating`, `BottleGraphic`(+premium/full), `Button`(primary/outline/outlineGold), `Pill`, `Chip`, `SectionTitle`, `WineCard`, `WineRow`(claro/escuro), `SegmentedToggle`, `Toggle`, `Toast`, `ScreenHeader`, `Screen`(+gradiente/scroll/footer). Catálogo temporário em `app/index.tsx`. **Typecheck+lint+export OK.**
+- [x] **Fase 2 — Dados & estado** — data/ (10 vinhos, reviews, quiz, ocasiões), tipos, formatters (`brl`/`nf`), regras de preço, seletores (rails/busca/carrinho), view-model mappers, stores zustand (cart/favorites/user/toast). **27 testes (jest) + typecheck + lint OK.**
+- [ ] **Fase 3 — Navegação & shell** — PRÓXIMA. tab bar flutuante custom, rotas, visibilidade por tela
+- [ ] Fase 4 — Onboarding (Quiz) — splash animada Lottie já pronta na fundação; falta o Quiz + navegação AnimatedSplash→Quiz→Home
+- [ ] Fase 5 — Home
+- [ ] Fase 6 — Busca/Coleção (vinho/prato/filtros)
+- [ ] Fase 7 — Produto (Padrão + Premium)
+- [ ] Fase 8 — Avaliações
+- [ ] Fase 9 — Sommelier
+- [ ] Fase 10 — Favoritos
+- [ ] Fase 11 — Sacola
+- [ ] Fase 12 — Checkout + Gifting
+- [ ] Fase 13 — Acompanhamento de pedido (Status/Mapa)
+- [ ] Fase 14 — Perfil + Fidelidade + VIP
+- [ ] Fase 15 — Polimento (animações, a11y, safe area)
+- [ ] Fase 16 — Integração backend (react-query; substitui mocks)
+
+## 5. Domínios & features implementados
+
+Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos:
+- `src/theme/*` — tema restyle completo e tipado.
+- **`src/components/` (design system, todos apresentacionais e via barrel `@components/index`):**
+  - Primitivos: `Box`/`TouchableOpacityBox`/`PressableBox`, `Text`.
+  - Infra: `AppProviders`, `AnimatedSplash` (Lottie + fade), `Screen` (safe area + fundo sólido/gradiente + scroll + footer).
+  - Marca: `Icon` (registry: search/heart/bag/home/profile/chevronLeft·Right/arrowRight/play/star/phone/check/plus), `StarRating` (leitura/editável), `BottleGraphic` (garrafa procedural; props `width/cor/capColor/showCap/premium/labelMode('initials'|'full')/iniciais/safra`), `Button` (primary/outline/outlineGold), `Pill`, `Chip`, `SectionTitle`, `WineCard` (+`WineCardData`), `WineRow` (light/dark, +`WineRowData`, `badge`/`subtitle`/`rightSlot`), `SegmentedToggle` (genérico), `Toggle`, `Toast`, `ScreenHeader` (light/dark).
+- `src/hooks/{useAppTheme,useAppFonts}.ts`.
+- `src/config/env*.ts` — env validado (API_URL opcional até a Fase 16).
+- **`src/data/`** (barrel `@data`): `types.ts` (Wine/Review/QuizQuestion/Ocasiao), `wines.ts` (WINES, 10), `reviews.ts` (REVIEWS), `quiz.ts` (QUIZ, 3), `ocasioes.ts` (OCASIOES, 4), `selectors.ts` (`findWine`, `railSelecionados`, `railMaisVendidos`, `especiais`, `winesByIds`, `searchWines`, `searchByDish`, `cartCount`, `cartSubtotal`, `CAT_ESPECIAIS`).
+- **`src/utils/`** (barrel `@utils`): `format.ts` (`brl`/`nf`), `pricing.ts` (`pointsDiscount`/`frete`/`checkoutTotal` + constantes), `wineViewModel.ts` (`toWineCardData`/`toWineRowData`/`tipoUva`/`categoriaCompleta`/`capColorFor`).
+- **`src/store/`** (barrel `@store`, zustand): `useCartStore` (items + addToCart/setQty/removeFromCart/clear), `useFavoritesStore` (favs + toggleFav/isFav; inicia com lumiere-blanche+corona-reale), `useUserStore` (paladar/points/setPaladar), `useToastStore` (message + show(auto-dismiss ~2,2s)/hide).
+- `src/**/__tests__/` — 27 testes de lógica pura (format, pricing, selectors).
+- `app/_layout.tsx` (providers+splash) + `app/index.tsx` (**catálogo temporário do DS** — some na Fase 3/4).
+
+## 6. Pendências & próximos passos
+
+1. **Iniciar a Fase 3 (Navegação & shell).** Criar a estrutura de rotas (ver "Mapa de telas" abaixo): `app/quiz`, `app/(tabs)/{home,search,favorites,bag,profile}`, `app/sommelier`, `app/product/[id]`, `app/reviews/[id]`, `app/checkout`, `app/tracking`, `app/loyalty`, `app/vip`. Telas podem ficar como stubs navegáveis.
+2. **Tab bar flutuante custom** no `app/(tabs)/_layout.tsx` (não a padrão): 5 ícones (`Icon`), estado ativo em bordô, badge de contagem na Sacola via `useCartStore`+`cartCount`. Regra de visibilidade por rota (ver Notas).
+3. Ligar o `Toast` global (via `useToastStore`) num ponto único (provavelmente no `_layout` ou num overlay), consumido pelas telas.
+4. Só depois (Fase 4+) preencher as telas com dados reais via seletores + `toWineCardData`/`toWineRowData`.
+5. Pendência menor de UI: revisar o catálogo rodando o app (`npx expo start`) para calibrar `letterSpacing`/proporções das garrafas.
+
+## 7. Notas / armadilhas
+
+- **Só variáveis `EXPO_PUBLIC_*`** chegam ao bundle. `env.API_URL` é opcional agora (falha cedo se inválida).
+- **Reanimated 4**: o plugin correto no `babel.config.js` é `react-native-worklets/plugin` (deve ser o último).
+- **letterSpacing**: o design usa `em`; no RN é **px**. Já convertido nos `textVariants` (aproximação por variante); ajustar caso destoe.
+- **Garrafas**: são formas desenhadas (não imagens). Props previstas: `cor`, `cap`(dourado se premium), `iniciais`, `safra`, e um `size` com presets (rail 46×150, lista 34×100, produto 96–110×320–340, sacola 30×92).
+- **Navegação "voltar"**: o protótipo usa pilha própria (`prev[]`); no app usar a stack nativa do Expo Router.
+- **Tab bar**: é flutuante e custom (não a padrão) — implementar via `tabBar` custom na Fase 3. Visível em home/search/sommelier/favorites/bag/profile/loyalty/vip; oculta nas demais.
+- TS 6 + Expo: `tsc --noEmit` é o typecheck; Metro resolve os aliases do tsconfig automaticamente.
+
+---
+
+# Referência de Design (fonte da verdade — não apagar)
+
+## Paleta (→ `src/theme/palette.ts` e cores semânticas em `theme.ts`)
+
+| Semântico (theme) | Hex | Uso |
 |---|---|---|
-| `bg` (creme claro) | `#F3ECDD` | Fundo padrão das telas claras |
-| `surface` (creme card) | `#FBF7EE` | Cards, inputs, linhas de lista |
-| `bgOuter` | `#e7e0d2` | Fundo externo do body |
-| `toggleTrack` | `#eadfce` | Trilho dos toggles segmentados (busca/tracking) |
-| `mapBg` | `#e4ddcd` | Fundo do mapa de entrega |
-| `wine` (bordô principal) | `#431018` | Texto sobre creme, botões primários, ícones |
-| `wineDeep` | `#2c0a10` / `#320b12` | Gradientes escuros, fundo de telas dark |
-| `wineLight` | `#5a1622` | Topo de gradientes radiais |
-| `wineAlt` | `#3a0e18` | Gradiente do quiz |
-| `gold` (dourado) | `#B08D57` | Cor de acento, bordas, labels, estrelas |
-| `goldDark` | `#8a6c40` | Hover / dourado mais escuro, links |
-| `ink` (texto) | `#2A211C` | Texto principal sobre creme |
-| `mutedIcon` | `#8a7d70` | Ícone de busca, cinza-marrom |
-| `cream` | `#F3ECDD` | Texto sobre fundos escuros |
+| `background` | `#F3ECDD` | Fundo telas claras |
+| `surface` | `#FBF7EE` | Cards, inputs, linhas |
+| `backgroundOuter` | `#E7E0D2` | Fundo externo |
+| `toggleTrack` | `#EADFCE` | Trilho de toggles |
+| `mapBackground` | `#E4DDCD` | Fundo do mapa |
+| `primary` | `#431018` | Bordô principal (texto/botões/ícones no claro) |
+| `primaryLight` | `#5A1622` | Topo de gradientes radiais |
+| `primaryAlt` | `#3A0E18` | Gradiente do quiz |
+| `primaryDeep` | `#2C0A10` | Fundo dark profundo |
+| `primaryDeeper` | `#320B12` | Variação mais escura |
+| `accent` | `#B08D57` | Dourado (acento, bordas, labels, estrelas) |
+| `accentDark` | `#8A6C40` | Dourado escuro / links |
+| `textPrimary` | `#2A211C` | Texto sobre creme |
+| `textOnDark` | `#F3ECDD` | Texto sobre fundo escuro |
+| `mutedIcon` | `#8A7D70` | Ícone de busca |
 
-Opacidades muito usadas: `rgba(42,33,28,.5/.55/.6)` (texto secundário no claro), `rgba(243,236,221,.6/.7)` (texto secundário no escuro), `rgba(176,141,87,.3–.6)` (bordas douradas).
+Transparências recorrentes mapeadas em `alpha` (ex.: `inkA50/55/60`, `cremeA*`, `goldA*`, `wineA*`). Fundos dark = `radial-gradient(120% 90% at 50% 18%, #5A1622, #431018 45%, #2C0A10 100%)` e variações (usar `expo-linear-gradient`).
 
-Fundos "dark" (splash, quiz, sommelier, VIP, produto premium):
-`radial-gradient(120% 90% at 50% 18%, #5a1622, #431018 45%, #2c0a10 100%)` e variações.
+## Tipografia
+- **Cormorant Garamond** (serif): títulos, nomes de vinho, preços, citações itálicas. Variantes: `brand`(58), `h1`(44), `h2`(34), `sectionTitle`(25), `wineName`(20), `wineNameSm`(16), `price`, `quote`(italic).
+- **Jost** (sans): UI/labels/corpo. Variantes: `body`(14), `bodySm`(12), `label`(11 caps), `eyebrow`(9 caps dourado), `button`(12 caps).
 
-### 1.2 Tipografia
+## Espaçamento & forma
+- Padding horizontal padrão **22** (`s22`); topo **56** (`s56`, notch); rodapé tab **~108** (`s108`). Radii: chips/pills `r8/r9`, cards `r12–r16`, tab bar `r20`, botões `r6–r11`. Device ref: **402×874**.
 
-- **Cormorant Garamond** (serif) — títulos, nomes de vinho, preços, citações em itálico. Pesos 400/500/600/700 + itálico. Instalar via `expo-font` (Google Fonts).
-- **Jost** (sans-serif) — UI, botões, labels, corpo. Pesos 300/400/500/600.
-- **Labels/CTAs**: caixa alta com `letter-spacing` alto (`.16em`–`.46em`), tamanhos pequenos (8–12px).
-- **Números/preços/nome de vinho**: Cormorant, tamanhos grandes (19–64px).
+## Modelo de dados (Fase 2 — copiar valores exatos do HTML)
 
-### 1.3 Espaçamento e forma
+`Wine` = `{ id, nome, safra, tipo:'Tinto'|'Branco'|'Rosé'|'Espumante', uva, regiao, assinatura, preco:number, destaque:boolean, notaMedia, totalAvaliacoes, estoqueBaixo:boolean, harmonizacoes:string[], cor:hex, iniciais, videoDur? }`.
+**10 vinhos** (`this.wines`, linhas 980–991): Notte Eterna*, Perla Nera*, Corona Reale*, Aurora del Sud, Lumière Blanche, Rosa dei Venti, Sangue di Terra, Fiore d'Inverno, Velluto Rosso, Alba Serena. (* = `destaque`.)
+`Review` = `{ nome, nota, comentario }` mapeado por wineId (linhas 992–1010).
+`QuizQuestion` (3): estilo(seco/suave), corpo(encorpado/leve), momento(jantar/solo) (linhas 1011–1021).
+`Ocasiao` (sommelier, 4): romântico, presente, churrasco, comemoração → `ids[]` (linhas 1022–1027).
+Estado global (zustand): `cart:{[id]:qty}`, `favs:{[id]:true}` (inicia com lumiere-blanche + corona-reale), `paladar` (default 'encorpado'), `points:320`.
 
-- Padding horizontal padrão das telas: **22px**. Produto/checkout usam 24–30px em alguns blocos.
-- Padding vertical topo: **56px** (área do notch); rodapé com tab bar: **~108px**.
-- Border-radius: chips/pills `8–9px`, cards `12–16px`, tab bar `20px`, botões `6–11px`.
-- Device de referência do protótipo: **402 × 874** (iPhone). Usar `react-native-safe-area-context`.
+### Regras de negócio
+- `brl(n)`→`"R$ "+n.toLocaleString('pt-BR')`; `nf(n)`→1 casa com vírgula.
+- Rail "Selecionados": `tipo==='Tinto' || destaque`, 5 primeiros. Rail "Mais vendidos": sort `totalAvaliacoes` desc, top 4. Especiais/VIP/Curadoria: `destaque===true`.
+- Busca por prato: casa `dishQuery` com `harmonizacoes`.
+- `buyFromProduct`: se `destaque && estoqueBaixo` → **reservar** (toast 24h); senão add à sacola + vai p/ sacola.
+- Fidelidade: 320 pts, meta 500 → 64%; 320 pts = R$ 64 desconto. Frete: grátis > R$ 300, senão R$ 29. Total = `max(0, subtotal − desconto) + frete`. `placeOrder` limpa carrinho/gift/pontos → tracking.
 
-### 1.4 Componentes reutilizáveis a criar
-
-| Componente | Descrição |
-|---|---|
-| `BottleGraphic` | **Garrafa desenhada proceduralmente** (Views posicionadas): gargalo, cápsula, corpo com `border-radius`, rótulo creme com iniciais + safra. Props: `cor`, `cap`, `iniciais`, `safra`, tamanho (variações: rail 46×150, lista 34×100, produto 96–110×320–340, sacola 30×92, etc.). Reutilizado em quase todas as telas. |
-| `Bottle` (destaque) | Variação premium com sombra interna (`inset shadow`) e cápsula dourada. |
-| `WineCard` | Card vertical (rail "Selecionados"): garrafa + nome + tipo·uva + preço + nota, badge "Especial", botão coração. |
-| `WineRow` | Linha horizontal (mais vendidos, busca, favoritos, sommelier, VIP): garrafa + infos + preço. Variações clara e escura. |
-| `Pill` | Botão-chip de categoria (Todos/Tinto/Branco/Rosé/Espumante), estados ativo/inativo. |
-| `Chip` | Chip de filtro com "⌄" (Uva, País, Preço, Corpo, Harmonização). |
-| `StarRating` | 5 estrelas (SVG) preenchidas conforme nota; versões: leitura (dourada), leitura sobre escuro, e editável (avaliação). |
-| `PrimaryButton` / `OutlineButton` | Botões CTA (fundo bordô ou contorno dourado/bordô, caixa alta espaçada). |
-| `SectionTitle` | Título de seção em Cormorant 25px bordô. |
-| `Toggle` | Switch custom (trilho + knob) — ou `@expo/ui` Switch. |
-| `SegmentedToggle` | Alternador de 2 opções (busca vinho/prato, tracking status/mapa). |
-| `Toast` | Notificação flutuante inferior (fundo `#2c0a10`, borda dourada), auto-some em ~2.2s. |
-| `TabBar` | Barra inferior flutuante com 5 ícones SVG + badge de contagem na sacola. |
-| `ScreenHeader` | Cabeçalho com botão "voltar" (chevron) + título. |
-| `Icon` | Ícones em SVG (`react-native-svg`): busca, coração, sacola, home, perfil, seta, play, chevrons, telefone, etc. |
-
-> Todos os ícones do protótipo são **SVG inline** → usar `react-native-svg`. As garrafas são **Views/CSS**, não imagens.
-
----
-
-## 2. Modelo de dados (mock inicial)
-
-Todo o conteúdo é mockado no protótipo. Estruturar em `data/` + tipos TypeScript. Substituível por API depois (ver Fase 16).
-
-### 2.1 `Wine`
-```ts
-type WineTipo = 'Tinto' | 'Branco' | 'Rosé' | 'Espumante';
-interface Wine {
-  id: string;              // ex: 'notte-eterna'
-  nome: string;            // 'Notte Eterna'
-  safra: number;           // 2019
-  tipo: WineTipo;
-  uva: string;             // 'Nebbiolo'
-  regiao: string;          // 'Piemonte'
-  assinatura: string;      // frase descritiva ("...")
-  preco: number;           // 489 (BRL, inteiro)
-  destaque: boolean;       // true = produto premium (vídeo + reserva)
-  notaMedia: number;       // 4.7
-  totalAvaliacoes: number; // 128
-  estoqueBaixo: boolean;   // true = "restam poucas unidades" + fluxo de reserva
-  harmonizacoes: string[]; // ['carnes vermelhas', ...]
-  cor: string;             // '#4a121c' cor da garrafa
-  iniciais: string;        // 'NE'
-  videoDur?: string;       // '0:48' (só destaques)
-}
+## Mapa de telas & navegação
 ```
-
-**Catálogo (10 vinhos)** — copiar exatamente do protótipo (`this.wines`, linhas 980–991 do HTML):
-`Notte Eterna` (destaque), `Perla Nera` (destaque), `Corona Reale` (destaque), `Aurora del Sud`, `Lumière Blanche`, `Rosa dei Venti`, `Sangue di Terra`, `Fiore d'Inverno`, `Velluto Rosso`, `Alba Serena`.
-
-### 2.2 `Review`
-Mapa `wineId → Review[]`:
-```ts
-interface Review { nome: string; nota: number; comentario: string; } // comentario pode ser ''
+Splash → Quiz → Home
+Home ├─ Buscar (vinho/prato/filtros) ├─ Sommelier ├─ Favoritos └─ Curadoria/Especiais
+        → Produto (Padrão destaque:false / Premium destaque:true → vídeo+reserva) → Avaliações
+Sacola → Checkout+Gifting → Pedido feito → Acompanhamento (Status·Mapa)
+Perfil ├─ Fidelidade └─ Acesso VIP
 ```
-(dados em `this.reviews`, linhas 992–1010).
-
-### 2.3 `QuizQuestion` (3 perguntas)
-```ts
-interface QuizQuestion {
-  key: 'estilo' | 'corpo' | 'momento';
-  pergunta: string; desc: string;
-  opcoes: { label: string; hint: string; val: string }[];
-}
-```
-Perguntas: seco/suave, encorpado/leve, jantar/solo (linhas 1011–1021).
-
-### 2.4 `Ocasiao` (sommelier — 4 ocasiões)
-```ts
-interface Ocasiao { key: string; label: string; desc: string; ids: string[]; }
-```
-Romântico, Presente, Churrasco, Comemoração (linhas 1022–1027).
-
-### 2.5 Estado global (app)
-```ts
-{
-  cart: Record<string, number>;      // { [wineId]: qty }
-  favs: Record<string, boolean>;     // favoritos ({'lumiere-blanche':true,'corona-reale':true} iniciais)
-  paladar: string;                   // resultado do quiz (default 'encorpado')
-  points: number;                    // 320 (fidelidade)
-  // efêmeros de UI: searchMode, searchQuery, dishQuery, catFilter, sommelier,
-  // tracking('status'|'mapa'), isGift, giftMsg, hidePrice, giftDate, usePoints,
-  // pm(pagamento), videoPlaying, draft(estrelas), draftMsg, toast
-}
-```
-Sugestão: **Zustand** (ou Context + reducer) para `cart/favs/paladar/points`; estado local por tela para o resto.
-
-### 2.6 Regras de negócio (formatters & lógica)
-- `brl(n)` → `"R$ " + n.toLocaleString('pt-BR')`.
-- `nf(n)` → nota com 1 casa e vírgula (`4,7`).
-- **Rail "Selecionados para você"**: `tipo==='Tinto' || destaque`, primeiros 5.
-- **Rail "Mais vendidos"**: ordenar por `totalAvaliacoes` desc, top 4.
-- **VIP / Curadoria reservada / Especiais**: `destaque === true`.
-- **Busca por prato**: casa `dishQuery` contra `harmonizacoes`.
-- **`buyFromProduct`**: se `destaque && estoqueBaixo` → **reservar** (toast "Reservado por 24h…"), senão adiciona à sacola e vai para a sacola.
-- **Fidelidade**: `320` pontos, meta `500` → `progressPct = 64%`; `320 pts = R$ 64` de desconto.
-- **Frete**: grátis acima de `R$ 300`, senão `R$ 29`.
-- **Checkout total**: `max(0, subtotal - desconto) + frete`.
-- Ao `placeOrder`: limpa carrinho, reseta gift/pontos, vai para tracking.
-
----
-
-## 3. Mapa de telas e navegação
-
-15 telas + tab bar + toast. Fluxo (da tela "Mapa de navegação" do próprio protótipo):
-
-```
-Splash → Quiz de paladar → Home
-Home ├─ Buscar (vinho / prato / filtros)
-     ├─ Sommelier (por ocasião)
-     ├─ Favoritos
-     └─ Curadoria / Especiais
-              ↓
-        Tela de Produto ── Padrão (destaque:false)
-                        └─ Premium (destaque:true → vídeo + reserva)
-                              ↓
-                          Avaliações
-              ↓
-     Sacola → Checkout + Gifting → Pedido feito → Acompanhamento (Status · Mapa ao vivo)
-              ↓
-        Perfil ├─ Fidelidade
-               └─ Acesso VIP
-```
-
-**Tab bar (5 itens)**: Início, Buscar, Favoritos, Sacola (com badge de qtd), Perfil.
-Mapeamento tab por tela: `home→home`, `search/sommelier→search`, `favorites→fav`, `bag/checkout→bag`, `profile/loyalty/vip/tracking→profile`.
-**Tab bar visível em**: home, search, sommelier, favorites, bag, profile, loyalty, vip. **Oculta em**: splash, quiz, product, reviews, checkout, tracking, navmap.
-
-**Estrutura sugerida com Expo Router (file-based):**
-```
-app/
-  _layout.tsx            # Stack raiz + providers (fonts, safe area, store)
-  index.tsx              # Splash
-  quiz.tsx               # Quiz (fora das tabs)
-  (tabs)/
-    _layout.tsx          # Tab bar custom
-    home.tsx
-    search.tsx
-    favorites.tsx
-    bag.tsx
-    profile.tsx
-  sommelier.tsx
-  product/[id].tsx       # decide layout padrão vs premium por wine.destaque
-  reviews/[id].tsx
-  checkout.tsx
-  tracking.tsx
-  loyalty.tsx
-  vip.tsx
-```
-> A tab bar do design é **flutuante e custom** (não a padrão do Expo Router). Renderizar via `tabBar` custom no `(tabs)/_layout.tsx`. A navegação "voltar" do protótipo usa uma pilha própria (`prev[]`) → no RN usar a stack nativa do router.
-
----
-
-## 4. Fases de desenvolvimento
-
-Cada fase tem **objetivo**, **entregáveis** e **critério de conclusão (DoD)**. Ao final de cada fase, atualizar um `DEVELOPMENT.md` vivo (resumo do que existe, decisões, próximos passos) para retomar sem reler tudo.
-
----
-
-### Fase 0 — Fundação do projeto
-**Objetivo:** projeto Expo rodando, com fontes, tema e navegação vazia.
-- `npx create-expo-app` (SDK 57) + TypeScript.
-- Instalar (`npx expo install`): `expo-router`, `expo-font`, `react-native-svg`, `react-native-safe-area-context`, `react-native-reanimated`, `react-native-gesture-handler`, e `@expo/ui`.
-- Carregar fontes **Cormorant Garamond** + **Jost** (`expo-font`), splash screen segurando até fontes prontas.
-- Criar `theme/` com tokens (§1.1–1.3): cores, tipos de texto, espaçamentos, radii.
-- Configurar `app.json` (nome "IL DiVino", ícone/splash com o bordô), safe area provider.
-
-**DoD:** app abre com fontes carregadas e uma tela em branco usando os tokens.
-
----
-
-### Fase 1 — Design System & primitivos
-**Objetivo:** biblioteca de componentes de marca (§1.4) isolada em `components/`.
-- `Text` tipado por variante (heading serif, label caixa-alta, body Jost…).
-- `BottleGraphic` (+ variação premium) com prop de tamanho.
-- `WineCard`, `WineRow` (clara/escura), `Pill`, `Chip`, `StarRating` (leitura/editável), `PrimaryButton`/`OutlineButton`, `SectionTitle`, `ScreenHeader`, `Toast`, `SegmentedToggle`, `Toggle`.
-- Ícones SVG num `Icon` central.
-- (Opcional) tela de "storybook" interna para revisar os primitivos.
-
-**DoD:** todos os componentes renderizam corretamente com dados de exemplo, em tema claro e escuro.
-
----
-
-### Fase 2 — Dados & estado
-**Objetivo:** catálogo e store prontos.
-- `data/wines.ts`, `data/reviews.ts`, `data/quiz.ts`, `data/ocasioes.ts` (copiar valores exatos do protótipo).
-- Tipos TS (§2).
-- Formatters `brl`, `nf` e seletores derivados (railSelecionados, railMaisVendidos, vipWines, dishSearch, etc.).
-- Store (Zustand): `cart`, `favs`, `paladar`, `points` + ações (`addToCart`, `setQty`, `removeFromCart`, `toggleFav`, `answerQuiz`, `placeOrder`) e toast global.
-
-**DoD:** funções de seleção e regras (§2.6) cobertas por testes simples; store manipulável.
-
----
-
-### Fase 3 — Navegação & shell
-**Objetivo:** esqueleto navegável.
-- Estrutura de rotas (§3) com Expo Router.
-- Tab bar flutuante custom com estados ativos e badge da sacola.
-- Regra de visibilidade da tab bar por rota.
-- `ScreenHeader`/voltar padronizados.
-
-**DoD:** navegar entre todas as telas (mesmo vazias) e a tab bar acende/some conforme especificado.
-
----
-
-### Fase 4 — Onboarding (Splash + Quiz)
-**Objetivo:** entrada do app.
-- **Splash** (dark radial): logo "IL / DiVino / Adega Prime", citação em itálico, botões "Entrar" (→ quiz) e "Ver mapa de navegação". Animação `fade`.
-- **Quiz de paladar** (3 perguntas): progresso "x / 3", opções (label+hint), dots animados, botão "Pular". Ao fim, grava `paladar` e vai para Home.
-
-**DoD:** fluxo splash→quiz→home funcionando, com "Pular" e "Refazer" (a partir do perfil).
-
----
-
-### Fase 5 — Home
-**Objetivo:** vitrine principal.
-- Header (menu, logo central, coração→favoritos).
-- Barra de busca (fake, → tela de busca).
-- Banner "Curadoria da semana" (→ Especiais).
-- Pills de categoria (→ busca com filtro).
-- Rail "Selecionados para você" (`WineCard` horizontais).
-- Card "Coleção reservada" (→ Especiais).
-- Rail "Mais vendidos" (`WineRow`).
-- Rodapé "— curadoria IL DiVino —".
-
-**DoD:** rails populados pelas regras corretas; toques navegam certo; favoritar no card funciona.
-
----
-
-### Fase 6 — Busca / Coleção
-**Objetivo:** descoberta.
-- Título dinâmico (categoria / "Especiais" / "Coleção").
-- `SegmentedToggle` **Buscar vinho / Buscar por prato**.
-- Modo vinho: input de busca + chips de filtro (Uva/País/Preço/Corpo/Harmonização) + lista de resultados (`WineRow`), filtrando por categoria e texto (nome/uva/região/tipo).
-- Modo prato: input + exemplos rápidos (salmão, risoto, churrasco, queijos) + resultados por harmonização.
-- Link "Sommelier virtual".
-
-**DoD:** filtros e busca textual/prato retornam resultados corretos; chips presentes (podem abrir `BottomSheet` na fase de polish).
-
----
-
-### Fase 7 — Produto (Padrão + Premium)
-**Objetivo:** página de detalhe, dois layouts por `destaque`.
-- **Premium** (dark): nome grande sobre garrafa, safra, categoria, estrelas (→ avaliações), assinatura em itálico, **"Palavra do sommelier"** (vídeo com play/pausa — placeholder animado), harmonizações, aviso de **estoque baixo** (blip animado), rodapé fixo com preço + CTA (**"Reservar por 24h"** se reserva, senão "Adquirir").
-- **Padrão** (creme): garrafa central grande, safra/nome/uva·região/categoria, estrelas, assinatura, preço, "Adquirir", bloco "Harmoniza com".
-- Lógica `buyFromProduct` (reserva vs sacola) + toasts.
-
-**DoD:** ambos layouts corretos; reserva e compra disparam toast/nav corretos; vídeo alterna play/pausa.
-
----
-
-### Fase 8 — Avaliações
-**Objetivo:** ver e enviar avaliações.
-- Média destaque (nota grande + estrelas + total).
-- Form "Deixe sua avaliação": estrelas editáveis + textarea + enviar (toast + volta).
-- Lista de avaliações (nome, estrelas em glifos, comentário opcional em itálico).
-
-**DoD:** enviar avaliação mostra toast e retorna; comentário vazio não quebra layout.
-
----
-
-### Fase 9 — Sommelier virtual
-**Objetivo:** recomendação por ocasião.
-- Header voltar; título "Qual é a ocasião?".
-- Grade 2×2 de ocasiões (selecionável).
-- Ao escolher, lista de vinhos daquela ocasião (`WineRow` escura) → abre produto.
-
-**DoD:** seleção de ocasião mostra os vinhos corretos (por `ids`).
-
----
-
-### Fase 10 — Favoritos
-**Objetivo:** garrafeira salva.
-- Título + subtítulo.
-- Estado vazio ("Nenhum vinho salvo ainda.").
-- Lista de favoritos (`WineRow`) com botão coração (remover) e "+" (adicionar à sacola + toast).
-
-**DoD:** favoritar/desfavoritar reflete aqui e nos cards; "+" adiciona à sacola.
-
----
-
-### Fase 11 — Sacola
-**Objetivo:** carrinho.
-- Estado vazio (ícone + "Explorar vinhos").
-- Itens com garrafa, nome, tipo·uva, stepper de quantidade (− / qty / +), subtotal.
-- Rail "Combina com sua compra" (sugestões).
-- Resumo (subtotal + qtd) + "Finalizar compra" (→ checkout).
-
-**DoD:** somas e stepper corretos; badge da tab atualiza; remover ao chegar em 0.
-
----
-
-### Fase 12 — Checkout + Gifting
-**Objetivo:** finalização.
-- Bloco de endereço (mock "Helena Prado · Casa").
-- Pagamento: Pix / Cartão / Boleto (seleção).
-- Toggle "Usar 320 pontos de fidelidade" (desconto R$ 64).
-- **Gifting**: toggle "Isso é um presente?" → mensagem do cartão, "Ocultar preço na nota", **data de entrega** (`@expo/ui` `DateTimePicker`). Animação de expansão.
-- Resumo (subtotal, desconto pontos, frete, total) + "Confirmar pedido" (→ tracking, limpa carrinho).
-
-**DoD:** descontos/frete/total conforme regras; gifting expande e persiste; pedido zera a sacola.
-
----
-
-### Fase 13 — Acompanhamento de pedido
-**Objetivo:** pós-compra.
-- Cabeçalho "Seu pedido a caminho" + "#ILD-4821 · Chega em ~25 min".
-- `SegmentedToggle` **Status / Mapa**.
-- **Status**: timeline de 4 etapas (Confirmado, Preparando, Saiu para entrega [atual], Entregue) com dots/linhas coloridos.
-- **Mapa**: mapa estilizado (grid + rota tracejada SVG + pino destino + entregador com blip animado) + card do entregador (Bruno) com botão de ligação.
-
-**DoD:** as duas abas renderizam; timeline destaca a etapa atual; animações do mapa rodando.
-
----
-
-### Fase 14 — Perfil, Fidelidade e VIP
-**Objetivo:** conta e programa.
-- **Perfil**: card VIP (avatar HP, "Membro Prime", 320 pts, barra de progresso, "Ver programa"), acesso antecipado (→ VIP), "Seu paladar" (tags + "Refazer"→quiz), "Pedidos recentes" (→ tracking), links (Dados pessoais, Endereços, Pagamento, Notificações), link "Mapa de navegação".
-- **Fidelidade**: hero de pontos (320, barra Prime→VIP), "Como ganhar pontos", "Resgatar" (recompensas com estado ok/insuficiente + toast), "Histórico".
-- **VIP**: lista de lançamentos antecipados (vinhos `destaque`, badge "Pré-lançamento").
-
-**DoD:** navegação entre os três; resgates disparam toast correto; "Refazer" reabre o quiz.
-
----
-
-### Fase 15 — Polimento, animações e acessibilidade
-**Objetivo:** acabamento de produto.
-- Animações: `fade`/`rise` de entrada de tela, `pulse` (vídeo), `blip` (estoque/entregador), toggles suaves. Usar `react-native-reanimated`.
-- Toast global (auto-dismiss ~2.2s).
-- Scroll reseta ao topo em troca de tela (comportamento do protótipo).
-- Acessibilidade: `accessibilityLabel` nos ícones/botões (já há `aria-label` no protótipo), tamanho de toque ≥44px, contraste.
-- Ajuste fino de safe area (notch/home indicator) e teclado (inputs).
-- (Opcional) avaliar `@expo/ui` `BottomSheet` para filtros e seleção de endereço/pagamento.
-
-**DoD:** app fluido em iOS e Android, sem quebras de layout; revisão visual contra os `shots/` do design.
-
----
-
-### Fase 16 — Integração com backend (opcional / futuro)
-**Objetivo:** trocar mocks por API real.
-- Alinhar contratos com o backend (usar o fluxo/skill `sync-backend` do projeto).
-- Catálogo, avaliações (GET/POST), carrinho/pedido, fidelidade, autenticação, rastreio real de entrega.
-- Camada de dados (React Query/TanStack) mantendo os mesmos seletores da Fase 2.
-
-**DoD:** telas consumindo API sem mudança visual; mocks removíveis por feature flag.
-
----
-
-## 5. Referências no repositório
-
-- **Design fonte da verdade:** `design/project/IL DiVino.dc.html` (markup + estilos por tela nas linhas 32–962; lógica/dados nas linhas 967–1269).
-- **Screenshots:** `design/project/shots/` (`splash`, `premium`, `01/02/03-premium`, scrolls) — para conferência visual.
-- **Infra do protótipo (ignorar p/ produção):** `support.js` (runtime do Claude Design) e `ios-frame.jsx` (moldura do device).
-- **Regras do projeto:** `AGENTS.md` (ler docs Expo v57 antes de codar).
-
-## 6. Checklist rápido de telas (15)
-
-- [ ] Splash · [ ] Quiz · [ ] Home · [ ] Busca/Coleção · [ ] Sommelier ·
-- [ ] Produto Padrão · [ ] Produto Premium · [ ] Avaliações · [ ] Sacola ·
-- [ ] Checkout+Gifting · [ ] Acompanhamento (Status/Mapa) · [ ] Favoritos ·
-- [ ] Perfil · [ ] Fidelidade · [ ] VIP · ([ ] Mapa de navegação — só dev)
+Tab bar (5): Início · Buscar · Favoritos · Sacola(badge) · Perfil.
+Estrutura de rotas planejada (Fase 3): `app/index`(splash), `app/quiz`, `app/(tabs)/{home,search,favorites,bag,profile}`, `app/sommelier`, `app/product/[id]`, `app/reviews/[id]`, `app/checkout`, `app/tracking`, `app/loyalty`, `app/vip`.
+
+## Referências no repositório
+- Design: `design/project/IL DiVino.dc.html` (estilos por tela 32–962; lógica/dados 967–1269). Screenshots: `design/project/shots/`.
+- Infra do protótipo (ignorar p/ produção): `support.js`, `ios-frame.jsx`.
+- Regras do projeto: `AGENTS.md` (ler docs Expo v57 antes de codar).
+
+## Checklist de telas (15)
+- [ ] Splash · [ ] Quiz · [ ] Home · [ ] Busca · [ ] Sommelier · [ ] Produto Padrão · [ ] Produto Premium · [ ] Avaliações · [ ] Sacola · [ ] Checkout+Gifting · [ ] Acompanhamento · [ ] Favoritos · [ ] Perfil · [ ] Fidelidade · [ ] VIP

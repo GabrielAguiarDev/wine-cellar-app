@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "yy-divino-mobile",
+    "name": "IL DiVino",
     "slug": "yy-divino-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,9 +29,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#431018"
         }
       ]
     ],
