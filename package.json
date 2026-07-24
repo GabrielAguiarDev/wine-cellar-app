@@ -49,5 +49,6 @@
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@4.13.0"
 }
