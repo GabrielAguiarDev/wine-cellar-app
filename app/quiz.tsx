@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 
-import { Box, Screen, Text, TouchableOpacityBox } from '@components/index';
+import { Box, Icon, Screen, Text, TouchableOpacityBox } from '@components/index';
+import { StaggeredText } from '@components/organisms/animated-text';
 import { QUIZ } from '@data/index';
 import { useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
@@ -22,6 +23,13 @@ export default function QuizScreen() {
 
   const question = QUIZ[step];
 
+  // A descrição e os botões esperam a pergunta (StaggeredText) terminar de se
+  // revelar (defaults reacticx: 40ms/char + 350ms). Depois disso entram rápido
+  // e próximos entre si — só um pouco atrasados um em relação ao outro.
+  const textRevealMs = (question.pergunta.length - 1) * 40 + 350;
+  const DESC_DELAY = textRevealMs;
+  const OPTS_DELAY = textRevealMs + 160;
+
   const finish = (allAnswers: Record<string, string>) => {
     setPaladar(allAnswers.corpo ?? PALADAR_DEFAULT);
     completeOnboarding();
@@ -38,6 +46,12 @@ export default function QuizScreen() {
     setStep(step + 1);
   };
 
+  const goBack = () => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
+
   return (
     <Screen gradient={[palette.wine, palette.wineAlt]}>
       <StatusBar style="light" />
@@ -48,9 +62,20 @@ export default function QuizScreen() {
           alignItems="center"
           justifyContent="space-between"
           marginBottom="s44">
-          <Text variant="eyebrow">
-            Seu paladar · {step + 1} / {QUIZ.length}
-          </Text>
+          <Box flexDirection="row" alignItems="center" style={{ gap: 10 }}>
+            {step > 0 && (
+              <TouchableOpacityBox
+                accessibilityLabel="Voltar"
+                activeOpacity={0.7}
+                onPress={goBack}
+                padding="s4">
+                <Icon name="chevronLeft" size={15} color={palette.gold} />
+              </TouchableOpacityBox>
+            )}
+            <Text variant="eyebrow">
+              Seu paladar · {step + 1} / {QUIZ.length}
+            </Text>
+          </Box>
           <TouchableOpacityBox activeOpacity={0.7} onPress={() => finish(answers)}>
             <Text variant="label" color="cremeA60" style={{ textTransform: 'uppercase' }}>
               Pular
@@ -58,39 +83,52 @@ export default function QuizScreen() {
           </TouchableOpacityBox>
         </Box>
 
-        {/* pergunta */}
-        <Text
-          color="textOnDark"
-          marginBottom="s6"
-          style={{ fontFamily: fonts.serifMedium, fontSize: 38, lineHeight: 42 }}>
-          {question.pergunta}
-        </Text>
-        <Text variant="body" fontSize={13} color="cremeA60" marginBottom="s40">
-          {question.desc}
-        </Text>
+        {/* pergunta (revelação caractere a caractere — reacticx) */}
+        <Box marginBottom="s6">
+          <StaggeredText
+            key={question.key}
+            text={question.pergunta}
+            style={{
+              fontFamily: fonts.serifMedium,
+              fontSize: 38,
+              lineHeight: 42,
+              color: palette.creme,
+            }}
+          />
+        </Box>
+        <Animated.View
+          key={`${question.key}-desc`}
+          entering={FadeInDown.delay(DESC_DELAY).duration(340)}>
+          <Text variant="body" fontSize={13} color="cremeA60" marginBottom="s40">
+            {question.desc}
+          </Text>
+        </Animated.View>
 
-        {/* opções */}
+        {/* opções (fade up escalonado) */}
         <Box style={{ gap: 14 }}>
-          {question.opcoes.map(op => (
-            <TouchableOpacityBox
-              key={op.val}
-              activeOpacity={0.85}
-              onPress={() => answer(op.val)}
-              backgroundColor="cremeA05"
-              borderWidth={1}
-              borderColor="goldA40"
-              borderRadius="r12"
-              padding="s22"
-              style={{ gap: 4 }}>
-              <Text
-                color="textOnDark"
-                style={{ fontFamily: fonts.serifMedium, fontSize: 23 }}>
-                {op.label}
-              </Text>
-              <Text variant="body" fontSize={11.5} color="cremeA55">
-                {op.hint}
-              </Text>
-            </TouchableOpacityBox>
+          {question.opcoes.map((op, i) => (
+            <Animated.View
+              key={`${question.key}-${op.val}`}
+              entering={FadeInDown.delay(OPTS_DELAY + i * 70).duration(320)}>
+              <TouchableOpacityBox
+                activeOpacity={0.85}
+                onPress={() => answer(op.val)}
+                backgroundColor="cremeA05"
+                borderWidth={1}
+                borderColor="goldA40"
+                borderRadius="r12"
+                padding="s22"
+                style={{ gap: 4 }}>
+                <Text
+                  color="textOnDark"
+                  style={{ fontFamily: fonts.serifMedium, fontSize: 23 }}>
+                  {op.label}
+                </Text>
+                <Text variant="body" fontSize={11.5} color="cremeA55">
+                  {op.hint}
+                </Text>
+              </TouchableOpacityBox>
+            </Animated.View>
           ))}
         </Box>
 
