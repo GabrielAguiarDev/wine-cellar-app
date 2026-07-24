@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { Box, Screen, Text, TouchableOpacityBox } from '@components/index';
 import { QUIZ } from '@data/index';
@@ -94,12 +95,15 @@ export default function QuizScreen() {
         {/* dots de progresso */}
         <Box flexDirection="row" justifyContent="center" style={{ gap: 6 }}>
           {QUIZ.map((q, i) => (
-            <Box
+            <Animated.View
               key={q.key}
-              height={5}
-              borderRadius="r5"
-              width={i === step ? 22 : 5}
-              backgroundColor={i <= step ? 'accent' : 'cremeA25'}
+              layout={LinearTransition.duration(300)}
+              style={{
+                height: 5,
+                borderRadius: 3,
+                width: i === step ? 22 : 5,
+                backgroundColor: i <= step ? palette.gold : 'rgba(243,236,221,0.25)',
+              }}
             />
           ))}
         </Box>

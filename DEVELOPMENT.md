@@ -1,7 +1,7 @@
 # IL DiVino — Adega Prime · Contexto de Desenvolvimento
 
 > Arquivo mantido pelo agente **mobile-senior-dev**. Leia isto antes de continuar o desenvolvimento.
-> **Última atualização: Fase 5 concluída — 2026-07-23**
+> **Última atualização: Fase 15 concluída — 2026-07-23**
 > Fonte de design em uso: pasta **`design/`** → `design/project/IL DiVino.dc.html` (export Claude Design). É a fonte da verdade visual; reconstruir pixel-perfect, sem copiar a estrutura interna do protótipo.
 
 ---
@@ -50,17 +50,17 @@ assets/                   # fonts/images/lottie (mantidos na raiz)
 - [x] **Fase 3 — Navegação & shell** — Stack único (sem Tabs) + **TabBar flutuante custom como overlay** (visibilidade + aba ativa por rota + badge da sacola), Toast global (`ToastHost`+store), 15 rotas como stubs navegáveis (`DevStub`), catálogo do DS movido p/ `/catalog`, `index`→redirect `/quiz`. **typecheck+lint+export OK.**
 - [x] **Fase 4 — Onboarding (Quiz)** — `app/quiz.tsx` real: 3 perguntas (`QUIZ`), progresso "x / N", opções label+hint, dots, "Pular"; grava `paladar` (do `corpo`) no `useUserStore` e `router.replace('/home')`. typecheck+lint+export OK.
 - [x] **Fase 5 — Home** — `app/home.tsx` real: header (logo + coração→favoritos), busca fake→/search, banner "Curadoria da semana", pills de categoria→/search, rail "Selecionados" (`WineCard`+`railSelecionados`, favoritar), card "Coleção reservada"→especiais, rail "Mais vendidos" (`WineRow`+`railMaisVendidos`), rodapé. Navega p/ `/product/[id]`. typecheck+lint+export OK.
-- [ ] **Fase 6 — Busca/Coleção** — PRÓXIMA (vinho/prato/filtros)
-- [ ] Fase 7 — Produto (Padrão + Premium)
-- [ ] Fase 8 — Avaliações
-- [ ] Fase 9 — Sommelier
-- [ ] Fase 10 — Favoritos
-- [ ] Fase 11 — Sacola
-- [ ] Fase 12 — Checkout + Gifting
-- [ ] Fase 13 — Acompanhamento de pedido (Status/Mapa)
-- [ ] Fase 14 — Perfil + Fidelidade + VIP
-- [ ] Fase 15 — Polimento (animações, a11y, safe area)
-- [ ] Fase 16 — Integração backend (react-query; substitui mocks)
+- [x] **Fase 6 — Busca/Coleção** — `app/search.tsx` real: título dinâmico, `SegmentedToggle` vinho/prato, lê param `cat` da Home, `searchWines`/`searchByDish`, input (TextInput), chips de filtro (visuais), resultados `WineRow`, exemplos de prato, link Sommelier. typecheck+lint+export OK.
+- [x] **Fase 7 — Produto (Padrão + Premium)** — `app/product/[id].tsx` real: escolhe layout por `destaque`. Premium (dark, nome+garrafa premium, rating→reviews, assinatura, vídeo play/pausa `useState`, harmoniza, estoque baixo, rodapé fixo Reservar/Adquirir) e Padrão (creme, garrafa central, infos, adquirir, harmoniza). `buyFromProduct` (reserva vs sacola+toast+ir p/ bag), favoritar. typecheck+lint+export OK.
+- [x] **Fase 8 — Avaliações** — `app/reviews/[id].tsx` real: header com nome, média destaque (nota 64 + `StarRating` + total), form (estrelas editáveis + `TextInput` comentário + enviar→toast+back), lista `REVIEWS` (nome + glifos ★ + comentário itálico opcional). typecheck+lint+export OK.
+- [x] **Fase 9 — Sommelier** — `app/sommelier.tsx` real (dark): "Qual é a ocasião?", grade 2×2 (`OCASIOES`) selecionável, lista de vinhos da ocasião (`winesByIds` + `WineRow` dark)→produto. typecheck+lint+export OK.
+- [x] **Fase 10 — Favoritos** — `app/favorites.tsx` real: lista `WINES.filter(favs)` em `WineRow` com `rightSlot` (coração remove + "+" adiciona à sacola+toast), estado vazio, →produto. typecheck+lint+export OK.
+- [x] **Fase 11 — Sacola** — `app/bag.tsx` real: vazio (ícone+"Explorar vinhos"), itens com stepper `setQty`±1 (remove em 0) + subtotal, rail "Combina com sua compra" (sugestões), resumo (`cartCount`/`cartSubtotal`) + "Finalizar compra"→/checkout. typecheck+lint+export OK.
+- [x] **Fase 12 — Checkout + Gifting** — `app/checkout.tsx` real: endereço mock, pagamento (Pix/Cartão/Boleto), `Toggle` pontos, gifting expansível (mensagem+ocultar preço+data), resumo (`pointsDiscount`/`frete`/`checkoutTotal`), "Confirmar pedido"→`clear()`+`/tracking`. typecheck+lint+export OK.
+- [x] **Fase 13 — Acompanhamento de pedido** — `app/tracking.tsx` real: toggle Status/Mapa; timeline de 4 etapas (feito/atual/futuro) com dots+linhas coloridos; mapa estilizado (rota SVG tracejada + pino + entregador) + card do entregador com botão telefone. typecheck+lint+export OK.
+- [x] **Fase 14 — Perfil + Fidelidade + VIP** — `profile.tsx` (card VIP+pontos/progresso, acesso antecipado, paladar do `useUserStore`, pedidos recentes, links), `loyalty.tsx` (hero pontos, ganhar, resgatar+toast, histórico), `vip.tsx` (dark, `especiais()` em `WineRow` dark badge "Pré-lançamento"). **`DevStub` removido — não há mais stubs.** typecheck+lint+export OK.
+- [x] **Fase 15 — Polimento** — reanimated: `Blip` (entregador/estoque), `PulseBar` (vídeo), fade-in de tela (`Screen`), dots do quiz (`LinearTransition`), expansão do gifting (`FadeInDown`); teclado (`keyboardShouldPersistTaps`/`on-drag`); a11y labels. typecheck+lint+27 testes+export OK.
+- [ ] Fase 16 — Integração backend (react-query; substitui mocks) — opcional/futuro
 
 ## 5. Domínios & features implementados
 
@@ -76,17 +76,18 @@ Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos
 - **`src/utils/`** (barrel `@utils`): `format.ts` (`brl`/`nf`), `pricing.ts` (`pointsDiscount`/`frete`/`checkoutTotal` + constantes), `wineViewModel.ts` (`toWineCardData`/`toWineRowData`/`tipoUva`/`categoriaCompleta`/`capColorFor`).
 - **`src/store/`** (barrel `@store`, zustand): `useCartStore` (items + addToCart/setQty/removeFromCart/clear), `useFavoritesStore` (favs + toggleFav/isFav; inicia com lumiere-blanche+corona-reale), `useUserStore` (paladar/points/setPaladar), `useToastStore` (message + show(auto-dismiss ~2,2s)/hide).
 - `src/**/__tests__/` — 27 testes de lógica pura (format, pricing, selectors).
-- **Navegação (Fase 3):** `src/components/TabBar.tsx` (overlay, lê `usePathname`, `VISIBLE_ON`/`ACTIVE_TAB`, badge via `useCartStore`), `ToastHost.tsx` (consome `useToastStore`), `DevStub.tsx` (esqueleto TEMPORÁRIO das telas — remover ao implementar cada tela real).
-- **Rotas `app/`:** `_layout.tsx` (Stack `headerShown:false`, `animation:'fade'` + `<TabBar/>` + `<ToastHost/>` + `<AnimatedSplash/>`), `index.tsx` (→`/quiz`), `quiz.tsx`, `home/search/favorites/bag/profile.tsx`, `sommelier.tsx`, `product/[id].tsx`, `reviews/[id].tsx`, `checkout.tsx`, `tracking.tsx`, `loyalty.tsx`, `vip.tsx`, `catalog.tsx` (revisão do DS). **Todas stubs, exceto navegação/tab bar reais.**
+- **Navegação:** `src/components/TabBar.tsx` (overlay, lê `usePathname`, `VISIBLE_ON`/`ACTIVE_TAB`, badge via `useCartStore`), `ToastHost.tsx` (consome `useToastStore`). (`DevStub` foi removido na Fase 14.)
+- **Rotas `app/` (todas REAIS):** `_layout.tsx` (Stack `headerShown:false`, `animation:'fade'` + `<TabBar/>` + `<ToastHost/>` + `<AnimatedSplash/>`), `index.tsx` (→`/quiz`), `quiz.tsx`, `home/search/favorites/bag/profile.tsx`, `sommelier.tsx`, `product/[id].tsx`, `reviews/[id].tsx`, `checkout.tsx`, `tracking.tsx`, `loyalty.tsx`, `vip.tsx`, `catalog.tsx` (revisão do DS — pode ser removida antes de publicar).
 
 ## 6. Pendências & próximos passos
 
-1. **Iniciar a Fase 6 (Busca/Coleção).** Substituir `app/search.tsx` (design linhas 175–261): título dinâmico (categoria / "Especiais" / "Coleção"), `SegmentedToggle` **Buscar vinho / Buscar por prato**.
-2. **Ler os params da rota** (`useLocalSearchParams<{ cat?: string }>()`) que a Home já envia (`cat` = tipo ou `__especiais`) e aplicar via `searchWines({ catFilter, query })`. Título: `cat==='__especiais'?'Especiais':(cat||'Coleção')`.
-3. Modo vinho: input de busca (state local `query`) + `Chip`s de filtro (Uva/País/Preço/Corpo/Harmonização — visuais por ora) + lista `WineRow` (`toWineRowData(w,{full:true})`). Modo prato: input + exemplos rápidos (salmão/risoto/churrasco/queijos) + resultados via `searchByDish`.
-4. Link "Sommelier virtual" (→`/sommelier`). Toque no resultado → `/product/[id]`.
-5. Ao implementar cada tela real, **remover o uso de `DevStub`** naquela rota (apagar `DevStub.tsx` quando não restar nenhuma). Restam com stub: search, sommelier, product, reviews, checkout, tracking, loyalty, vip, favorites, bag, profile.
-6. Pendência menor de UI: revisar rodando o app (Expo Go) — calibrar `letterSpacing`/garrafas e tab bar sobre telas escuras.
+**MVP completo:** as 15 telas + navegação + polimento estão prontos. O que resta é opcional.
+
+1. **Rodar no dispositivo/Expo Go e calibrar visualmente:** `letterSpacing` dos labels, proporções das garrafas, gradientes (aproximam radiais do design), posição da tab bar sobre telas escuras, e o timing das animações (Blip/PulseBar/fade). Ajustar constantes conforme necessário.
+2. **Antes de publicar:** remover a rota `/catalog` (revisão do DS); revisar `bundleIdentifier` (`com.ydivino`) e `scheme` (`yydivinomobile`).
+3. **a11y (aprofundar, se desejado):** varredura completa de `accessibilityRole`/labels e contraste (ex.: texto sobre dourado nas ocasiões ativas do sommelier).
+4. **Fase 16 (backend):** quando houver API, criar os domínios (`Api/Adapter/Service/useCases` react-query) e trocar os mocks, **mantendo** os seletores (`@data`) e mappers (`@utils`) — a UI não muda. Usar a skill `sync-backend` para alinhar contratos.
+5. Persistência de "primeiro acesso" (pular quiz em execuções seguintes) e de carrinho/favoritos (ex.: `react-native-mmkv`) — hoje o estado é em memória.
 
 ## 7. Notas / armadilhas
 
@@ -164,4 +165,4 @@ Estrutura de rotas planejada (Fase 3): `app/index`(splash), `app/quiz`, `app/(ta
 - Regras do projeto: `AGENTS.md` (ler docs Expo v57 antes de codar).
 
 ## Checklist de telas (15)
-- [x] Splash · [x] Quiz · [x] Home · [ ] Busca · [ ] Sommelier · [ ] Produto Padrão · [ ] Produto Premium · [ ] Avaliações · [ ] Sacola · [ ] Checkout+Gifting · [ ] Acompanhamento · [ ] Favoritos · [ ] Perfil · [ ] Fidelidade · [ ] VIP
+- [x] Splash · [x] Quiz · [x] Home · [x] Busca · [x] Sommelier · [x] Produto Padrão · [x] Produto Premium · [x] Avaliações · [x] Sacola · [x] Checkout+Gifting · [x] Acompanhamento · [x] Favoritos · [x] Perfil · [x] Fidelidade · [x] VIP  ← **todas as 15 telas prontas**

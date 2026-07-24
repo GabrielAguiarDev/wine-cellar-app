@@ -3,6 +3,7 @@ import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@hooks/useAppTheme';
@@ -44,11 +45,17 @@ export function Screen({
   const content = scroll ? (
     <ScrollView
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       contentContainerStyle={{ paddingTop: insets.top }}>
-      {children}
+      <Animated.View entering={FadeIn.duration(300)}>{children}</Animated.View>
     </ScrollView>
   ) : (
-    <View style={{ flex: 1, paddingTop: insets.top }}>{children}</View>
+    <Animated.View
+      entering={FadeIn.duration(300)}
+      style={{ flex: 1, paddingTop: insets.top }}>
+      {children}
+    </Animated.View>
   );
 
   return (

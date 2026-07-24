@@ -1,17 +1,60 @@
 import { useRouter } from 'expo-router';
 
-import { DevStub } from '@components/index';
+import {
+  Box,
+  Screen,
+  ScreenHeader,
+  Text,
+  WineRow,
+} from '@components/index';
+import { especiais } from '@data/index';
+import { fonts, palette } from '@theme/index';
+import { toWineRowData } from '@utils/index';
 
-/** Stub do Acesso antecipado / VIP (Fase 14). */
 export default function VipScreen() {
   const router = useRouter();
+  const lancamentos = especiais();
+  const openWine = (id: string) =>
+    router.navigate({ pathname: '/product/[id]', params: { id } });
+
   return (
-    <DevStub
-      title="Lançamentos antecipados"
-      subtitle="Exclusivo nível VIP — pré-lançamentos entram na Fase 14."
-      dark
-      onBack={() => router.back()}
-      links={[{ label: 'Abrir um produto (ex.)', href: { pathname: '/product/[id]', params: { id: 'perla-nera' } } }]}
-    />
+    <Screen scroll gradient={[palette.wineLight, palette.wine, palette.wineDeep]} gradientLocations={[0, 0.46, 1]}>
+      <Box paddingBottom="s108" paddingTop="s6">
+        <Box paddingHorizontal="s22">
+          <ScreenHeader onBack={() => router.back()} variant="dark" />
+        </Box>
+
+        <Box paddingHorizontal="s24" paddingTop="s14">
+          <Text variant="eyebrow" style={{ letterSpacing: 3.6 }}>
+            Exclusivo · Nível VIP
+          </Text>
+          <Text
+            color="textOnDark"
+            marginTop="s8"
+            style={{ fontFamily: fonts.serifSemiBold, fontSize: 40, lineHeight: 41 }}>
+            Lançamentos{'\n'}antecipados
+          </Text>
+          <Text
+            color="cremeA70"
+            marginTop="s12"
+            style={{ fontFamily: fonts.serifItalic, fontSize: 17, lineHeight: 24 }}>
+            Garrafas em pré-lançamento, antes do público geral.
+          </Text>
+        </Box>
+
+        <Box paddingHorizontal="s22" paddingTop="s26" style={{ gap: 16 }}>
+          {lancamentos.map(w => (
+            <WineRow
+              key={w.id}
+              variant="dark"
+              bottleWidth={38}
+              badge="Pré-lançamento"
+              data={toWineRowData(w, { full: false })}
+              onPress={() => openWine(w.id)}
+            />
+          ))}
+        </Box>
+      </Box>
+    </Screen>
   );
 }

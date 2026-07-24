@@ -1,15 +1,203 @@
-import { DevStub } from '@components/index';
+import { useState } from 'react';
 
-/** Stub da Busca/Coleção (Fase 6). */
+import { ScrollView, TextInput } from 'react-native';
+
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
+import {
+  Box,
+  Chip,
+  Icon,
+  Screen,
+  SegmentedToggle,
+  Text,
+  TouchableOpacityBox,
+  WineRow,
+} from '@components/index';
+import { CAT_ESPECIAIS, searchByDish, searchWines } from '@data/index';
+import { fonts, palette } from '@theme/index';
+import { toWineRowData } from '@utils/index';
+
+type Modo = 'vinho' | 'prato';
+
+const FILTROS = ['Uva', 'País', 'Preço', 'Corpo', 'Harmonização'];
+const EXEMPLOS_PRATO = ['salmão grelhado', 'risoto', 'churrasco', 'queijos'];
+
 export default function SearchScreen() {
+  const router = useRouter();
+  const { cat } = useLocalSearchParams<{ cat?: string }>();
+
+  const [modo, setModo] = useState<Modo>('vinho');
+  const [query, setQuery] = useState('');
+  const [dishQuery, setDishQuery] = useState('');
+
+  const catFilter = cat ?? null;
+  const titulo = cat === CAT_ESPECIAIS ? 'Especiais' : (cat ?? 'Coleção');
+
+  const resultados = searchWines({ catFilter, query });
+  const dishResultados = searchByDish(dishQuery);
+  const openWine = (id: string) =>
+    router.navigate({ pathname: '/product/[id]', params: { id } });
+
   return (
-    <DevStub
-      title="Coleção"
-      subtitle="Busca por vinho/prato e filtros entram na Fase 6."
-      links={[
-        { label: 'Sommelier virtual', href: '/sommelier' },
-        { label: 'Abrir um produto (ex.)', href: '/product/corona-reale' },
-      ]}
-    />
+    <Screen scroll>
+      <Box paddingBottom="s108" paddingTop="s6">
+        <Text variant="h2" paddingHorizontal="s22">
+          {titulo}
+        </Text>
+
+        {/* toggle vinho / prato */}
+        <Box paddingHorizontal="s22" marginTop="s16" marginBottom="s16">
+          <SegmentedToggle<Modo>
+            value={modo}
+            onChange={setModo}
+            options={[
+              { key: 'vinho', label: 'Buscar vinho' },
+              { key: 'prato', label: 'Buscar por prato' },
+            ]}
+          />
+        </Box>
+
+        {modo === 'vinho' ? (
+          <>
+            {/* input */}
+            <Box
+              marginHorizontal="s22"
+              marginBottom="s18"
+              flexDirection="row"
+              alignItems="center"
+              backgroundColor="surface"
+              borderWidth={1}
+              borderColor="inkBorder14"
+              borderRadius="r12"
+              paddingVertical="s12"
+              paddingHorizontal="s16"
+              style={{ gap: 10 }}>
+              <Icon name="search" size={16} color={palette.mutedIcon} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Nome, uva ou região…"
+                placeholderTextColor={palette.mutedIcon}
+                style={{ flex: 1, fontFamily: fonts.sansRegular, fontSize: 14, color: palette.ink }}
+              />
+            </Box>
+
+            {/* chips de filtro */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 22, gap: 8, paddingBottom: 18 }}>
+              {FILTROS.map(f => (
+                <Chip key={f} label={f} />
+              ))}
+            </ScrollView>
+
+            {/* resultados */}
+            <Box paddingHorizontal="s22" style={{ gap: 14 }}>
+              {resultados.map(w => (
+                <WineRow
+                  key={w.id}
+                  data={toWineRowData(w, { full: true })}
+                  onPress={() => openWine(w.id)}
+                />
+              ))}
+              {resultados.length === 0 && (
+                <Text variant="quote" color="wineA70" textAlign="center" marginTop="s40">
+                  Nenhum vinho encontrado.
+                </Text>
+              )}
+            </Box>
+          </>
+        ) : (
+          <Box paddingHorizontal="s22">
+            <Text variant="quote" fontSize={17} color="wineA70" marginBottom="s14">
+              Diga o que vai preparar — encontramos a taça certa.
+            </Text>
+
+            {/* input prato */}
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              backgroundColor="surface"
+              borderWidth={1}
+              borderColor="inkBorder14"
+              borderRadius="r12"
+              paddingVertical="s14"
+              paddingHorizontal="s16"
+              marginBottom="s14"
+              style={{ gap: 10 }}>
+              <Text style={{ fontSize: 15 }}>🍽</Text>
+              <TextInput
+                value={dishQuery}
+                onChangeText={setDishQuery}
+                placeholder="ex: salmão grelhado"
+                placeholderTextColor={palette.mutedIcon}
+                style={{ flex: 1, fontFamily: fonts.sansRegular, fontSize: 14, color: palette.ink }}
+              />
+            </Box>
+
+            {/* exemplos */}
+            <Box flexDirection="row" flexWrap="wrap" marginBottom="s22" style={{ gap: 8 }}>
+              {EXEMPLOS_PRATO.map(d => (
+                <TouchableOpacityBox
+                  key={d}
+                  activeOpacity={0.8}
+                  onPress={() => setDishQuery(d)}
+                  borderWidth={1}
+                  borderColor="goldA50"
+                  borderRadius="r8"
+                  paddingVertical="s8"
+                  paddingHorizontal="s14">
+                  <Text variant="body" fontSize={11} color="accentDark">
+                    {d}
+                  </Text>
+                </TouchableOpacityBox>
+              ))}
+            </Box>
+
+            {/* resultados por prato */}
+            {dishResultados.length > 0 && (
+              <>
+                <Text variant="eyebrow" marginBottom="s14">
+                  Harmonizam com &quot;{dishQuery}&quot;
+                </Text>
+                <Box style={{ gap: 14 }}>
+                  {dishResultados.map(w => (
+                    <WineRow key={w.id} data={toWineRowData(w)} onPress={() => openWine(w.id)} />
+                  ))}
+                </Box>
+              </>
+            )}
+          </Box>
+        )}
+
+        {/* link sommelier */}
+        <TouchableOpacityBox
+          activeOpacity={0.85}
+          onPress={() => router.navigate('/sommelier')}
+          marginTop="s26"
+          marginHorizontal="s22"
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="space-between"
+          borderWidth={1}
+          borderColor="goldA60"
+          borderRadius="r13"
+          paddingVertical="s18"
+          paddingHorizontal="s20"
+          style={{ borderStyle: 'dashed' }}>
+          <Box>
+            <Text variant="wineName" color="primary">
+              Sommelier virtual
+            </Text>
+            <Text variant="body" fontSize={11} color="inkA55" marginTop="s2">
+              Sugestões por ocasião
+            </Text>
+          </Box>
+          <Icon name="arrowRight" size={14} color={palette.gold} />
+        </TouchableOpacityBox>
+      </Box>
+    </Screen>
   );
 }
