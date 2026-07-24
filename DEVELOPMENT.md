@@ -1,7 +1,7 @@
 # IL DiVino — Adega Prime · Contexto de Desenvolvimento
 
 > Arquivo mantido pelo agente **mobile-senior-dev**. Leia isto antes de continuar o desenvolvimento.
-> **Última atualização: Fase 15 concluída — 2026-07-23**
+> **Última atualização: Refinamento nativo (Fases A–F) concluído — 2026-07-24**
 > Fonte de design em uso: pasta **`design/`** → `design/project/IL DiVino.dc.html` (export Claude Design). É a fonte da verdade visual; reconstruir pixel-perfect, sem copiar a estrutura interna do protótipo.
 
 ---
@@ -14,8 +14,8 @@ App mobile de **adega premium (e-commerce de vinhos)** — catálogo curado, qui
 
 - **Expo SDK 57** (managed) + **Expo Router** (file-based) + **TypeScript strict**. React Native 0.86 / React 19.2.3 / Node ≥22.13.
 - **Estilização: `@shopify/restyle`** (tema tipado). Decisão do usuário. Substitui o `StyleSheet` do plano original.
-- **Estado: `zustand` agora** (carrinho/favoritos/quiz/pontos são mock) → **migrar para `@tanstack/react-query` + Context na Fase 16** (backend real). Decisão do usuário.
-- **`@expo/ui` NÃO é usado para a UI de marca** (componentes nativos seguem a aparência da plataforma e não reproduzem o visual creme/bordô/dourado). Reservado só para primitivos pontuais quando fizer sentido (ex.: date picker do gifting). Preferir componentes custom em RN + restyle.
+- **Estado: `zustand` agora** (carrinho/favoritos/quiz/pontos são mock) → **migrar para `@tanstack/react-query` + Context na Fase 16** (backend real). Decisão do usuário. **`useUserStore` é persistido** via `zustand/middleware persist` + `@react-native-async-storage/async-storage` (flag `onboarded` → quiz só no 1º acesso; `paladar`/`points`).
+- **`@expo/ui` usado de forma PONTUAL** (decisão do usuário: "pontual"). Adotados os drop-ins cross-platform `@expo/ui/community/*` onde o controle nativo é superior e neutro à marca: **`SegmentedControl`** (pagamento no checkout; toggle vinho/prato na busca) e **`DateTimePicker`** (data do presente). A UI de marca (cards, botões, headers custom, `Toggle`) permanece em RN + restyle — o `Switch` nativo não expõe cor e viraria verde de sistema, então o `Toggle` bordô foi mantido.
 - **Tema de marca fixo** (NÃO dirigido pelo modo claro/escuro do SO): o design define fundo claro vs. escuro **por tela** (ex.: splash/quiz/produto premium são dark; home/busca são creme), não por preferência do sistema. Por isso há um único `theme` com tokens claros e escuros disponíveis simultaneamente.
 - **Splash animada = Lottie** (`assets/lottie/wine.json`, ~5,4s/60fps, vetor puro). Fluxo: splash nativo **só cor sólida bordô** (sem logo) → ao carregar o JS, overlay `AnimatedSplash` (mesma cor, sem flash) toca o Lottie 1x em tela cheia (**sem texto/logo**) via `lottie-react-native` → **fade out** (reanimated) revela o app. Decisão do usuário: o Lottie **é** a splash (não há tela de marca "Entrar"; o fluxo do design que tinha Splash→Quiz vira **AnimatedSplash→Quiz**). `speed` ~1.8x (~3s) — ajustável em `AnimatedSplash.tsx`.
 - Gradientes via **`expo-linear-gradient`**; ícones e garrafas via **`react-native-svg`** (garrafas serão desenhadas com Views/SVG, não imagens). Animações: **`react-native-reanimated` 4** (plugin `react-native-worklets/plugin` no babel). Gestos: **`react-native-gesture-handler`**. Fontes: **`@expo-google-fonts/cormorant-garamond` + `@expo-google-fonts/jost`** via `expo-font`. Env validado com **`zod`**.
@@ -62,6 +62,17 @@ assets/                   # fonts/images/lottie (mantidos na raiz)
 - [x] **Fase 15 — Polimento** — reanimated: `Blip` (entregador/estoque), `PulseBar` (vídeo), fade-in de tela (`Screen`), dots do quiz (`LinearTransition`), expansão do gifting (`FadeInDown`); teclado (`keyboardShouldPersistTaps`/`on-drag`); a11y labels. typecheck+lint+27 testes+export OK.
 - [ ] Fase 16 — Integração backend (react-query; substitui mocks) — opcional/futuro
 
+### Refinamento nativo (pós-MVP, 2026-07-24) — Fases A–F
+
+Objetivo do usuário: parecer/comportar-se como app nativo iOS/Android **sem perder a identidade** (bordô/creme/serif). Todas estabilizadas (tsc+eslint+27 testes+export iOS/Android).
+
+- [x] **Fase A — Ajustes rápidos** — removido o fade-in de troca de tela (`Screen` sem `FadeIn`; `Stack` sem `animation:'fade'`); splash com fundo **creme** (não bordô) em `app.json` + `AnimatedSplash`; `StatusBar` global `dark` (+ `light` local em quiz/produto premium/sommelier/vip); removido o botão de menu (drawer) do header da Home.
+- [x] **Fase B — Onboarding no 1º acesso** — `@react-native-async-storage/async-storage` + `persist`; `useUserStore.onboarded`/`completeOnboarding()`; `app/index.tsx` aguarda hidratação e redireciona (`onboarded ? /home : /quiz`); `quiz.finish()` marca onboarded (inclui "Pular").
+- [x] **Fase C — Navegação (tabs) + Native Tabs** — grupo `app/(tabs)/` com pilhas aninhadas por aba. **iOS:** `expo-router/unstable-native-tabs` (SF Symbols, labels pt-BR, `tintColor` bordô, badge da sacola). **Android:** `<Stack>` + a `TabBar` flutuante custom (overlay do root, agora só fora do iOS). `sommelier/loyalty/vip` saíram do `VISIBLE_ON` → **tela cheia**.
+- [x] **Fase D — Headers/title nativos** — `src/theme/navHeader.ts` (`brandHeaderOptions`: bg creme, tinta bordô, título Cormorant, `headerLargeTitle` iOS); `Screen` ganhou prop **`nativeHeader`** (sem inset manual + `contentInsetAdjustmentBehavior="automatic"`). Header nativo em: **abas** search/favorites/bag/profile e **pushes** checkout/reviews/loyalty (voltar nativo). Telas imersivas escuras (sommelier/vip/produto premium/quiz) mantêm título artístico custom.
+- [x] **Fase E — Expo UI pontual** — `@expo/ui@57.0.7`; `community/segmented-control` (checkout + busca) e `community/datetime-picker` (data do presente, compact no iOS / diálogo no Android). `Toggle` custom mantido.
+- [x] **Fase F — Estabilização + docs** — bateria completa verde; este documento atualizado.
+
 ## 5. Domínios & features implementados
 
 Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos:
@@ -76,18 +87,19 @@ Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos
 - **`src/utils/`** (barrel `@utils`): `format.ts` (`brl`/`nf`), `pricing.ts` (`pointsDiscount`/`frete`/`checkoutTotal` + constantes), `wineViewModel.ts` (`toWineCardData`/`toWineRowData`/`tipoUva`/`categoriaCompleta`/`capColorFor`).
 - **`src/store/`** (barrel `@store`, zustand): `useCartStore` (items + addToCart/setQty/removeFromCart/clear), `useFavoritesStore` (favs + toggleFav/isFav; inicia com lumiere-blanche+corona-reale), `useUserStore` (paladar/points/setPaladar), `useToastStore` (message + show(auto-dismiss ~2,2s)/hide).
 - `src/**/__tests__/` — 27 testes de lógica pura (format, pricing, selectors).
-- **Navegação:** `src/components/TabBar.tsx` (overlay, lê `usePathname`, `VISIBLE_ON`/`ACTIVE_TAB`, badge via `useCartStore`), `ToastHost.tsx` (consome `useToastStore`). (`DevStub` foi removido na Fase 14.)
-- **Rotas `app/` (todas REAIS):** `_layout.tsx` (Stack `headerShown:false`, `animation:'fade'` + `<TabBar/>` + `<ToastHost/>` + `<AnimatedSplash/>`), `index.tsx` (→`/quiz`), `quiz.tsx`, `home/search/favorites/bag/profile.tsx`, `sommelier.tsx`, `product/[id].tsx`, `reviews/[id].tsx`, `checkout.tsx`, `tracking.tsx`, `loyalty.tsx`, `vip.tsx`, `catalog.tsx` (revisão do DS — pode ser removida antes de publicar).
+- **Navegação:** `src/components/TabBar.tsx` (overlay flutuante **só Android**, lê `usePathname`, `VISIBLE_ON`=as 5 abas/`ACTIVE_TAB`, badge via `useCartStore`); no **iOS** a barra é nativa (`app/(tabs)/_layout.tsx`). `ToastHost.tsx` consome `useToastStore`. `src/theme/navHeader.ts` = opções de header nativo de marca.
+- **Rotas `app/`:** `_layout.tsx` (Stack raiz `headerShown:false` + `{Platform.OS!=='ios' && <TabBar/>}` + `<ToastHost/>` + `<AnimatedSplash/>`), `index.tsx` (aguarda hidratação → `onboarded ? /home : /quiz`), `quiz.tsx`. **Grupo `(tabs)/`**: `_layout.tsx` (iOS `<NativeTabs>` / Android `<Stack>`), e `home|search|favorites|bag|profile/{_layout.tsx (Stack, header nativo),index.tsx}`. **Pushes raiz (tela cheia):** `sommelier.tsx`, `product/[id].tsx`, `reviews/[id].tsx`, `checkout.tsx`, `tracking.tsx`, `loyalty.tsx`, `vip.tsx`, `catalog.tsx` (revisão do DS — remover antes de publicar). URLs seguem iguais (grupos são transparentes: `/home`, `/search`…).
 
 ## 6. Pendências & próximos passos
 
-**MVP completo:** as 15 telas + navegação + polimento estão prontos. O que resta é opcional.
+**MVP + refinamento nativo completos.** O que resta é opcional.
 
-1. **Rodar no dispositivo/Expo Go e calibrar visualmente:** `letterSpacing` dos labels, proporções das garrafas, gradientes (aproximam radiais do design), posição da tab bar sobre telas escuras, e o timing das animações (Blip/PulseBar/fade). Ajustar constantes conforme necessário.
+0. **⚠️ Requer DEV BUILD (não Expo Go):** native-tabs (`expo-router/unstable-native-tabs`), `@expo/ui` e AsyncStorage são módulos nativos. Rodar com `npx expo run:ios` / `npx expo run:android` (há `expo-dev-client`). Num binário antigo dariam "módulo ausente".
+1. **Calibrar no device (iOS+Android):** SF Symbols vs. ícones do design nas abas; cor/contraste do `SegmentedControl` e do large title; **Lottie da splash sobre o novo fundo creme** (foi desenhado p/ fundo escuro — pode precisar de ajuste); `paddingBottom="s108"` das telas de aba talvez sobre no iOS (native tabs já aplica inset via `contentInsetAdjustmentBehavior`); timing de Blip/PulseBar.
 2. **Antes de publicar:** remover a rota `/catalog` (revisão do DS); revisar `bundleIdentifier` (`com.ydivino`) e `scheme` (`yydivinomobile`).
-3. **a11y (aprofundar, se desejado):** varredura completa de `accessibilityRole`/labels e contraste (ex.: texto sobre dourado nas ocasiões ativas do sommelier).
+3. **a11y (aprofundar, se desejado):** varredura completa de `accessibilityRole`/labels e contraste.
 4. **Fase 16 (backend):** quando houver API, criar os domínios (`Api/Adapter/Service/useCases` react-query) e trocar os mocks, **mantendo** os seletores (`@data`) e mappers (`@utils`) — a UI não muda. Usar a skill `sync-backend` para alinhar contratos.
-5. Persistência de "primeiro acesso" (pular quiz em execuções seguintes) e de carrinho/favoritos (ex.: `react-native-mmkv`) — hoje o estado é em memória.
+5. Persistência de **onboarding já feita** (AsyncStorage). Falta persistir carrinho/favoritos, se desejado (mesmo padrão `persist`).
 
 ## 7. Notas / armadilhas
 
@@ -96,7 +108,9 @@ Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos
 - **letterSpacing**: o design usa `em`; no RN é **px**. Já convertido nos `textVariants` (aproximação por variante); ajustar caso destoe.
 - **Garrafas**: são formas desenhadas (não imagens). Props previstas: `cor`, `cap`(dourado se premium), `iniciais`, `safra`, e um `size` com presets (rail 46×150, lista 34×100, produto 96–110×320–340, sacola 30×92).
 - **Navegação "voltar"**: o protótipo usa pilha própria (`prev[]`); no app usar a stack nativa do Expo Router.
-- **Tab bar**: é flutuante e custom (não a padrão) — implementar via `tabBar` custom na Fase 3. Visível em home/search/sommelier/favorites/bag/profile/loyalty/vip; oculta nas demais.
+- **Tab bar**: **iOS = Native Tabs** (`(tabs)/_layout.tsx`, split por `Platform`); **Android = TabBar flutuante custom** (overlay do root, visível só nas 5 abas). Telas secundárias (sommelier/loyalty/vip) e fluxos (checkout/tracking) abrem em tela cheia.
+- **Native Tabs / `@expo/ui` / AsyncStorage = nativos → dev build.** Ícones das abas usam SF Symbols no iOS; validar API do pacote instalado antes de mexer (feito nesta rodada).
+- **Header nativo**: `brandHeaderOptions` + `Screen nativeHeader`. Large title só colapsa no iOS e exige `ScrollView` com `contentInsetAdjustmentBehavior="automatic"` (a prop `nativeHeader` já faz isso). Telas escuras imersivas ficam sem header nativo de propósito.
 - TS 6 + Expo: `tsc --noEmit` é o typecheck; Metro resolve os aliases do tsconfig automaticamente.
 
 ---
@@ -150,7 +164,7 @@ Estado global (zustand): `cart:{[id]:qty}`, `favs:{[id]:true}` (inicia com lumie
 
 ## Mapa de telas & navegação
 ```
-Splash → Quiz → Home
+Splash(Lottie) → index (hidrata) → 1º acesso: Quiz → Home · demais: Home direto
 Home ├─ Buscar (vinho/prato/filtros) ├─ Sommelier ├─ Favoritos └─ Curadoria/Especiais
         → Produto (Padrão destaque:false / Premium destaque:true → vídeo+reserva) → Avaliações
 Sacola → Checkout+Gifting → Pedido feito → Acompanhamento (Status·Mapa)
