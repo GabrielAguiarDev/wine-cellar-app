@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { ScrollView, TextInput } from 'react-native';
 
+import { SegmentedControl } from '@expo/ui/community/segmented-control';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
@@ -9,7 +10,6 @@ import {
   Chip,
   Icon,
   Screen,
-  SegmentedToggle,
   Text,
   TouchableOpacityBox,
   WineRow,
@@ -20,6 +20,10 @@ import { toWineRowData } from '@utils/index';
 
 type Modo = 'vinho' | 'prato';
 
+const MODOS: { key: Modo; label: string }[] = [
+  { key: 'vinho', label: 'Buscar vinho' },
+  { key: 'prato', label: 'Buscar por prato' },
+];
 const FILTROS = ['Uva', 'País', 'Preço', 'Corpo', 'Harmonização'];
 const EXEMPLOS_PRATO = ['salmão grelhado', 'risoto', 'churrasco', 'queijos'];
 
@@ -43,15 +47,15 @@ export default function SearchScreen() {
     <Screen scroll nativeHeader>
       <Stack.Screen options={{ title: titulo }} />
       <Box paddingBottom="s108" paddingTop="s10">
-        {/* toggle vinho / prato */}
+        {/* toggle vinho / prato (segmented nativo) */}
         <Box paddingHorizontal="s22" marginTop="s4" marginBottom="s16">
-          <SegmentedToggle<Modo>
-            value={modo}
-            onChange={setModo}
-            options={[
-              { key: 'vinho', label: 'Buscar vinho' },
-              { key: 'prato', label: 'Buscar por prato' },
-            ]}
+          <SegmentedControl
+            values={MODOS.map(m => m.label)}
+            selectedIndex={MODOS.findIndex(m => m.key === modo)}
+            onChange={e =>
+              setModo(MODOS[e.nativeEvent.selectedSegmentIndex].key)
+            }
+            tintColor={palette.wine}
           />
         </Box>
 

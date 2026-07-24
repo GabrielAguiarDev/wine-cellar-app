@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
-import { TextInput } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
+import { SegmentedControl } from '@expo/ui/community/segmented-control';
 import { Stack, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -52,7 +54,14 @@ export default function CheckoutScreen() {
   const [isGift, setIsGift] = useState(false);
   const [giftMsg, setGiftMsg] = useState('');
   const [hidePrice, setHidePrice] = useState(false);
-  const [giftDate, setGiftDate] = useState('2026-08-02');
+  const [giftDate, setGiftDate] = useState(() => new Date('2026-08-02T12:00:00'));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const giftDateLabel = giftDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const subtotal = cartSubtotal(items);
   const hasItems = Object.keys(items).length > 0;
@@ -94,28 +103,14 @@ export default function CheckoutScreen() {
           <Text variant="eyebrow" marginBottom="s12">
             Pagamento
           </Text>
-          <Box flexDirection="row" style={{ gap: 8 }}>
-            {PAGAMENTOS.map(p => {
-              const active = pm === p.key;
-              return (
-                <TouchableOpacityBox
-                  key={p.key}
-                  activeOpacity={0.85}
-                  onPress={() => setPm(p.key)}
-                  flex={1}
-                  alignItems="center"
-                  paddingVertical="s12"
-                  borderRadius="r9"
-                  borderWidth={1}
-                  backgroundColor={active ? 'primary' : 'transparent'}
-                  borderColor={active ? 'primary' : 'inkBorder20'}>
-                  <Text variant="body" fontSize={12} color={active ? 'textOnDark' : 'primary'}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacityBox>
-              );
-            })}
-          </Box>
+          <SegmentedControl
+            values={PAGAMENTOS.map(p => p.label)}
+            selectedIndex={PAGAMENTOS.findIndex(p => p.key === pm)}
+            onChange={e =>
+              setPm(PAGAMENTOS[e.nativeEvent.selectedSegmentIndex].key)
+            }
+            tintColor={palette.wine}
+          />
         </CardBox>
 
         {/* pontos */}
@@ -201,25 +196,42 @@ export default function CheckoutScreen() {
                 <Text variant="body" fontSize={13}>
                   Data de entrega
                 </Text>
-                <TextInput
-                  value={giftDate}
-                  onChangeText={setGiftDate}
-                  placeholder="AAAA-MM-DD"
-                  placeholderTextColor={palette.mutedIcon}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: 'rgba(42,33,28,0.16)',
-                    backgroundColor: palette.white,
-                    borderRadius: 8,
-                    paddingHorizontal: 10,
-                    paddingVertical: 8,
-                    fontFamily: fonts.sansRegular,
-                    fontSize: 13,
-                    color: palette.ink,
-                    minWidth: 130,
-                  }}
-                />
+                {Platform.OS === 'ios' ? (
+                  <DateTimePicker
+                    value={giftDate}
+                    mode="date"
+                    display="compact"
+                    accentColor={palette.wine}
+                    onValueChange={(_e, date) => setGiftDate(date)}
+                  />
+                ) : (
+                  <TouchableOpacityBox
+                    activeOpacity={0.8}
+                    onPress={() => setShowDatePicker(true)}
+                    borderWidth={1}
+                    borderColor="inkBorder20"
+                    borderRadius="r8"
+                    paddingVertical="s8"
+                    paddingHorizontal="s12">
+                    <Text variant="body" fontSize={13} color="primary">
+                      {giftDateLabel}
+                    </Text>
+                  </TouchableOpacityBox>
+                )}
               </Box>
+              {Platform.OS !== 'ios' && showDatePicker && (
+                <DateTimePicker
+                  value={giftDate}
+                  mode="date"
+                  presentation="dialog"
+                  accentColor={palette.wine}
+                  onValueChange={(_e, date) => {
+                    setGiftDate(date);
+                    setShowDatePicker(false);
+                  }}
+                  onDismiss={() => setShowDatePicker(false)}
+                />
+              )}
             </Box>
             </Animated.View>
           )}

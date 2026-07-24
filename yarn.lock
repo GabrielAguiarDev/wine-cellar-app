@@ -1602,7 +1602,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/ui@npm:^57.0.7":
+"@expo/ui@npm:^57.0.7, @expo/ui@npm:~57.0.7":
   version: 57.0.7
   resolution: "@expo/ui@npm:57.0.7"
   dependencies:
@@ -11121,6 +11121,7 @@ __metadata:
   dependencies:
     "@expo-google-fonts/cormorant-garamond": "npm:^0.4.1"
     "@expo-google-fonts/jost": "npm:^0.4.2"
+    "@expo/ui": "npm:~57.0.7"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
     "@shopify/restyle": "npm:^2.4.5"
     "@types/jest": "npm:29.5.14"
