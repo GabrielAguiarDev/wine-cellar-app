@@ -71,7 +71,7 @@ export default function CheckoutScreen() {
 
   const placeOrder = () => {
     clear();
-    router.replace('/tracking');
+    router.replace('/processing');
   };
 
   return (
