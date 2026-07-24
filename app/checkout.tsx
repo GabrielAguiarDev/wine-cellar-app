@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Platform, TextInput } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { SegmentedControl } from '@expo/ui/community/segmented-control';
@@ -193,38 +193,85 @@ export default function CheckoutScreen() {
                 </Text>
               </TouchableOpacityBox>
               <Box flexDirection="row" alignItems="center" justifyContent="space-between" marginTop="s14">
-                <Text variant="body" fontSize={13}>
+                <Text variant="body" fontSize={13} style={{ flexShrink: 1 }}>
                   Data de entrega
                 </Text>
-                {Platform.OS === 'ios' ? (
-                  <DateTimePicker
-                    value={giftDate}
-                    mode="date"
-                    display="compact"
-                    accentColor={palette.wine}
-                    onValueChange={(_e, date) => setGiftDate(date)}
-                  />
-                ) : (
-                  <TouchableOpacityBox
-                    activeOpacity={0.8}
-                    onPress={() => setShowDatePicker(true)}
-                    borderWidth={1}
-                    borderColor="inkBorder20"
-                    borderRadius="r8"
-                    paddingVertical="s8"
-                    paddingHorizontal="s12">
-                    <Text variant="body" fontSize={13} color="primary">
-                      {giftDateLabel}
-                    </Text>
-                  </TouchableOpacityBox>
-                )}
+                {/* chip próprio (alinhado à direita) abre o calendário */}
+                <TouchableOpacityBox
+                  activeOpacity={0.8}
+                  onPress={() => setShowDatePicker(true)}
+                  backgroundColor="background"
+                  borderWidth={1}
+                  borderColor="inkBorder20"
+                  borderRadius="r8"
+                  paddingVertical="s8"
+                  paddingHorizontal="s14">
+                  <Text
+                    variant="body"
+                    fontSize={13}
+                    color="primary"
+                    style={{ fontFamily: fonts.sansMedium }}>
+                    {giftDateLabel}
+                  </Text>
+                </TouchableOpacityBox>
               </Box>
+
+              {/* iOS: calendário num modal (layout sob controle) */}
+              {Platform.OS === 'ios' && (
+                <Modal
+                  visible={showDatePicker}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setShowDatePicker(false)}>
+                  <Box flex={1} justifyContent="center" paddingHorizontal="s22">
+                    <Pressable
+                      style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(42,33,28,0.45)' }]}
+                      onPress={() => setShowDatePicker(false)}
+                    />
+                    <Box
+                      backgroundColor="surface"
+                      borderRadius="r18"
+                      padding="s18"
+                      style={{
+                        shadowColor: palette.wine,
+                        shadowOpacity: 0.18,
+                        shadowRadius: 24,
+                        shadowOffset: { width: 0, height: 10 },
+                        elevation: 10,
+                      }}>
+                      <Text variant="eyebrow" marginBottom="s10">
+                        Data de entrega
+                      </Text>
+                      <DateTimePicker
+                        value={giftDate}
+                        mode="date"
+                        display="inline"
+                        accentColor={palette.wine}
+                        locale="pt-BR"
+                        onValueChange={(_e, date) => setGiftDate(date)}
+                        style={{ alignSelf: 'stretch', height: 340 }}
+                      />
+                      <Box marginTop="s12">
+                        <Button
+                          label="Concluir"
+                          variant="primary"
+                          fullWidth
+                          onPress={() => setShowDatePicker(false)}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Modal>
+              )}
+
+              {/* Android: diálogo nativo */}
               {Platform.OS !== 'ios' && showDatePicker && (
                 <DateTimePicker
                   value={giftDate}
                   mode="date"
                   presentation="dialog"
                   accentColor={palette.wine}
+                  locale="pt-BR"
                   onValueChange={(_e, date) => {
                     setGiftDate(date);
                     setShowDatePicker(false);

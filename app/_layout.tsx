@@ -6,12 +6,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
-import {
-  AnimatedSplash,
-  AppProviders,
-  TabBar,
-  ToastHost,
-} from '@components/index';
+import { AnimatedSplash, AppProviders, TabBar } from '@components/index';
+import { ToastProviderWithViewport } from '@components/molecules/Toast';
 import { useAppFonts } from '@hooks/useAppFonts';
 
 // Mantém o splash nativo (cor sólida bordô) visível enquanto as fontes carregam.
@@ -35,14 +31,15 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-      {/* iOS usa Native Tabs (em (tabs)/_layout); Android usa a TabBar custom. */}
-      {Platform.OS !== 'ios' && <TabBar />}
-      <ToastHost />
-      {!splashFinished && (
-        <AnimatedSplash onFinish={() => setSplashFinished(true)} />
-      )}
+      <ToastProviderWithViewport>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+        {/* iOS usa Native Tabs (em (tabs)/_layout); Android usa a TabBar custom. */}
+        {Platform.OS !== 'ios' && <TabBar />}
+        {!splashFinished && (
+          <AnimatedSplash onFinish={() => setSplashFinished(true)} />
+        )}
+      </ToastProviderWithViewport>
     </AppProviders>
   );
 }

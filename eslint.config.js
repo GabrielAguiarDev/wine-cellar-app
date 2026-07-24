@@ -5,8 +5,14 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    // organisms/ = componentes vendorizados via CLI reacticx (não seguem nosso estilo)
-    ignores: ['dist/*', '.expo/*', 'node_modules/*', 'src/components/organisms/*'],
+    // organisms/ e molecules/ = componentes vendorizados via CLI reacticx
+    ignores: [
+      'dist/*',
+      '.expo/*',
+      'node_modules/*',
+      'src/components/organisms/*',
+      'src/components/molecules/*',
+    ],
   },
   {
     rules: {

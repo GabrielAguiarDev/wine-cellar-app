@@ -1,25 +1,23 @@
 import { create } from 'zustand';
 
-const DURATION_MS = 2200;
+import { Toast } from '@components/molecules/Toast';
+import { palette } from '@theme/index';
 
 type ToastState = {
-  message: string;
+  /** Exibe um toast (delegado ao Toast do reacticx, com a cor da marca). */
   show: (message: string) => void;
-  hide: () => void;
 };
 
-let timer: ReturnType<typeof setTimeout> | undefined;
-
-/** Toast global com auto-dismiss (~2,2s). */
-export const useToastStore = create<ToastState>(set => ({
-  message: '',
-  show: message => {
-    if (timer) clearTimeout(timer);
-    set({ message });
-    timer = setTimeout(() => set({ message: '' }), DURATION_MS);
-  },
-  hide: () => {
-    if (timer) clearTimeout(timer);
-    set({ message: '' });
-  },
+/**
+ * Ponte: mantém a API `show(message)` usada em todo o app, delegando ao Toast
+ * do reacticx (montado via `ToastProviderWithViewport` no root layout). Assim
+ * as chamadas existentes passam a usar o toast novo sem nenhuma alteração.
+ */
+export const useToastStore = create<ToastState>(() => ({
+  show: message =>
+    Toast.show(message, {
+      backgroundColor: palette.wine,
+      position: 'top',
+      duration: 2600,
+    }),
 }));
