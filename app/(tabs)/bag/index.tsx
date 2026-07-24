@@ -30,12 +30,8 @@ export default function BagScreen() {
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
   return (
-    <Screen scroll>
+    <Screen scroll nativeHeader>
       <Box paddingBottom="s108" paddingTop="s6">
-        <Text variant="h2" paddingHorizontal="s22">
-          Sua sacola
-        </Text>
-
         {ids.length === 0 ? (
           <Box alignItems="center" paddingHorizontal="s40" paddingTop="s60">
             <Box

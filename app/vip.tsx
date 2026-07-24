@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 import {
   Box,
@@ -19,6 +20,7 @@ export default function VipScreen() {
 
   return (
     <Screen scroll gradient={[palette.wineLight, palette.wine, palette.wineDeep]} gradientLocations={[0, 0.46, 1]}>
+      <StatusBar style="light" />
       <Box paddingBottom="s108" paddingTop="s6">
         <Box paddingHorizontal="s22">
           <ScreenHeader onBack={() => router.back()} variant="dark" />

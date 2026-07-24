@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 import {
   Box,
@@ -25,6 +26,7 @@ export default function SommelierScreen() {
 
   return (
     <Screen scroll gradient={[palette.wine, palette.wineDeeper]}>
+      <StatusBar style="light" />
       <Box paddingBottom="s108" paddingTop="s6">
         <Box paddingHorizontal="s22">
           <ScreenHeader onBack={() => router.back()} variant="dark" />

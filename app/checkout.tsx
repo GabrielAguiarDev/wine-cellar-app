@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { TextInput } from 'react-native';
 
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import {
@@ -10,7 +10,6 @@ import {
   Button,
   Icon,
   Screen,
-  ScreenHeader,
   Text,
   Toggle,
   TouchableOpacityBox,
@@ -18,6 +17,7 @@ import {
 import { cartSubtotal } from '@data/index';
 import { useCartStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
+import { brandHeaderOptions } from '@theme/navHeader';
 import { brl, checkoutTotal, frete, pointsDiscount } from '@utils/index';
 
 type PagamentoMetodo = 'pix' | 'card' | 'boleto';
@@ -66,15 +66,9 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen scroll nativeHeader>
+      <Stack.Screen options={{ ...brandHeaderOptions, title: 'Checkout' }} />
       <Box paddingBottom="s40" paddingTop="s6">
-        <Box paddingHorizontal="s22">
-          <ScreenHeader label="Sacola" onBack={() => router.back()} />
-        </Box>
-        <Text variant="h2" paddingHorizontal="s22" marginTop="s12">
-          Checkout
-        </Text>
-
         {/* endereço */}
         <CardBox>
           <Text variant="eyebrow" marginBottom="s8">

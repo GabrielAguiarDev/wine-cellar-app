@@ -30,12 +30,9 @@ export default function FavoritesScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen scroll nativeHeader>
       <Box paddingBottom="s108" paddingTop="s6">
-        <Text variant="h2" paddingHorizontal="s22">
-          Favoritos
-        </Text>
-        <Text variant="body" fontSize={12} color="inkA55" paddingHorizontal="s22" marginTop="s4">
+        <Text variant="body" fontSize={12} color="inkA55" paddingHorizontal="s22">
           Sua garrafeira dos desejos
         </Text>
 

@@ -23,6 +23,12 @@ type ScreenProps = {
   footer?: ReactNode;
   /** Respeita o inset inferior (home indicator). Default true. */
   bottomInset?: boolean;
+  /**
+   * A tela usa um header nativo (Stack.Screen). Remove o padding-top manual e
+   * ativa `contentInsetAdjustmentBehavior="automatic"` — requisito do large
+   * title do iOS colapsar ao rolar.
+   */
+  nativeHeader?: boolean;
 };
 
 /**
@@ -37,20 +43,24 @@ export function Screen({
   scroll = false,
   footer,
   bottomInset = true,
+  nativeHeader = false,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+
+  const topPad = nativeHeader ? 0 : insets.top;
 
   const content = scroll ? (
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
-      contentContainerStyle={{ paddingTop: insets.top }}>
+      contentInsetAdjustmentBehavior={nativeHeader ? 'automatic' : 'never'}
+      contentContainerStyle={{ paddingTop: topPad }}>
       {children}
     </ScrollView>
   ) : (
-    <View style={{ flex: 1, paddingTop: insets.top }}>{children}</View>
+    <View style={{ flex: 1, paddingTop: topPad }}>{children}</View>
   );
 
   return (

@@ -2,19 +2,13 @@ import { useState } from 'react';
 
 import { TextInput } from 'react-native';
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import {
-  Box,
-  Button,
-  Screen,
-  ScreenHeader,
-  StarRating,
-  Text,
-} from '@components/index';
+import { Box, Button, Screen, StarRating, Text } from '@components/index';
 import { findWine, REVIEWS } from '@data/index';
 import { useToastStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
+import { brandHeaderOptions } from '@theme/navHeader';
 import { nf } from '@utils/index';
 
 const stars = (nota: number) => '★'.repeat(nota) + '☆'.repeat(5 - nota);
@@ -38,12 +32,9 @@ export default function ReviewsScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen scroll nativeHeader>
+      <Stack.Screen options={{ ...brandHeaderOptions, title: wine.nome }} />
       <Box paddingBottom="s40" paddingTop="s6">
-        <Box paddingHorizontal="s22">
-          <ScreenHeader label={wine.nome} onBack={() => router.back()} />
-        </Box>
-
         {/* média destaque */}
         <Box alignItems="center" paddingHorizontal="s22" paddingTop="s26" paddingBottom="s8">
           <Text color="primary" style={{ fontFamily: fonts.serifSemiBold, fontSize: 64, lineHeight: 58 }}>

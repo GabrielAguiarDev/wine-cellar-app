@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
 
-/** Pilha da aba "profile". Header nativo é configurado na Fase D. */
+import { brandHeaderOptions } from '@theme/navHeader';
+
+/** Pilha da aba "profile" — header nativo com large title "Perfil". */
 export default function ProfileStackLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ ...brandHeaderOptions, title: 'Perfil' }} />;
 }

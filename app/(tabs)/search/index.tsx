@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { ScrollView, TextInput } from 'react-native';
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   Box,
@@ -40,14 +40,11 @@ export default function SearchScreen() {
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
   return (
-    <Screen scroll>
-      <Box paddingBottom="s108" paddingTop="s6">
-        <Text variant="h2" paddingHorizontal="s22">
-          {titulo}
-        </Text>
-
+    <Screen scroll nativeHeader>
+      <Stack.Screen options={{ title: titulo }} />
+      <Box paddingBottom="s108" paddingTop="s10">
         {/* toggle vinho / prato */}
-        <Box paddingHorizontal="s22" marginTop="s16" marginBottom="s16">
+        <Box paddingHorizontal="s22" marginTop="s4" marginBottom="s16">
           <SegmentedToggle<Modo>
             value={modo}
             onChange={setModo}

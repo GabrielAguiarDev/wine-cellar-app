@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
 
-/** Pilha da aba "bag". Header nativo é configurado na Fase D. */
+import { brandHeaderOptions } from '@theme/navHeader';
+
+/** Pilha da aba "bag" — header nativo com large title "Sacola". */
 export default function BagStackLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ ...brandHeaderOptions, title: 'Sacola' }} />;
 }

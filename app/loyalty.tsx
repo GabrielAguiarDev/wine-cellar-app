@@ -1,15 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 
-import {
-  Box,
-  Screen,
-  ScreenHeader,
-  Text,
-  TouchableOpacityBox,
-} from '@components/index';
+import { Box, Screen, Text, TouchableOpacityBox } from '@components/index';
 import { useToastStore, useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
+import { brandHeaderOptions } from '@theme/navHeader';
 
 const META = 500;
 
@@ -32,7 +27,6 @@ const HISTORICO = [
 ];
 
 export default function LoyaltyScreen() {
-  const router = useRouter();
   const points = useUserStore(s => s.points);
   const show = useToastStore(s => s.show);
 
@@ -40,12 +34,9 @@ export default function LoyaltyScreen() {
   const restante = META - points;
 
   return (
-    <Screen scroll>
+    <Screen scroll nativeHeader>
+      <Stack.Screen options={{ ...brandHeaderOptions, title: 'Fidelidade' }} />
       <Box paddingBottom="s108" paddingTop="s6">
-        <Box paddingHorizontal="s22">
-          <ScreenHeader label="Perfil" onBack={() => router.back()} />
-        </Box>
-
         {/* hero de pontos */}
         <Box marginHorizontal="s22" marginTop="s14" borderRadius="r18" overflow="hidden">
           <LinearGradient
