@@ -1,7 +1,7 @@
 # IL DiVino — Adega Prime · Contexto de Desenvolvimento
 
 > Arquivo mantido pelo agente **mobile-senior-dev**. Leia isto antes de continuar o desenvolvimento.
-> **Última atualização: Fase 3 concluída — 2026-07-23**
+> **Última atualização: Fase 5 concluída — 2026-07-23**
 > Fonte de design em uso: pasta **`design/`** → `design/project/IL DiVino.dc.html` (export Claude Design). É a fonte da verdade visual; reconstruir pixel-perfect, sem copiar a estrutura interna do protótipo.
 
 ---
@@ -48,9 +48,9 @@ assets/                   # fonts/images/lottie (mantidos na raiz)
 - [x] **Fase 1 — Design System & primitivos** — `Icon`(12 ícones SVG), `StarRating`, `BottleGraphic`(+premium/full), `Button`(primary/outline/outlineGold), `Pill`, `Chip`, `SectionTitle`, `WineCard`, `WineRow`(claro/escuro), `SegmentedToggle`, `Toggle`, `Toast`, `ScreenHeader`, `Screen`(+gradiente/scroll/footer). Catálogo temporário em `app/index.tsx`. **Typecheck+lint+export OK.**
 - [x] **Fase 2 — Dados & estado** — data/ (10 vinhos, reviews, quiz, ocasiões), tipos, formatters (`brl`/`nf`), regras de preço, seletores (rails/busca/carrinho), view-model mappers, stores zustand (cart/favorites/user/toast). **27 testes (jest) + typecheck + lint OK.**
 - [x] **Fase 3 — Navegação & shell** — Stack único (sem Tabs) + **TabBar flutuante custom como overlay** (visibilidade + aba ativa por rota + badge da sacola), Toast global (`ToastHost`+store), 15 rotas como stubs navegáveis (`DevStub`), catálogo do DS movido p/ `/catalog`, `index`→redirect `/quiz`. **typecheck+lint+export OK.**
-- [ ] **Fase 4 — Onboarding (Quiz)** — PRÓXIMA. Substituir o stub `app/quiz.tsx` pelo quiz real (3 perguntas, progresso, dots, pular) gravando `paladar` no `useUserStore`; fluxo AnimatedSplash→Quiz→Home.
-- [ ] Fase 5 — Home
-- [ ] Fase 6 — Busca/Coleção (vinho/prato/filtros)
+- [x] **Fase 4 — Onboarding (Quiz)** — `app/quiz.tsx` real: 3 perguntas (`QUIZ`), progresso "x / N", opções label+hint, dots, "Pular"; grava `paladar` (do `corpo`) no `useUserStore` e `router.replace('/home')`. typecheck+lint+export OK.
+- [x] **Fase 5 — Home** — `app/home.tsx` real: header (logo + coração→favoritos), busca fake→/search, banner "Curadoria da semana", pills de categoria→/search, rail "Selecionados" (`WineCard`+`railSelecionados`, favoritar), card "Coleção reservada"→especiais, rail "Mais vendidos" (`WineRow`+`railMaisVendidos`), rodapé. Navega p/ `/product/[id]`. typecheck+lint+export OK.
+- [ ] **Fase 6 — Busca/Coleção** — PRÓXIMA (vinho/prato/filtros)
 - [ ] Fase 7 — Produto (Padrão + Premium)
 - [ ] Fase 8 — Avaliações
 - [ ] Fase 9 — Sommelier
@@ -81,11 +81,12 @@ Nenhum domínio/feature de negócio ainda. Base técnica + design system prontos
 
 ## 6. Pendências & próximos passos
 
-1. **Iniciar a Fase 4 (Onboarding/Quiz).** Substituir `app/quiz.tsx` pelo quiz real: 3 perguntas do `QUIZ` (`@data`), progresso "x / 3", opções (label+hint), dots animados, botão "Pular". Ao responder a última, gravar `paladar` (do valor de `corpo`, default 'encorpado') via `useUserStore.setPaladar` e `router.replace('/home')`.
-2. Usar `Screen` com gradiente escuro (`[wineAlt, wine, wineDeep]`), `Button` outlineGold, tipografia serif. Sem tab bar (quiz não está em `VISIBLE_ON`).
-3. A Home (Fase 5) já tem stub navegável; ao chegar nela, começar a preencher rails com `railSelecionados`/`railMaisVendidos` + `toWineCardData`/`toWineRowData` e `WineCard`/`WineRow`.
-4. Ao implementar cada tela real, **remover o uso de `DevStub`** naquela rota (e apagar `DevStub.tsx` quando não restar nenhuma).
-5. Pendência menor de UI: revisar rodando o app (Expo Go) para calibrar `letterSpacing`/proporções das garrafas e a posição da tab bar sobre telas escuras.
+1. **Iniciar a Fase 6 (Busca/Coleção).** Substituir `app/search.tsx` (design linhas 175–261): título dinâmico (categoria / "Especiais" / "Coleção"), `SegmentedToggle` **Buscar vinho / Buscar por prato**.
+2. **Ler os params da rota** (`useLocalSearchParams<{ cat?: string }>()`) que a Home já envia (`cat` = tipo ou `__especiais`) e aplicar via `searchWines({ catFilter, query })`. Título: `cat==='__especiais'?'Especiais':(cat||'Coleção')`.
+3. Modo vinho: input de busca (state local `query`) + `Chip`s de filtro (Uva/País/Preço/Corpo/Harmonização — visuais por ora) + lista `WineRow` (`toWineRowData(w,{full:true})`). Modo prato: input + exemplos rápidos (salmão/risoto/churrasco/queijos) + resultados via `searchByDish`.
+4. Link "Sommelier virtual" (→`/sommelier`). Toque no resultado → `/product/[id]`.
+5. Ao implementar cada tela real, **remover o uso de `DevStub`** naquela rota (apagar `DevStub.tsx` quando não restar nenhuma). Restam com stub: search, sommelier, product, reviews, checkout, tracking, loyalty, vip, favorites, bag, profile.
+6. Pendência menor de UI: revisar rodando o app (Expo Go) — calibrar `letterSpacing`/garrafas e tab bar sobre telas escuras.
 
 ## 7. Notas / armadilhas
 
@@ -163,4 +164,4 @@ Estrutura de rotas planejada (Fase 3): `app/index`(splash), `app/quiz`, `app/(ta
 - Regras do projeto: `AGENTS.md` (ler docs Expo v57 antes de codar).
 
 ## Checklist de telas (15)
-- [ ] Splash · [ ] Quiz · [ ] Home · [ ] Busca · [ ] Sommelier · [ ] Produto Padrão · [ ] Produto Premium · [ ] Avaliações · [ ] Sacola · [ ] Checkout+Gifting · [ ] Acompanhamento · [ ] Favoritos · [ ] Perfil · [ ] Fidelidade · [ ] VIP
+- [x] Splash · [x] Quiz · [x] Home · [ ] Busca · [ ] Sommelier · [ ] Produto Padrão · [ ] Produto Premium · [ ] Avaliações · [ ] Sacola · [ ] Checkout+Gifting · [ ] Acompanhamento · [ ] Favoritos · [ ] Perfil · [ ] Fidelidade · [ ] VIP
