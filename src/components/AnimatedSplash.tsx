@@ -13,7 +13,7 @@ import { palette } from '@theme/index';
 // Velocidade de reprodução do Lottie (o arquivo tem ~5,4s @ 60fps;
 // ~1.8x deixa a intro em ~3s). Duração do fade out ao final.
 const LOTTIE_SPEED = 1.8;
-const FADE_OUT_MS = 450;
+const FADE_OUT_MS = 200;
 
 type AnimatedSplashProps = {
   /** Chamado após o fade out terminar (para desmontar o overlay). */
