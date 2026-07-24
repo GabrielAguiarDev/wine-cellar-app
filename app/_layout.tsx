@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { Platform } from 'react-native';
+
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -33,9 +35,10 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
-      <TabBar />
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }} />
+      {/* iOS usa Native Tabs (em (tabs)/_layout); Android usa a TabBar custom. */}
+      {Platform.OS !== 'ios' && <TabBar />}
       <ToastHost />
       {!splashFinished && (
         <AnimatedSplash onFinish={() => setSplashFinished(true)} />

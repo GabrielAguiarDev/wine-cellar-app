@@ -54,10 +54,8 @@ export default function HomeScreen() {
           paddingHorizontal="s22"
           paddingTop="s6"
           paddingBottom="s14">
-          <Box width={22} style={{ gap: 4 }}>
-            <Box height={1.5} borderRadius="r5" backgroundColor="primary" />
-            <Box height={1.5} width={15} borderRadius="r5" backgroundColor="primary" />
-          </Box>
+          {/* spacer à esquerda p/ manter o logo centralizado (mesma largura do ícone à direita) */}
+          <Box width={21 + 8} />
           <Box alignItems="center">
             <Text
               style={{

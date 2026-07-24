@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 import {
   Blip,
@@ -136,6 +137,7 @@ function ProductPremium({
       gradient={[palette.wineLight, palette.wine, palette.wineDeep]}
       gradientLocations={[0, 0.46, 1]}
       footer={footer}>
+      <StatusBar style="light" />
       <Box paddingHorizontal="s20" paddingBottom="s20">
         <Box flexDirection="row" alignItems="center" justifyContent="space-between">
           <TouchableOpacityBox accessibilityLabel="Voltar" activeOpacity={0.7} onPress={onBack} padding="s6">

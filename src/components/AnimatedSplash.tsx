@@ -21,7 +21,7 @@ type AnimatedSplashProps = {
 };
 
 /**
- * Splash animada: cobre o app inteiro com o fundo bordô (igual ao splash
+ * Splash animada: cobre o app inteiro com o fundo creme (igual ao splash
  * nativo, para um handoff sem flash), toca o Lottie uma vez e faz fade out
  * ao terminar. Sem texto nem logo — apenas a animação.
  */
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: palette.wine,
+    backgroundColor: palette.creme,
     zIndex: 100,
     elevation: 100,
   } as ViewStyle,

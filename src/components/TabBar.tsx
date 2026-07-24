@@ -29,30 +29,20 @@ const TABS: TabDef[] = [
   { key: 'profile', icon: 'profile', route: '/profile', label: 'Perfil' },
 ];
 
-/** Rotas (primeiro segmento) onde a tab bar aparece. */
-const VISIBLE_ON = new Set([
-  'home',
-  'search',
-  'sommelier',
-  'favorites',
-  'bag',
-  'profile',
-  'loyalty',
-  'vip',
-]);
+/**
+ * Rotas (primeiro segmento) onde a tab bar aparece. Apenas as 5 abas — telas
+ * secundárias (sommelier/loyalty/vip) e fluxos (checkout/tracking) abrem em
+ * tela cheia, sem a tab bar.
+ */
+const VISIBLE_ON = new Set(['home', 'search', 'favorites', 'bag', 'profile']);
 
 /** Mapeia o segmento da rota atual para a aba ativa. */
 const ACTIVE_TAB: Record<string, TabKey> = {
   home: 'home',
   search: 'search',
-  sommelier: 'search',
   favorites: 'fav',
   bag: 'bag',
-  checkout: 'bag',
   profile: 'profile',
-  loyalty: 'profile',
-  vip: 'profile',
-  tracking: 'profile',
 };
 
 const ACTIVE = palette.wine;

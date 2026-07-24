@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { Box, Screen, Text, TouchableOpacityBox } from '@components/index';
@@ -14,6 +15,7 @@ const PALADAR_DEFAULT = 'encorpado';
 export default function QuizScreen() {
   const router = useRouter();
   const setPaladar = useUserStore(s => s.setPaladar);
+  const completeOnboarding = useUserStore(s => s.completeOnboarding);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -22,6 +24,7 @@ export default function QuizScreen() {
 
   const finish = (allAnswers: Record<string, string>) => {
     setPaladar(allAnswers.corpo ?? PALADAR_DEFAULT);
+    completeOnboarding();
     router.replace('/home');
   };
 
@@ -37,6 +40,7 @@ export default function QuizScreen() {
 
   return (
     <Screen gradient={[palette.wine, palette.wineAlt]}>
+      <StatusBar style="light" />
       <Box flex={1} paddingHorizontal="s32" paddingTop="s52" paddingBottom="s60">
         {/* topo: progresso + pular */}
         <Box
