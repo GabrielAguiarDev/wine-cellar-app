@@ -33,7 +33,24 @@ export default function RootLayout() {
     <AppProviders>
       <ToastProviderWithViewport>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          {/*
+            Curadoria: a tela cresce a partir do card da Home (shared element
+            em `BlocoCuradoria`). Para isso a Stack precisa sair da frente —
+            `transparentModal` mantém a Home montada e visível por baixo,
+            `animation: 'none'` desliga a animação de push (quem anima é o
+            bloco) e `gestureEnabled: false` impede que o swipe de dismiss
+            pule a animação de fechamento.
+          */}
+          <Stack.Screen
+            name="curadoria/[id]"
+            options={{
+              presentation: 'transparentModal',
+              animation: 'none',
+              gestureEnabled: false,
+            }}
+          />
+        </Stack>
         {/* iOS usa Native Tabs (em (tabs)/_layout); Android usa a TabBar custom. */}
         {Platform.OS !== 'ios' && <TabBar />}
         {!splashFinished && (

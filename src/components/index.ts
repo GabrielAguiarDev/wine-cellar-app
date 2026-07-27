@@ -16,6 +16,12 @@ export { Screen } from './Screen';
 
 // Design system
 export { Icon, type IconName } from './Icon';
+export {
+  BlocoCuradoria,
+  type BlocoCuradoriaProps,
+  type ConteudoCuradoria,
+  type VarianteBloco,
+} from './BlocoCuradoria';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';

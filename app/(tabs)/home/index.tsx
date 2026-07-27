@@ -4,8 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
 import {
+  BlocoCuradoria,
   Box,
-  Button,
   Icon,
   Pill,
   Screen,
@@ -15,7 +15,12 @@ import {
   WineCard,
   WineRow,
 } from '@components/index';
-import { CAT_ESPECIAIS, railMaisVendidos, railSelecionados } from '@data/index';
+import {
+  CAT_ESPECIAIS,
+  CURADORIA_SEMANA,
+  railMaisVendidos,
+  railSelecionados,
+} from '@data/index';
 import { useFavoritesStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { nf, toWineCardData, toWineRowData } from '@utils/index';
@@ -40,6 +45,16 @@ export default function HomeScreen() {
     router.navigate(cat ? { pathname: '/search', params: { cat } } : '/search');
   const goEspeciais = () =>
     router.navigate({ pathname: '/search', params: { cat: CAT_ESPECIAIS } });
+  /**
+   * Destino do bloco de curadoria. Rota fora de `(tabs)` (push da Stack raiz)
+   * → tela cheia, sem tab bar. Quando a shared element transition entrar, é
+   * aqui que ela será disparada — a rota e os dois estados já existem.
+   */
+  const goCuradoria = () =>
+    router.navigate({
+      pathname: '/curadoria/[id]',
+      params: { id: CURADORIA_SEMANA.id },
+    });
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
@@ -100,28 +115,21 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacityBox>
 
-        {/* banner curadoria */}
-        <Box marginHorizontal="s22" marginBottom="s24" borderRadius="r16" overflow="hidden">
-          <LinearGradient
-            colors={[palette.wineLight, palette.wine, palette.wineDeeper]}
-            start={{ x: 0.8, y: 0 }}
-            end={{ x: 0.2, y: 1 }}
-            style={{ padding: 26, paddingTop: 30 }}>
-            <Text variant="eyebrow" marginBottom="s12">
-              Curadoria da semana
-            </Text>
-            <Text
-              color="textOnDark"
-              style={{ fontFamily: fonts.serifMedium, fontSize: 31, lineHeight: 34, maxWidth: 230 }}>
-              Noites de inverno, taças cheias
-            </Text>
-            <Text variant="body" fontSize={12} color="cremeA62" marginTop="s12" style={{ maxWidth: 210, lineHeight: 18 }}>
-              Tintos encorpados para harmonizar com sabores e memórias.
-            </Text>
-            <Box marginTop="s20" alignItems="flex-start">
-              <Button label="Explorar coleção" variant="outlineGold" onPress={goEspeciais} />
-            </Box>
-          </LinearGradient>
+        {/* banner curadoria — mesma peça visual da tela /curadoria/[id],
+            só que em `variante="card"`. Ao tocar, a forma deve crescer até a
+            tela cheia (shared element, ainda não implementada): ver
+            src/components/BlocoCuradoria.tsx. */}
+        <Box marginHorizontal="s22" marginBottom="s24">
+          <BlocoCuradoria
+            variante="card"
+            transitionId={CURADORIA_SEMANA.id}
+            eyebrow={CURADORIA_SEMANA.eyebrow}
+            titulo={CURADORIA_SEMANA.titulo}
+            subtitulo={CURADORIA_SEMANA.subtitulo}
+            botaoLabel={CURADORIA_SEMANA.botaoLabel}
+            cores={CURADORIA_SEMANA.cores}
+            onPress={goCuradoria}
+          />
         </Box>
 
         {/* pills */}
