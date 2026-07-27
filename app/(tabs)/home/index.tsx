@@ -47,8 +47,8 @@ export default function HomeScreen() {
     router.navigate({ pathname: '/search', params: { cat: CAT_ESPECIAIS } });
   /**
    * Destino do bloco de curadoria. Rota fora de `(tabs)` (push da Stack raiz)
-   * → tela cheia, sem tab bar. Quando a shared element transition entrar, é
-   * aqui que ela será disparada — a rota e os dois estados já existem.
+   * → tela cheia, sem tab bar. É daqui que a shared element transition parte:
+   * o `BlocoCuradoria` mede o card antes de deixar esta navegação rolar.
    */
   const goCuradoria = () =>
     router.navigate({
@@ -115,10 +115,9 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacityBox>
 
-        {/* banner curadoria — mesma peça visual da tela /curadoria/[id],
-            só que em `variante="card"`. Ao tocar, a forma deve crescer até a
-            tela cheia (shared element, ainda não implementada): ver
-            src/components/BlocoCuradoria.tsx. */}
+        {/* banner curadoria — a MESMA peça visual da tela /curadoria/[id], aqui
+            em `variante="card"`. Ao tocar (no bloco ou no CTA) a forma cresce
+            até virar a tela cheia: ver src/components/BlocoCuradoria.tsx. */}
         <Box marginHorizontal="s22" marginBottom="s24">
           <BlocoCuradoria
             variante="card"

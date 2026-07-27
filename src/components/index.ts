@@ -18,6 +18,8 @@ export { Screen } from './Screen';
 export { Icon, type IconName } from './Icon';
 export {
   BlocoCuradoria,
+  DURACAO_ABERTURA,
+  PADDING_TELA_CHEIA,
   type BlocoCuradoriaProps,
   type ConteudoCuradoria,
   type VarianteBloco,

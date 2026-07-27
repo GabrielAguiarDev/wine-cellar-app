@@ -51,20 +51,28 @@ import { Text } from './Text';
  *     dispara a navegação — a medida precisa existir antes. Vale para o toque
  *     no bloco E no CTA: os dois passam por `abrirMedindo`. Uma saída que
  *     chame a navegação direto não deixa origem e o destino aparece de salto.
- *  2. ROTA: `/curadoria/[id]` é apresentada como `transparentModal` com
- *     `animation: 'none'` (ver `app/_layout.tsx`). A Home continua montada e
- *     visível por baixo, e a Stack não faz animação própria — quem anima é
- *     este componente.
+ *  2. ROTA: `/curadoria/[id]` é um push NORMAL (`card`) com `animation: 'none'`
+ *     e `contentStyle` no creme da Home (ver `app/_layout.tsx`). A Stack não
+ *     anima — quem anima é este componente —, e o entorno da forma enquanto ela
+ *     cresce é a cor de fundo da Home, então a cor não salta.
+ *     NÃO usar `transparentModal` aqui: mostrava a Home viva por baixo, mas no
+ *     iOS toda tela empilhada depois de um modal também vira modal, e a tela de
+ *     produto aberta da coleção subia de baixo com cara de sheet.
  *  3. TELA CHEIA: lê o retângulo de origem e anima a FORMA de lá até
  *     (0, 0, largura, altura) da janela, com o `borderRadius` indo a 0. Como
  *     ela nasce exatamente sobre o card, a leitura é de o card crescendo.
- *  4. CONTEÚDO: são duas camadas em crossfade, nenhuma delas esticada junto
- *     com a forma. A camada-fantasma repete o texto DO CARD no tamanho do
- *     card e some nos primeiros 28%; a definitiva entra a partir de 45%, já
- *     em geometria final. Sem o fantasma o texto do card sumiria de um frame
- *     para o outro (a forma opaca nasce por cima dele) e sobraria um
- *     retângulo bordô vazio crescendo — que o olho lê como salto.
- *     Um scrim escurece a Home ao redor conforme a forma cresce.
+ *  4. TEXTO: é UM bloco só, que sai da posição/escala do texto do card e
+ *     chega na do destino (`estiloMorfTexto`). Não há crossfade entre dois
+ *     textos: com dois blocos em posições e corpos diferentes, o olho percebe
+ *     que são textos distintos trocando de lugar. Para o morph funcionar, as
+ *     medidas da tela cheia são as do card × `ESCALA_TELA_CHEIA` — o mesmo
+ *     fator em corpo, entrelinha, tracking e largura máxima —, o que mantém as
+ *     quebras de linha idênticas do começo ao fim.
+ *     O CTA é o único elemento sem par no destino: ele não morfa, acompanha a
+ *     forma e sai em fade nos primeiros 28% (sem isso desapareceria de um
+ *     frame para o outro, quando a forma opaca nasce por cima do card).
+ *     O resto (voltar, contagem, carrossel) entra em fade a partir de 45%, já
+ *     em geometria final.
  *  5. VOLTAR: o caminho inverso (encolhe até o card) e só então `onBack()`
  *     executa a navegação. Vale para o header e para o botão físico do
  *     Android; o gesto de swipe da Stack fica desabilitado na rota para não
@@ -72,6 +80,24 @@ import { Text } from './Text';
  *
  * Sem origem medida (deep link, reload), o destino aparece direto em tela
  * cheia, sem animação.
+ *
+ * ── Custo por frame (o que mantém isso fluido em aparelho fraco) ────────────
+ *
+ * A regra é: durante a transição, o ÚNICO nó que muda de layout é a forma.
+ *  • Posição é `translate`, nunca `left`/`top` — mover por layout obrigaria a
+ *    remedir a subárvore (no fantasma, isso significava remedir o texto a
+ *    cada frame).
+ *  • `width`/`height` continuam animando porque a forma precisa mudar de
+ *    tamanho; em troca ela carrega só o gradiente de fundo. O gradiente é
+ *    esticado junto de propósito: gradiente linear é invariante à escala, e é
+ *    isso que faz o frame 0 bater exatamente com o card.
+ *  • O que é pesado (garrafas, camadas de tinta) NÃO monta durante a
+ *    transição: quem consome monta ao receber `onAberturaConcluida`. Criar
+ *    dezenas de views no meio do movimento custava ~55ms de thread JS travada
+ *    já no simulador — em aparelho fraco, frames perdidos logo na largada.
+ *  • `fundoExtra` fica com tamanho FIXO dentro da forma, então não é remedido
+ *    nem re-rasterizado a cada frame; a forma só abre uma janela sobre ele.
+ *  • Scrim, fantasma e conteúdo animam apenas `opacity`/`transform`.
  *
  * ── Anatomia (não achatar estas duas camadas) ───────────────────────────────
  *
@@ -110,7 +136,13 @@ export type ConteudoCuradoria = {
   eyebrow?: string;
   titulo: string;
   subtitulo?: string;
-  /** Label do CTA. Sem label, o botão não é renderizado. */
+  /**
+   * Label do CTA. Sem label, o botão não é renderizado.
+   *
+   * Em `tela-cheia` o destino NÃO mostra CTA: passe o mesmo label do card e ele
+   * será usado só para o botão fantasma da transição (o CTA é o único elemento
+   * do card sem par no destino, então precisa sair em fade em vez de sumir).
+   */
   botaoLabel?: string;
 };
 
@@ -153,6 +185,20 @@ export type BlocoCuradoriaProps = ConteudoCuradoria & {
    * `measureInWindow` da transição).
    */
   formaRef?: RefObject<View | null>;
+  /**
+   * Chamado uma vez, quando a animação de abertura termina (ou já na montagem
+   * quando não há transição). É o gancho para montar conteúdo PESADO só depois
+   * da transição: criar dezenas de views no meio da animação derruba frames,
+   * sobretudo em aparelho fraco. Ver `app/curadoria/[id].tsx`.
+   */
+  onAberturaConcluida?: () => void;
+  /**
+   * Camada de fundo EXTRA (só `tela-cheia`): entra dentro da forma, portanto é
+   * recortada por ela e nunca pinta fora do bloco durante a transição. Use
+   * para tintas/gradientes que reagem ao conteúdo — ex.: o `FundoVinhos` do
+   * carrossel da curadoria. Aparece junto com o conteúdo, não com a forma.
+   */
+  fundoExtra?: ReactNode;
   /** Resto da tela de destino (listas etc.). Só faz sentido em `tela-cheia`. */
   children?: ReactNode;
 };
@@ -170,6 +216,16 @@ const GRADIENTE_END = { x: 0.2, y: 1 };
 /** Raio do card (r16 do tema) — vira 0 em tela cheia. */
 const RAIO_CARD = 16;
 
+/** Padding horizontal do conteúdo no card. */
+const PADDING_CARD = 26;
+
+/**
+ * Padding horizontal do conteúdo em tela cheia. Exportado porque um filho que
+ * precise sangrar até as bordas (ex.: o carrossel da curadoria, cujo recuo
+ * lateral é o que centraliza os slides) tem de anular exatamente este valor.
+ */
+export const PADDING_TELA_CHEIA = 24;
+
 export const DURACAO_ABERTURA = 560;
 export const DURACAO_FECHAMENTO = 420;
 
@@ -184,11 +240,49 @@ const CURVA = Easing.bezier(0.4, 0, 0.2, 1);
 /** A partir de que ponto da expansão o conteúdo de destino começa a aparecer. */
 const INICIO_FADE_CONTEUDO = 0.45;
 
-/** Até que ponto o conteúdo do card (camada-fantasma) ainda é visível. */
+/** Até que ponto o CTA fantasma (elemento sem par no destino) fica visível. */
 const FIM_FADE_FANTASMA = 0.28;
 
-/** Escurecimento da tela de origem enquanto a forma cresce por cima dela. */
-const OPACIDADE_SCRIM = 0.3;
+/**
+ * Quanto o bloco de texto cresce do card para a tela cheia.
+ *
+ * TODAS as medidas do texto (corpo, entrelinha, tracking e largura máxima)
+ * são derivadas das medidas do card por este fator único. É o que garante que
+ * as linhas quebrem exatamente nos mesmos pontos nos dois estados — e é o que
+ * permite morfar UM bloco só, em vez de fazer crossfade entre dois. Com
+ * fatores diferentes por elemento, o texto reflui no meio do caminho e o olho
+ * percebe que são dois blocos distintos.
+ */
+const ESCALA_TELA_CHEIA = 1.3;
+
+/** Medidas base do texto (as do card). A tela cheia é isto × ESCALA_TELA_CHEIA. */
+const TEXTO_BASE = {
+  eyebrowCorpo: 9,
+  eyebrowTracking: 3,
+  eyebrowMargem: 12,
+  tituloCorpo: 31,
+  tituloEntrelinha: 34,
+  tituloLargura: 230,
+  subCorpo: 12,
+  subEntrelinha: 18,
+  subLargura: 210,
+  subMargem: 12,
+} as const;
+
+type Medida = { x: number; y: number; width: number; height: number };
+
+/** `measureInWindow` como promise, para medir vários nós antes de navegar. */
+function medirNo(no: View | null): Promise<Medida | undefined> {
+  return new Promise(resolve => {
+    if (!no) {
+      resolve(undefined);
+      return;
+    }
+    no.measureInWindow((x, y, width, height) =>
+      resolve({ x, y, width, height }),
+    );
+  });
+}
 
 export function BlocoCuradoria({
   transitionId,
@@ -204,6 +298,8 @@ export function BlocoCuradoria({
   alturaCard,
   conteudoVisivel = true,
   formaRef,
+  onAberturaConcluida,
+  fundoExtra,
   children,
 }: BlocoCuradoriaProps) {
   const insets = useSafeAreaInsets();
@@ -222,6 +318,11 @@ export function BlocoCuradoria({
 
   const refInterna = useRef<View | null>(null);
   const refForma = formaRef ?? refInterna;
+  /** Nós do card que o destino precisa localizar para morfar/desaparecer. */
+  const refTexto = useRef<View | null>(null);
+  const refBotao = useRef<View | null>(null);
+  /** Posição de layout do bloco de texto no destino (origem do morph). */
+  const posTexto = useSharedValue({ x: 0, y: 0 });
 
   /** 0 = geometria do card (origem) · 1 = tela cheia. */
   const progresso = useSharedValue(telaCheia && !origem ? 1 : 0);
@@ -274,9 +375,23 @@ export function BlocoCuradoria({
         acao();
         return;
       }
-      no.measureInWindow((x, y, width, height) => {
-        if (width > 0 && height > 0) {
-          setOrigem(transitionId, { x, y, width, height, radius: RAIO_CARD });
+      // Mede forma, bloco de texto e CTA de uma vez: os três viram âncoras da
+      // transição, e todas precisam existir antes de a navegação acontecer.
+      Promise.all([
+        medirNo(no),
+        medirNo(refTexto.current),
+        medirNo(refBotao.current),
+      ]).then(([forma, texto, botao]) => {
+        if (forma && forma.width > 0 && forma.height > 0) {
+          setOrigem(transitionId, {
+            x: forma.x,
+            y: forma.y,
+            width: forma.width,
+            height: forma.height,
+            radius: RAIO_CARD,
+            texto: texto && { x: texto.x, y: texto.y },
+            botao: botao && { x: botao.x, y: botao.y },
+          });
         }
         acao();
       });
@@ -286,17 +401,28 @@ export function BlocoCuradoria({
 
   // Abertura: só no destino e só quando há um retângulo de origem medido.
   useEffect(() => {
-    if (!telaCheia || !origem) {
+    if (!telaCheia) {
       return;
     }
-    // Começa no frame SEGUINTE: montar o destino (lista, SVGs das garrafas)
-    // consome o primeiro frame, e sem esse respiro os ~100ms iniciais da
-    // animação não chegam a ser desenhados — de novo com cara de salto.
+    if (!origem) {
+      // Sem transição (deep link): libera o conteúdo pesado de imediato.
+      onAberturaConcluida?.();
+      return;
+    }
+    // Começa no frame SEGUINTE: montar o destino consome o primeiro frame, e
+    // sem esse respiro os ~100ms iniciais da animação não chegam a ser
+    // desenhados — de novo com cara de salto.
     const frame = requestAnimationFrame(() => {
-      progresso.set(withTiming(1, { duration: DURACAO_ABERTURA, easing: CURVA }));
+      progresso.set(
+        withTiming(1, { duration: DURACAO_ABERTURA, easing: CURVA }, fim => {
+          if (fim && onAberturaConcluida) {
+            scheduleOnRN(onAberturaConcluida);
+          }
+        }),
+      );
     });
     return () => cancelAnimationFrame(frame);
-  }, [telaCheia, origem, progresso]);
+  }, [telaCheia, origem, progresso, onAberturaConcluida]);
 
   // A origem serve para uma viagem só: limpa ao desmontar o destino para que
   // uma entrada futura sem card (deep link) não anime a partir de lixo.
@@ -319,42 +445,102 @@ export function BlocoCuradoria({
     return () => sub.remove();
   }, [telaCheia, onBack, fechar]);
 
+  /**
+   * Geometria da forma. `translate` em vez de `left`/`top`: transform não
+   * dispara layout. `width`/`height` continuam animando porque a forma PRECISA
+   * mudar de tamanho — mas ela é o único nó que relayouta por frame, e o
+   * gradiente de dentro reproduz o do card justamente por ser esticado junto
+   * (gradiente linear é invariante à escala).
+   */
   const estiloForma = useAnimatedStyle(() => {
     if (!origem) {
       return {};
     }
     const p = progresso.get();
     return {
-      left: interpolate(p, [0, 1], [origem.x, 0]),
-      top: interpolate(p, [0, 1], [origem.y, 0]),
       width: interpolate(p, [0, 1], [origem.width, larguraTela]),
       height: interpolate(p, [0, 1], [origem.height, alturaTela]),
       borderRadius: interpolate(p, [0, 1], [origem.radius, 0]),
+      transform: [
+        { translateX: interpolate(p, [0, 1], [origem.x, 0]) },
+        { translateY: interpolate(p, [0, 1], [origem.y, 0]) },
+      ],
     };
   });
 
-  // Escurece a tela de origem conforme a forma cresce: sem isso o movimento
-  // vertical sozinho não comunica "estou entrando dentro do card".
-  const estiloScrim = useAnimatedStyle(() => ({
-    opacity: origem
-      ? interpolate(progresso.get(), [0, 1], [0, OPACIDADE_SCRIM])
-      : 0,
-  }));
+  /**
+   * MORPH DO TEXTO: um único bloco que sai da posição/escala do texto do card e
+   * chega na posição/escala do destino. Nada de crossfade entre dois textos —
+   * era isso que deixava perceptível que eram blocos diferentes.
+   *
+   * A escala inicial é exatamente 1/ESCALA_TELA_CHEIA, então no frame 0 o bloco
+   * renderiza com as medidas do card (mesmo corpo, mesma quebra de linha). O
+   * `transformOrigin: 'top left'` faz a escala acontecer a partir do canto que
+   * estamos ancorando.
+   */
+  const estiloMorfTexto = useAnimatedStyle(() => {
+    if (!origem?.texto) {
+      return {};
+    }
+    const p = progresso.get();
+    const destino = posTexto.get();
+    const escala = interpolate(p, [0, 1], [1 / ESCALA_TELA_CHEIA, 1]);
+    return {
+      transform: [
+        { translateX: interpolate(p, [0, 1], [origem.texto.x - destino.x, 0]) },
+        { translateY: interpolate(p, [0, 1], [origem.texto.y - destino.y, 0]) },
+        { scale: escala },
+      ],
+    };
+  });
 
-  // Fantasma: acompanha o canto superior esquerdo da forma e some cedo.
-  const estiloFantasma = useAnimatedStyle(() => {
-    if (!origem) {
+  /**
+   * O CTA do card é o único elemento sem par no destino: ele não morfa, só
+   * acompanha o movimento da forma e sai em fade no início. Sem isso ele
+   * desapareceria de um frame para o outro assim que a forma opaca nascesse
+   * por cima do card.
+   */
+  const estiloBotaoFantasma = useAnimatedStyle(() => {
+    if (!origem?.botao) {
       return { opacity: 0 };
     }
     const p = progresso.get();
     return {
-      opacity: interpolate(p, [0, FIM_FADE_FANTASMA], [1, 0], Extrapolation.CLAMP),
-      left: interpolate(p, [0, 1], [origem.x, 0]),
-      top: interpolate(p, [0, 1], [origem.y, 0]),
+      opacity: interpolate(
+        p,
+        [0, FIM_FADE_FANTASMA],
+        [1, 0],
+        Extrapolation.CLAMP,
+      ),
+      transform: [
+        { translateX: origem.botao.x - origem.x * p },
+        { translateY: origem.botao.y - origem.y * p },
+      ],
     };
   });
 
-  const estiloConteudo = useAnimatedStyle(() => {
+  /**
+   * Fade do conteúdo que NÃO morfa (voltar, contagem, carrossel): esse sim
+   * entra depois, já em geometria final.
+   */
+  const estiloSecundario = useAnimatedStyle(() => {
+    if (!origem) {
+      return { opacity: conteudoVisivel ? 1 : 0 };
+    }
+    const fade = interpolate(
+      progresso.get(),
+      [INICIO_FADE_CONTEUDO, 1],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    return { opacity: conteudoVisivel ? fade : 0 };
+  });
+
+  /**
+   * Mesma curva de opacidade do conteúdo, mas em seu próprio hook: o reanimated
+   * não permite reaproveitar um estilo animado em mais de um componente.
+   */
+  const estiloFundoExtra = useAnimatedStyle(() => {
     if (!origem) {
       return { opacity: conteudoVisivel ? 1 : 0 };
     }
@@ -409,6 +595,20 @@ export function BlocoCuradoria({
         estiloForma,
       ]}>
       {fundo}
+      {fundoExtra && (
+        // Tamanho FIXO (tela cheia), não `absoluteFill`: assim a camada não é
+        // remedida nem re-rasterizada quando a forma muda de tamanho — ela
+        // apenas aparece pela "janela" que a forma abre (daí o overflow hidden).
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            { position: 'absolute', left: 0, top: 0 },
+            { width: larguraTela, height: alturaTela },
+            estiloFundoExtra,
+          ]}>
+          {fundoExtra}
+        </Animated.View>
+      )}
     </Animated.View>
   ) : (
     // No card é uma View comum: nada anima aqui, e o ref precisa ser o do
@@ -428,11 +628,24 @@ export function BlocoCuradoria({
      Irmão da forma (não filho) e com opacity própria: entra/sai em fade já na
      geometria final, sem ser esticado enquanto a forma cresce. */
 
-  /** Texto do bloco nas proporções de card ou de tela cheia. */
-  const textos = (comoCard: boolean) => (
+  /**
+   * Bloco de texto numa escala `k`. Todas as medidas saem de `TEXTO_BASE × k`,
+   * então k=1 dá exatamente o card e k=ESCALA_TELA_CHEIA dá exatamente a tela
+   * cheia — com as mesmas quebras de linha. O CTA fica fora daqui de propósito:
+   * ele existe só no card.
+   */
+  const textos = (k: number) => (
     <>
       {eyebrow && (
-        <Text variant="eyebrow" marginBottom="s12">
+        <Text
+          color="accent"
+          style={{
+            fontFamily: fonts.sansRegular,
+            fontSize: TEXTO_BASE.eyebrowCorpo * k,
+            letterSpacing: TEXTO_BASE.eyebrowTracking * k,
+            textTransform: 'uppercase',
+            marginBottom: TEXTO_BASE.eyebrowMargem * k,
+          }}>
           {eyebrow}
         </Text>
       )}
@@ -441,92 +654,97 @@ export function BlocoCuradoria({
         color="textOnDark"
         style={{
           fontFamily: fonts.serifMedium,
-          fontSize: comoCard ? 31 : 40,
-          lineHeight: comoCard ? 34 : 43,
-          maxWidth: comoCard ? 230 : 300,
+          fontSize: TEXTO_BASE.tituloCorpo * k,
+          lineHeight: TEXTO_BASE.tituloEntrelinha * k,
+          maxWidth: TEXTO_BASE.tituloLargura * k,
         }}>
         {titulo}
       </Text>
 
       {subtitulo && (
         <Text
-          variant="body"
-          fontSize={comoCard ? 12 : 13.5}
           color="cremeA62"
-          marginTop="s12"
           style={{
-            maxWidth: comoCard ? 210 : 280,
-            lineHeight: comoCard ? 18 : 20,
+            fontFamily: fonts.sansRegular,
+            fontSize: TEXTO_BASE.subCorpo * k,
+            lineHeight: TEXTO_BASE.subEntrelinha * k,
+            maxWidth: TEXTO_BASE.subLargura * k,
+            marginTop: TEXTO_BASE.subMargem * k,
           }}>
           {subtitulo}
         </Text>
       )}
-
-      {botaoLabel && (
-        <Box marginTop="s20" alignItems="flex-start">
-          <Button
-            label={botaoLabel}
-            variant="outlineGold"
-            onPress={
-              comoCard
-                ? () => abrirMedindo(onPressBotao ?? onPress)
-                : onPressBotao
-            }
-          />
-        </Box>
-      )}
     </>
   );
 
-  const conteudo = (
+  /** Grupo que morfa. No card é uma View comum — precisa ser medível. */
+  const grupoTexto = telaCheia ? (
     <Animated.View
-      style={[
-        {
-          flex: telaCheia ? 1 : undefined,
-          paddingTop: telaCheia ? insets.top + 6 : 30,
-          paddingBottom: telaCheia ? insets.bottom + 24 : 26,
-          paddingHorizontal: telaCheia ? 24 : 26,
-        },
-        estiloConteudo,
-      ]}
+      onLayout={e =>
+        posTexto.set({
+          x: e.nativeEvent.layout.x,
+          y: e.nativeEvent.layout.y,
+        })
+      }
+      style={[{ transformOrigin: 'top left' }, estiloMorfTexto]}>
+      {textos(ESCALA_TELA_CHEIA)}
+    </Animated.View>
+  ) : (
+    <View ref={refTexto} collapsable={false}>
+      {textos(1)}
+    </View>
+  );
+
+  const conteudo = (
+    <View
+      style={{
+        flex: telaCheia ? 1 : undefined,
+        paddingTop: telaCheia ? insets.top + 6 : 30,
+        paddingBottom: telaCheia ? insets.bottom + 24 : 26,
+        paddingHorizontal: telaCheia ? PADDING_TELA_CHEIA : PADDING_CARD,
+        opacity: conteudoVisivel ? 1 : 0,
+      }}
       pointerEvents={conteudoVisivel ? 'auto' : 'none'}>
       {telaCheia && onBack && (
-        <Box marginBottom="s20">
-          <ScreenHeader onBack={fechar} variant="dark" />
+        <Animated.View style={estiloSecundario}>
+          <Box marginBottom="s20">
+            <ScreenHeader onBack={fechar} variant="dark" />
+          </Box>
+        </Animated.View>
+      )}
+
+      {grupoTexto}
+
+      {!telaCheia && botaoLabel && (
+        <Box marginTop="s20" alignItems="flex-start">
+          <View ref={refBotao} collapsable={false}>
+            <Button
+              label={botaoLabel}
+              variant="outlineGold"
+              onPress={() => abrirMedindo(onPressBotao ?? onPress)}
+            />
+          </View>
         </Box>
       )}
 
-      {textos(!telaCheia)}
-
-      {telaCheia && children}
-    </Animated.View>
+      {telaCheia && children && (
+        <Animated.View style={[{ flex: 1 }, estiloSecundario]}>
+          {children}
+        </Animated.View>
+      )}
+    </View>
   );
 
   /**
-   * Camada-fantasma: repete o conteúdo DO CARD, no tamanho do card, colado no
-   * canto superior esquerdo da forma enquanto ela cresce — e some em fade nos
-   * primeiros 28% do trajeto.
-   *
-   * Sem isso, o texto do card desaparece de um frame para o outro assim que a
-   * forma (opaca) nasce por cima dele, e o que resta é um retângulo bordô
-   * vazio crescendo: é exatamente essa perda seca que o olho lê como "salto"
-   * em vez de "o card virou a tela".
+   * CTA fantasma: cópia do botão do card, ancorada onde ele estava, que
+   * acompanha a forma e sai em fade. Em `tela-cheia` o `botaoLabel` serve
+   * APENAS para isto — a tela de destino não mostra CTA.
    */
-  const conteudoFantasma = telaCheia && origem && (
+  const botaoFantasma = telaCheia && origem?.botao && botaoLabel && (
     <Animated.View
       pointerEvents="none"
-      style={[
-        {
-          position: 'absolute',
-          width: origem.width,
-          height: origem.height,
-          paddingTop: 30,
-          paddingBottom: 26,
-          paddingHorizontal: 26,
-        },
-        estiloFantasma,
-      ]}>
-      {textos(true)}
+      style={[{ position: 'absolute', left: 0, top: 0 }, estiloBotaoFantasma]}>
+      <Button label={botaoLabel} variant="outlineGold" />
     </Animated.View>
   );
 
@@ -536,19 +754,9 @@ export function BlocoCuradoria({
     // pinta é a forma, que pode estar menor que a tela durante a transição.
     return (
       <View style={{ flex: 1 }}>
-        {origem && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: palette.black },
-              estiloScrim,
-            ]}
-          />
-        )}
         {forma}
-        {conteudoFantasma}
         {conteudo}
+        {botaoFantasma}
       </View>
     );
   }
