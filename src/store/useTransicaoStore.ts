@@ -24,6 +24,19 @@ type TransicaoState = {
   origens: Record<string, RetanguloOrigem>;
   setOrigem: (id: string, rect: RetanguloOrigem) => void;
   limparOrigem: (id: string) => void;
+  /**
+   * Shared elements que saíram da tela de origem por um push SEM animação de
+   * Stack (`animation: 'none'`), indexados pelo `transitionId`.
+   *
+   * Sem animação de Stack, a tela de origem também não tem animação de VOLTA:
+   * ela reaparece de um frame para o outro, seca, enquanto o shared element
+   * termina de encolher macio. Esta flag é o pedido de "reapareça em fade" que
+   * o card deixa para a tela de origem consumir quando voltar ao foco (ver
+   * `ReentradaEmFade`).
+   */
+  reentradas: Record<string, boolean>;
+  pedirReentrada: (id: string) => void;
+  limparReentrada: (id: string) => void;
 };
 
 /**
@@ -47,5 +60,17 @@ export const useTransicaoStore = create<TransicaoState>(set => ({
       const origens = { ...s.origens };
       delete origens[id];
       return { origens };
+    }),
+  reentradas: {},
+  pedirReentrada: id =>
+    set(s => ({ reentradas: { ...s.reentradas, [id]: true } })),
+  limparReentrada: id =>
+    set(s => {
+      if (!s.reentradas[id]) {
+        return s;
+      }
+      const reentradas = { ...s.reentradas };
+      delete reentradas[id];
+      return { reentradas };
     }),
 }));

@@ -308,6 +308,7 @@ export function BlocoCuradoria({
 
   const setOrigem = useTransicaoStore(s => s.setOrigem);
   const limparOrigem = useTransicaoStore(s => s.limparOrigem);
+  const pedirReentrada = useTransicaoStore(s => s.pedirReentrada);
   /**
    * Snapshot lido UMA vez, na montagem do destino: se o store mudar no meio
    * da animação, a geometria de partida não pode mudar junto.
@@ -364,12 +365,18 @@ export function BlocoCuradoria({
    * TODA saída do card para a tela cheia tem que passar por aqui — tocar no
    * bloco E tocar no CTA. Se o botão chamar a navegação direto, não existe
    * retângulo de origem e o destino aparece de salto, sem animação.
+   *
+   * Aqui também fica armado o pedido de reentrada em fade da tela de origem:
+   * como a rota de destino não tem animação de Stack, ela também não tem
+   * animação de pop, e sem isso tudo o que está ao redor do card reapareceria
+   * seco na volta. Ver `ReentradaEmFade`.
    */
   const abrirMedindo = useCallback(
     (acao?: () => void) => {
       if (!acao) {
         return;
       }
+      pedirReentrada(transitionId);
       const no = refForma.current;
       if (!no) {
         acao();
@@ -396,7 +403,7 @@ export function BlocoCuradoria({
         acao();
       });
     },
-    [refForma, setOrigem, transitionId],
+    [refForma, setOrigem, pedirReentrada, transitionId],
   );
 
   // Abertura: só no destino e só quando há um retângulo de origem medido.

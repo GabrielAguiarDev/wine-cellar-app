@@ -24,6 +24,12 @@ export {
   type ConteudoCuradoria,
   type VarianteBloco,
 } from './BlocoCuradoria';
+export {
+  ReentradaEmFade,
+  Reaparecer,
+  type ReentradaEmFadeProps,
+  type ReaparecerProps,
+} from './ReentradaEmFade';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';
