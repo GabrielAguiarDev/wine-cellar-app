@@ -1,8 +1,11 @@
-import { type Wine } from './types';
+import { matchesFilters, type WineFilters } from './filters';
+import { type Wine, type WineType } from './types';
 import { WINES } from './wines';
 
-/** Marcador de categoria especial (curadoria/destaques). */
-export const CAT_SPECIALS = '__specials';
+/** Quantos rótulos do catálogo são de um tipo (contagem dos atalhos). */
+export function countByType(type: WineType, wines: Wine[] = WINES): number {
+  return wines.filter(w => w.type === type).length;
+}
 
 /** Busca um vinho por id (fallback: primeiro do catálogo). */
 export function findWine(id: string, wines: Wine[] = WINES): Wine {
@@ -30,23 +33,23 @@ export function winesByIds(ids: string[], wines: Wine[] = WINES): Wine[] {
 }
 
 type SearchParams = {
+  /** Atalho para `filters.type` (param `cat` da rota). */
   catFilter?: string | null;
   query?: string;
+  /** Filtros da busca (tipo/uva/país/preço/corpo/harmonização). */
+  filters?: WineFilters;
 };
 
-/** Busca por vinho: filtra por categoria/especiais e por texto (nome/uva/região/tipo). */
+/** Busca por vinho: aplica os filtros ativos e o texto (nome/uva/região/tipo). */
 export function searchWines(
-  { catFilter, query }: SearchParams,
+  { catFilter, query, filters }: SearchParams,
   wines: Wine[] = WINES,
 ): Wine[] {
-  let results: Wine[];
-  if (catFilter === CAT_SPECIALS) {
-    results = wines.filter(w => w.featured);
-  } else if (catFilter) {
-    results = wines.filter(w => w.type === catFilter);
-  } else {
-    results = wines;
-  }
+  const all: WineFilters = {
+    ...(catFilter ? { type: catFilter } : {}),
+    ...filters,
+  };
+  let results = wines.filter(w => matchesFilters(w, all));
 
   const qtxt = (query ?? '').trim().toLowerCase();
   if (qtxt) {

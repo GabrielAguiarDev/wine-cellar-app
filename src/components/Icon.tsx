@@ -70,9 +70,12 @@ const ICONS: Record<IconName, IconSpec> = {
     fillable: true,
     render: ({ color, fill, strokeWidth }) => (
       <Path
-        d="M12 20s-7-4.5-9.2-9C1.3 8 2.8 4.5 6.2 4.5c2 0 3.2 1.2 3.8 2.3C10.6 5.7 11.8 4.5 13.8 4.5c3.4 0 4.9 3.5 3.4 6.5C19 15.5 12 20 12 20z"
+        // Simétrico em torno de x=12 (lobos espelhados) e centrado no viewBox —
+        // o traçado anterior era torto à direita e parecia cortado.
+        d="M12 20.4C12 20.4 2.6 15 2.6 9.1C2.6 6.2 4.8 4 7.5 4c1.9 0 3.6 1.1 4.5 2.8C12.9 5.1 14.6 4 16.5 4c2.7 0 4.9 2.2 4.9 5.1c0 5.9-9.4 11.3-9.4 11.3z"
         stroke={color}
         strokeWidth={strokeWidth}
+        strokeLinejoin="round"
         fill={fill}
       />
     ),

@@ -1,8 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { CAT_SPECIALS, WINE_TYPES } from '../filters';
 import {
-  CAT_SPECIALS,
   cartCount,
+  countByType,
   cartSubtotal,
   findWine,
   railBestSellers,
@@ -40,6 +41,17 @@ describe('rails', () => {
     expect(specials().map(w => w.id).sort()).toEqual(
       ['corona-reale', 'notte-eterna', 'perla-nera'].sort(),
     );
+  });
+});
+
+describe('countByType', () => {
+  it('conta rótulos de um tipo', () => {
+    expect(countByType('Tinto')).toBe(searchWines({ catFilter: 'Tinto' }).length);
+  });
+
+  it('a soma dos tipos cobre o catálogo inteiro', () => {
+    const total = WINE_TYPES.reduce((acc, t) => acc + countByType(t), 0);
+    expect(total).toBe(searchWines({}).length);
   });
 });
 

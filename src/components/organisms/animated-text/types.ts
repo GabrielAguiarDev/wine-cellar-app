@@ -18,6 +18,8 @@ interface AnimationConfig {
     mass: number;
   };
   readonly maxBlurIntensity?: number;
+  /** Atraso (ms) antes do primeiro caractere — útil para encadear várias linhas. */
+  readonly startDelay?: number;
 }
 
 interface StaggeredTextProps {

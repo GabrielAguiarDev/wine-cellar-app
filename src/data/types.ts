@@ -1,10 +1,14 @@
 export type WineType = 'Tinto' | 'Branco' | 'Rosé' | 'Espumante';
 
+/** Corpo do vinho — filtro "Corpo" da busca. */
+export type WineBody = 'Leve' | 'Médio' | 'Encorpado';
+
 export interface Wine {
   id: string;
   name: string;
   vintage: number;
   type: WineType;
+  body: WineBody;
   grape: string;
   region: string;
   signature: string;

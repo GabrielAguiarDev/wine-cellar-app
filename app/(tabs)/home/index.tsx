@@ -10,17 +10,20 @@ import {
   FadeReentry,
   Icon,
   Logo,
-  Pill,
   Reappear,
   SectionTitle,
   Text,
   TouchableOpacityBox,
   WineCard,
   WineRow,
+  WineTypeCard,
+  type WineTypeCardData,
 } from '@components/index';
 import {
   CAT_SPECIALS,
   WEEKLY_CURATION,
+  WINE_TYPES,
+  countByType,
   railBestSellers,
   railSelected,
   unreadNotificationCount,
@@ -29,13 +32,22 @@ import { useFavoritesStore, useNotificationsStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { nf, toWineCardData, toWineRowData } from '@utils/index';
 
-const CATS: { label: string; val: string | null }[] = [
-  { label: 'Todos', val: null },
-  { label: 'Tinto', val: 'Tinto' },
-  { label: 'Branco', val: 'Branco' },
-  { label: 'Rosé', val: 'Rosé' },
-  { label: 'Espumante', val: 'Espumante' },
-];
+/** Cor do líquido de cada tipo — swatch dos atalhos "Explorar por tipo". */
+const TYPE_COLORS: Record<string, [string, string]> = {
+  Tinto: [palette.pourRedLight, palette.pourRed],
+  Branco: [palette.pourWhiteLight, palette.pourWhite],
+  Rosé: [palette.pourRoseLight, palette.pourRose],
+  Espumante: [palette.pourSparklingLight, palette.pourSparkling],
+};
+
+const TYPE_SHORTCUTS: (WineTypeCardData & { type: string })[] = WINE_TYPES.map(
+  type => ({
+    type,
+    label: type,
+    count: countByType(type),
+    colors: TYPE_COLORS[type],
+  }),
+);
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -166,19 +178,39 @@ export default function HomeScreen() {
               />
             </Box>
 
-            {/* pills */}
+            {/* atalhos por tipo — abrem a busca já filtrada (não filtram aqui) */}
             <Reappear order={2}>
+              <Box paddingHorizontal="s22" marginBottom="s14">
+                <SectionTitle
+                  right={
+                    <TouchableOpacityBox
+                      accessibilityRole="button"
+                      accessibilityLabel="Ver toda a coleção na busca"
+                      activeOpacity={0.7}
+                      onPress={() => goCat(null)}
+                      flexDirection="row"
+                      alignItems="center"
+                      paddingVertical="s4"
+                      style={{ gap: 6 }}>
+                      <Text
+                        variant="label"
+                        fontSize={9.5}
+                        color="accentDark"
+                        style={{ letterSpacing: 1.5 }}>
+                        Ver tudo
+                      </Text>
+                      <Icon name="arrowRight" size={11} color={palette.goldDark} />
+                    </TouchableOpacityBox>
+                  }>
+                  Explorar por tipo
+                </SectionTitle>
+              </Box>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 22, gap: 9 }}>
-                {CATS.map(c => (
-                  <Pill
-                    key={c.label}
-                    label={c.label}
-                    active={c.val === null}
-                    onPress={() => goCat(c.val)}
-                  />
+                contentContainerStyle={{ paddingHorizontal: 22, gap: 12 }}>
+                {TYPE_SHORTCUTS.map(t => (
+                  <WineTypeCard key={t.type} data={t} onPress={() => goCat(t.type)} />
                 ))}
               </ScrollView>
             </Reappear>

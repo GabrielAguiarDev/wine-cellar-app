@@ -40,7 +40,8 @@ const Character: React.FC<CharacterProps> = memo<CharacterProps>(
   }: CharacterProps): React.ReactNode &
     React.JSX.Element &
     React.ReactElement => {
-    const enterDelay = index * animationConfig.characterDelay;
+    const enterDelay =
+      (animationConfig.startDelay ?? 0) + index * animationConfig.characterDelay;
     const exitDelay = index * (animationConfig.characterDelay * 0.5);
 
     const maxBlur = animationConfig.maxBlurIntensity ?? 12;

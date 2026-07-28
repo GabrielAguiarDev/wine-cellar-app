@@ -23,6 +23,16 @@ export const palette = {
   gold: '#B08D57', // acento, bordas, labels, estrelas
   goldDark: '#8A6C40', // dourado escuro / links
 
+  // Líquidos (swatch dos atalhos por tipo de vinho) — pares claro/escuro
+  pourRedLight: '#7A1D2B',
+  pourRed: '#3F0F17',
+  pourWhiteLight: '#E9D79B',
+  pourWhite: '#C9A961',
+  pourRoseLight: '#F0B3AC',
+  pourRose: '#D07C79',
+  pourSparklingLight: '#F2E2B4',
+  pourSparkling: '#D8B872',
+
   // Neutros
   ink: '#2A211C', // texto principal sobre creme
   mutedIcon: '#8A7D70', // cinza-marrom (ícone de busca)

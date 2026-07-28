@@ -8,13 +8,23 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Box,
   Chip,
+  FilterSheet,
   Icon,
   Screen,
   Text,
   TouchableOpacityBox,
   WineRow,
 } from '@components/index';
-import { CAT_SPECIALS, searchByDish, searchWines } from '@data/index';
+import {
+  FILTER_DEFS,
+  activeFilterCount,
+  filterOptions,
+  filterValueLabel,
+  searchByDish,
+  searchWines,
+  type WineFilterKey,
+  type WineFilters,
+} from '@data/index';
 import { fonts, palette } from '@theme/index';
 import { toWineRowData } from '@utils/index';
 
@@ -24,8 +34,8 @@ const MODES: { key: Mode; label: string }[] = [
   { key: 'wine', label: 'Buscar vinho' },
   { key: 'dish', label: 'Buscar por prato' },
 ];
-const FILTERS = ['Uva', 'País', 'Preço', 'Corpo', 'Harmonização'];
 const DISH_EXAMPLES = ['salmão grelhado', 'risoto', 'churrasco', 'queijos'];
+const TITLE = 'Coleção';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -34,18 +44,38 @@ export default function SearchScreen() {
   const [mode, setMode] = useState<Mode>('wine');
   const [query, setQuery] = useState('');
   const [dishQuery, setDishQuery] = useState('');
+  // A categoria que vem da Home não vira título: entra como o filtro "Tipo".
+  const [filters, setFilters] = useState<WineFilters>(cat ? { type: cat } : {});
+  const [openFilter, setOpenFilter] = useState<WineFilterKey | null>(null);
 
-  const catFilter = cat ?? null;
-  const title = cat === CAT_SPECIALS ? 'Especiais' : (cat ?? 'Coleção');
+  // A tela é uma aba: já pode estar montada quando a Home navega com outro
+  // `cat`. Ajuste em render (e não em effect) para não renderizar um frame
+  // com os filtros antigos.
+  const [lastCat, setLastCat] = useState(cat);
+  if (cat !== lastCat) {
+    setLastCat(cat);
+    setFilters(cat ? { type: cat } : {});
+  }
 
-  const results = searchWines({ catFilter, query });
+  const activeCount = activeFilterCount(filters);
+  const results = searchWines({ query, filters });
   const dishResults = searchByDish(dishQuery);
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
+  const setFilter = (key: WineFilterKey, value?: string) =>
+    setFilters(current => {
+      const next = { ...current };
+      if (value) next[key] = value;
+      else delete next[key];
+      return next;
+    });
+
+  const openFilterDef = FILTER_DEFS.find(f => f.key === openFilter);
+
   return (
-    <Screen scroll largeTitle={title}>
-      <Stack.Screen options={{ title: title }} />
+    <Screen scroll largeTitle={TITLE}>
+      <Stack.Screen options={{ title: TITLE }} />
       <Box paddingBottom="s108" paddingTop="s10">
         {/* toggle vinho / prato (segmented nativo) */}
         <Box paddingHorizontal="s22" marginTop="s4" marginBottom="s16">
@@ -84,15 +114,66 @@ export default function SearchScreen() {
               />
             </Box>
 
-            {/* chips de filtro */}
+            {/* chips de filtro — cada um abre a folha de opções */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 22, gap: 8, paddingBottom: 18 }}>
-              {FILTERS.map(f => (
-                <Chip key={f} label={f} />
+              contentContainerStyle={{ paddingHorizontal: 22, gap: 8 }}>
+              {FILTER_DEFS.map(f => (
+                <Chip
+                  key={f.key}
+                  label={f.label}
+                  value={
+                    filters[f.key]
+                      ? filterValueLabel(f.key, filters[f.key] as string)
+                      : undefined
+                  }
+                  onPress={() => setOpenFilter(f.key)}
+                  onClear={() => setFilter(f.key)}
+                />
               ))}
             </ScrollView>
+
+            {/* resumo dos filtros ativos + limpar tudo */}
+            <Box
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              paddingHorizontal="s22"
+              paddingTop="s14"
+              paddingBottom="s18">
+              <Text variant="label" fontSize={9.5} color="inkA50" style={{ letterSpacing: 1.4 }}>
+                {results.length} {results.length === 1 ? 'rótulo' : 'rótulos'}
+                {activeCount > 0 &&
+                  ` · ${activeCount} ${activeCount === 1 ? 'filtro' : 'filtros'}`}
+              </Text>
+              {activeCount > 0 && (
+                <TouchableOpacityBox
+                  accessibilityRole="button"
+                  accessibilityLabel="Limpar todos os filtros"
+                  activeOpacity={0.7}
+                  onPress={() => setFilters({})}
+                  flexDirection="row"
+                  alignItems="center"
+                  borderWidth={1}
+                  borderColor="goldA50"
+                  borderRadius="r8"
+                  paddingVertical="s6"
+                  paddingHorizontal="s12"
+                  style={{ gap: 6 }}>
+                  <Text
+                    variant="label"
+                    fontSize={9.5}
+                    color="accentDark"
+                    style={{ letterSpacing: 1.4 }}>
+                    Limpar filtros
+                  </Text>
+                  <Text fontSize={13} color="accentDark" style={{ lineHeight: 14 }}>
+                    ×
+                  </Text>
+                </TouchableOpacityBox>
+              )}
+            </Box>
 
             {/* resultados */}
             <Box paddingHorizontal="s22" style={{ gap: 14 }}>
@@ -104,9 +185,30 @@ export default function SearchScreen() {
                 />
               ))}
               {results.length === 0 && (
-                <Text variant="quote" color="wineA70" textAlign="center" marginTop="s40">
-                  Nenhum vinho encontrado.
-                </Text>
+                <Box alignItems="center" marginTop="s40" style={{ gap: 14 }}>
+                  <Text variant="quote" color="wineA70" textAlign="center">
+                    Nenhum vinho encontrado.
+                  </Text>
+                  {activeCount > 0 && (
+                    <TouchableOpacityBox
+                      accessibilityRole="button"
+                      activeOpacity={0.7}
+                      onPress={() => setFilters({})}
+                      borderWidth={1}
+                      borderColor="goldA50"
+                      borderRadius="r8"
+                      paddingVertical="s8"
+                      paddingHorizontal="s14">
+                      <Text
+                        variant="label"
+                        fontSize={9.5}
+                        color="accentDark"
+                        style={{ letterSpacing: 1.4 }}>
+                        Limpar filtros
+                      </Text>
+                    </TouchableOpacityBox>
+                  )}
+                </Box>
               )}
             </Box>
           </>
@@ -199,6 +301,18 @@ export default function SearchScreen() {
           <Icon name="arrowRight" size={14} color={palette.gold} />
         </TouchableOpacityBox>
       </Box>
+
+      {openFilterDef && (
+        <FilterSheet
+          title={openFilterDef.label}
+          options={filterOptions(openFilterDef.key)}
+          selected={filters[openFilterDef.key]}
+          onSelect={value => setFilter(openFilterDef.key, value)}
+          onClear={() => setFilter(openFilterDef.key)}
+          // a própria folha fecha ao escolher/limpar; aqui só desmontamos
+          onClose={() => setOpenFilter(null)}
+        />
+      )}
     </Screen>
   );
 }

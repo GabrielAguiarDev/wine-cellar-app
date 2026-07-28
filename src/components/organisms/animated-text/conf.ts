@@ -10,6 +10,7 @@ const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
     mass: 0.6,
   },
   maxBlurIntensity: 12,
+  startDelay: 0,
 };
 
 const DEFAULT_ENTER_FROM: CharacterAnimationParams = {
