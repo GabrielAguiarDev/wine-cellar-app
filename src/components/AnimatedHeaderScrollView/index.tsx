@@ -1,6 +1,14 @@
-import { memo } from 'react';
+import { memo, useCallback, useRef } from 'react';
 
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import {
+  type LayoutChangeEvent,
+  Platform,
+  StyleSheet,
+  Text,
+  type TextLayoutEventData,
+  View,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import MaskedView from '@react-native-masked-view/masked-view';
 import { BlurView } from 'expo-blur';
@@ -26,6 +34,7 @@ import {
   HEADER_HEIGHT,
   MAX_BLUR_INTENSITY,
   spacing,
+  TITLE_WIDTH_SAFETY,
 } from './conf';
 import { type AnimatedHeaderProps } from './types';
 
@@ -53,9 +62,10 @@ import { type AnimatedHeaderProps } from './types';
  * ── Os quatro elementos que animam ──────────────────────────────────────────
  *
  * 1. Título grande: rola com o conteúdo (não é fixo) e sai em fade em [0, 60].
- *    Em overscroll (puxar para baixo) ele CRESCE até 2× — daí `largeHeaderTitleStyle`
- *    precisar de um `fontSize`. Isso é desligável por `growOnOverscroll`, para
- *    quando o título é um logo (a Home).
+ *    Em overscroll (puxar para baixo) ele CRESCE até o que couber em uma linha,
+ *    com teto em `maxOverscrollGrowth` — daí `largeHeaderTitleStyle` precisar de
+ *    um `fontSize`. Isso é desligável por `growOnOverscroll`, para quando o
+ *    título é um logo (a Home).
  * 2. Fundo do header: gradiente + blur entrando em opacidade sobre [0, 80].
  *    Mascarado por um gradiente eased, o que dá a borda inferior difusa (sem
  *    linha de corte) — é o papel do `MaskedView` aqui.
@@ -80,6 +90,9 @@ import { type AnimatedHeaderProps } from './types';
  * - `rightComponent` fica FORA da barra que faz fade, sempre visível (no
  *   original ele desaparece em repouso junto com o título compacto). Ver o
  *   comentário no JSX.
+ * - O crescimento do título grande no overscroll é LIMITADO pela largura da
+ *   linha, não só pelo teto de 2× do original: títulos longos ("Notificações")
+ *   quebravam linha ao puxar. Ver `maxOverscrollGrowth` e as medições abaixo.
  * - Props novas `largeTitleSlot` / `smallTitleSlot`: trocam o texto do título por
  *   um nó — é o que permite usar o logo na Home em vez do nome da tela.
  * - Prop nova `leftComponent`: o voltar de telas EMPILHADAS (`/notifications`).
@@ -129,9 +142,57 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     smallHeaderTitleStyle,
     smallHeaderSubtitleStyle,
     growOnOverscroll = true,
+    maxOverscrollGrowth = 2,
   }) => {
     const insets = useSafeAreaInsets();
     const scrollY = useSharedValue(0);
+
+    /**
+     * Teto do crescimento do título grande, em duas medidas: a largura útil da
+     * linha e a largura natural do texto em repouso. Com as duas, o worklet sabe
+     * até onde pode esticar o `fontSize` sem que o título quebre linha — o que
+     * acontecia com títulos longos, que no teto fixo de 2× estouravam a linha.
+     *
+     * Shared values (e não state) para não re-renderizar a cada medição: quem lê
+     * é só o worklet do `fontSize`.
+     */
+    const availableTitleWidth = useSharedValue(0);
+    const naturalTitleWidth = useSharedValue(0);
+
+    /**
+     * A medição do texto vale só EM REPOUSO. Animar o `fontSize` re-dispara
+     * `onTextLayout` com a largura já esticada; sem esta guarda o teto subiria a
+     * cada frame do overscroll e o título cresceria sem limite.
+     */
+    const measuredTitle = useRef<string | null>(null);
+
+    const onTitleContainerLayout = useCallback(
+      (event: LayoutChangeEvent) => {
+        availableTitleWidth.set(
+          event.nativeEvent.layout.width - spacing.lg * 2,
+        );
+      },
+      [availableTitleWidth],
+    );
+
+    const onTitleTextLayout = useCallback(
+      (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+        if (measuredTitle.current === largeTitle) {
+          return;
+        }
+        measuredTitle.current = largeTitle;
+
+        const { lines } = event.nativeEvent;
+        /**
+         * Mais de uma linha já em repouso: `Infinity` faz o teto cair para 1× —
+         * o título não cresce, porque crescer só somaria linhas.
+         */
+        naturalTitleWidth.set(
+          lines.length > 1 ? Number.POSITIVE_INFINITY : (lines[0]?.width ?? 0),
+        );
+      },
+      [largeTitle, naturalTitleWidth],
+    );
 
     /**
      * Com botão à esquerda (voltar), o título grande nasce uma faixa de nav bar
@@ -154,11 +215,25 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
         return {};
       }
       const base = largeHeaderTitleStyle.fontSize ?? 40;
+
+      /**
+       * O teto é o MENOR entre `maxOverscrollGrowth` e o que cabe na linha.
+       * `letterSpacing` é fixo (não escala com o corpo), então a largura real
+       * cresce um pouco mais que proporcionalmente — daí a folga de 4%.
+       */
+      const available = availableTitleWidth.get();
+      const natural = naturalTitleWidth.get();
+      const fits =
+        available > 0 && natural > 0
+          ? (available * TITLE_WIDTH_SAFETY) / natural
+          : maxOverscrollGrowth;
+      const growth = Math.max(1, Math.min(maxOverscrollGrowth, fits));
+
       return {
         fontSize: interpolate(
           -scrollY.get(),
           [0, 100],
-          [base, base * 2],
+          [base, base * growth],
           Extrapolation.CLAMP,
         ),
       };
@@ -175,7 +250,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
             scale: interpolate(
               -scrollY.get(),
               [0, 100],
-              [1, 2],
+              [1, maxOverscrollGrowth],
               Extrapolation.CLAMP,
             ),
           },
@@ -423,6 +498,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           ]}>
           {/* 1. Título grande */}
           <Animated.View
+            onLayout={onTitleContainerLayout}
             style={[styles.largeTitleContainer, largeTitleOpacity]}>
             {largeTitleSlot ? (
               <Animated.View
@@ -432,6 +508,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
               </Animated.View>
             ) : (
               <Animated.Text
+                onTextLayout={onTitleTextLayout}
                 style={[
                   styles.largeTitle,
                   largeHeaderTitleStyle,

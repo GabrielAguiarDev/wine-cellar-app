@@ -65,4 +65,13 @@ export type AnimatedHeaderProps = {
    * esticar a marca não é aceitável. Default `true`.
    */
   growOnOverscroll?: boolean;
+  /**
+   * TETO do crescimento no overscroll. Default `2` (o do original).
+   *
+   * No título em TEXTO ele é só o teto: o crescimento real é o que couber em uma
+   * linha, medido em repouso — títulos longos ("Notificações") crescem menos que
+   * curtos ("Perfil") em vez de quebrar linha. Num `largeTitleSlot` (logo), onde
+   * não há texto para medir, vale o valor cheio.
+   */
+  maxOverscrollGrowth?: number;
 };

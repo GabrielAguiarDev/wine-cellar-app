@@ -12,6 +12,14 @@ export const HEADER_HEIGHT = 44;
 /** Intensidade do blur do fundo do header no fim do colapso. */
 export const MAX_BLUR_INTENSITY = 40;
 
+/**
+ * Folga sobre a largura útil da linha ao calcular quanto o título grande pode
+ * crescer no overscroll. `letterSpacing` não escala com o corpo da fonte, então
+ * a largura real cresce um pouco mais que proporcionalmente — 4% cobre isso e o
+ * arredondamento do layout, mantendo o título em uma linha.
+ */
+export const TITLE_WIDTH_SAFETY = 0.96;
+
 export const spacing = {
   xs: 4,
   sm: 8,
