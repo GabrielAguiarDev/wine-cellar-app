@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fonts, palette } from '@theme/index';
 
+import { useScrollableSearchOptional } from '../ScrollableSearch';
 import {
   ANDROID_BLUR_METHOD,
   Colors,
@@ -202,16 +203,44 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
      */
     const collapseOffset = leftComponent ? HEADER_HEIGHT : 0;
 
-    const onScroll = useAnimatedScrollHandler({
-      onScroll: event => {
-        scrollY.set(event.contentOffset.y);
+    /**
+     * Busca puxável (`ScrollableSearch`) em volta desta tela, se houver. Ela não
+     * tem ScrollView próprio: quem lê o scroll é este componente, e repassa o
+     * offset para os worklets do contexto. Só os worklets são capturados no
+     * handler — o resto do contexto (refs, setState) não atravessa para a UI.
+     */
+    const pullToSearch = useScrollableSearchOptional();
+    const onPullScroll = pullToSearch?.onScroll;
+    const onPullEndDrag = pullToSearch?.onEndDrag;
+
+    const onScroll = useAnimatedScrollHandler(
+      {
+        onScroll: event => {
+          scrollY.set(event.contentOffset.y);
+          if (onPullScroll) {
+            onPullScroll(event.contentOffset.y);
+          }
+        },
+        onEndDrag: () => {
+          if (onPullEndDrag) {
+            onPullEndDrag();
+          }
+        },
       },
-    });
+      [onPullScroll, onPullEndDrag],
+    );
+
+    /**
+     * Dentro de uma busca puxável o crescimento do título é DESLIGADO à força: é
+     * o mesmo gesto (puxar a lista para baixo), e ele passa a focar o campo de
+     * busca — as duas respostas ao mesmo tempo brigariam pela atenção.
+     */
+    const growTitle = growOnOverscroll && !pullToSearch;
 
     // Overscroll (scrollY negativo) engorda o título — o "puxar" do iOS.
     // Desligado, os dois worklets devolvem {} e nem interpolam.
     const largeTitleSize = useAnimatedStyle(() => {
-      if (!growOnOverscroll) {
+      if (!growTitle) {
         return {};
       }
       const base = largeHeaderTitleStyle.fontSize ?? 40;
@@ -241,7 +270,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
 
     // Equivalente do crescimento acima, para um slot (logo): escala, não corpo.
     const largeTitleScale = useAnimatedStyle(() => {
-      if (!growOnOverscroll) {
+      if (!growTitle) {
         return {};
       }
       return {
@@ -475,6 +504,8 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           onScroll={onScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+          /* Só serve à busca puxável: é o gatilho para o `Anchor` remedir. */
+          onContentSizeChange={pullToSearch?.notifyContentResize}
           /*
             `insets.top + sm`, não `+ HEADER_HEIGHT`: no original (e na
             referência) o título grande começa logo abaixo da status bar, sem a

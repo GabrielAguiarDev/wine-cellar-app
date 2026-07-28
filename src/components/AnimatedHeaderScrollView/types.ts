@@ -63,6 +63,9 @@ export type AnimatedHeaderProps = {
    * Puxar a lista para baixo (overscroll) faz o título grande crescer até 2×.
    * É o comportamento do original; desligar quando o título for um logo, onde
    * esticar a marca não é aceitável. Default `true`.
+   *
+   * Dentro de um `<ScrollableSearch>` o crescimento é desligado à força,
+   * independente desta prop: lá o mesmo gesto foca o campo de busca.
    */
   growOnOverscroll?: boolean;
   /**

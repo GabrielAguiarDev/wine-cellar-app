@@ -18,6 +18,16 @@ export type {
   AnimatedHeaderProps,
   GradientConfig,
 } from './AnimatedHeaderScrollView/types';
+export {
+  ScrollableSearch,
+  useScrollableSearch,
+  useScrollableSearchOptional,
+} from './ScrollableSearch';
+export type {
+  ScrollableSearchProps,
+  ScrollableSearchContextValue,
+  SearchBarProps,
+} from './ScrollableSearch/types';
 
 // Design system
 export { Icon, type IconName } from './Icon';
