@@ -1,22 +1,22 @@
 /** Regras de preço do checkout (idênticas ao protótipo). */
 
 /** 320 pontos de fidelidade = R$ 64 de desconto máximo. */
-export const PONTOS_DESCONTO_MAX = 64;
+export const MAX_POINTS_DISCOUNT = 64;
 
 /** Frete grátis acima deste subtotal. */
-export const FRETE_GRATIS_ACIMA = 300;
+export const FREE_SHIPPING_ABOVE = 300;
 
 /** Valor do frete quando não é grátis. */
-export const FRETE_PADRAO = 29;
+export const DEFAULT_SHIPPING = 29;
 
 /** Desconto aplicado ao usar pontos (limitado ao subtotal). */
 export function pointsDiscount(subtotal: number, usePoints: boolean): number {
-  return usePoints ? Math.min(subtotal, PONTOS_DESCONTO_MAX) : 0;
+  return usePoints ? Math.min(subtotal, MAX_POINTS_DISCOUNT) : 0;
 }
 
 /** Frete: grátis acima de R$ 300, senão R$ 29. */
-export function frete(subtotal: number): number {
-  return subtotal > FRETE_GRATIS_ACIMA ? 0 : FRETE_PADRAO;
+export function shipping(subtotal: number): number {
+  return subtotal > FREE_SHIPPING_ABOVE ? 0 : DEFAULT_SHIPPING;
 }
 
 /**
@@ -27,7 +27,7 @@ export function checkoutTotal(
   usePoints: boolean,
   hasItems: boolean,
 ): number {
-  const desconto = pointsDiscount(subtotal, usePoints);
-  const freteValor = hasItems ? frete(subtotal) : 0;
-  return Math.max(0, subtotal - desconto) + freteValor;
+  const discount = pointsDiscount(subtotal, usePoints);
+  const shippingValue = hasItems ? shipping(subtotal) : 0;
+  return Math.max(0, subtotal - discount) + shippingValue;
 }

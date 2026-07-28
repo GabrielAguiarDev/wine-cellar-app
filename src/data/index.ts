@@ -2,11 +2,11 @@ export * from './types';
 export { WINES } from './wines';
 export { REVIEWS } from './reviews';
 export { QUIZ } from './quiz';
-export { OCASIOES } from './ocasioes';
+export { OCCASIONS } from './occasions';
 export {
-  CURADORIAS,
-  CURADORIA_SEMANA,
-  findCuradoria,
-  type Curadoria,
-} from './curadorias';
+  CURATIONS,
+  WEEKLY_CURATION,
+  findCuration,
+  type Curation,
+} from './curations';
 export * from './selectors';

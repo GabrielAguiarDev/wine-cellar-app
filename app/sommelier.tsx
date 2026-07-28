@@ -11,7 +11,7 @@ import {
   TouchableOpacityBox,
   WineRow,
 } from '@components/index';
-import { OCASIOES, winesByIds } from '@data/index';
+import { OCCASIONS, winesByIds } from '@data/index';
 import { fonts, palette } from '@theme/index';
 import { toWineRowData } from '@utils/index';
 
@@ -19,8 +19,8 @@ export default function SommelierScreen() {
   const router = useRouter();
   const [sel, setSel] = useState<string | null>(null);
 
-  const ocasiao = OCASIOES.find(o => o.key === sel);
-  const vinhos = ocasiao ? winesByIds(ocasiao.ids) : [];
+  const occasion = OCCASIONS.find(o => o.key === sel);
+  const wines = occasion ? winesByIds(occasion.ids) : [];
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
@@ -50,7 +50,7 @@ export default function SommelierScreen() {
           paddingHorizontal="s22"
           paddingTop="s22"
           style={{ rowGap: 12 }}>
-          {OCASIOES.map(o => {
+          {OCCASIONS.map(o => {
             const active = o.key === sel;
             return (
               <TouchableOpacityBox
@@ -84,13 +84,13 @@ export default function SommelierScreen() {
         </Box>
 
         {/* vinhos da ocasião */}
-        {ocasiao && (
+        {occasion && (
           <Box paddingHorizontal="s22" paddingTop="s20">
             <Text variant="eyebrow" marginBottom="s14">
-              Para &quot;{ocasiao.label}&quot;
+              Para &quot;{occasion.label}&quot;
             </Text>
             <Box style={{ gap: 12 }}>
-              {vinhos.map(w => (
+              {wines.map(w => (
                 <WineRow
                   key={w.id}
                   variant="dark"

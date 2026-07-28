@@ -24,7 +24,7 @@ export default function BagScreen() {
   const ids = Object.keys(items);
   const count = cartCount(items);
   const subtotal = cartSubtotal(items);
-  const sugestoes = WINES.filter(w => !items[w.id]).slice(0, 4);
+  const suggestions = WINES.filter(w => !items[w.id]).slice(0, 4);
 
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
@@ -69,10 +69,10 @@ export default function BagScreen() {
                     paddingVertical="s14"
                     paddingHorizontal="s16"
                     style={{ gap: 16 }}>
-                    <BottleGraphic width={30} cor={w.cor} iniciais={w.iniciais} showCap={false} />
+                    <BottleGraphic width={30} color={w.color} initials={w.initials} showCap={false} />
                     <Box flex={1}>
                       <Text variant="wineNameSm" fontSize={19} style={{ lineHeight: 20 }}>
-                        {w.nome}
+                        {w.name}
                       </Text>
                       <Text
                         variant="label"
@@ -80,7 +80,7 @@ export default function BagScreen() {
                         color="inkA50"
                         marginTop="s2"
                         style={{ letterSpacing: 1.2 }}>
-                        {w.tipo} · {w.uva}
+                        {w.type} · {w.grape}
                       </Text>
                       <Box flexDirection="row" alignItems="center" marginTop="s10" style={{ gap: 12 }}>
                         <Box
@@ -103,7 +103,7 @@ export default function BagScreen() {
                           </TouchableOpacityBox>
                         </Box>
                         <Text color="primary" style={{ fontFamily: fonts.serifRegular, fontSize: 14 }}>
-                          {brl(w.preco * qty)}
+                          {brl(w.price * qty)}
                         </Text>
                       </Box>
                     </Box>
@@ -123,7 +123,7 @@ export default function BagScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 22, gap: 14 }}>
-                {sugestoes.map(w => (
+                {suggestions.map(w => (
                   <TouchableOpacityBox key={w.id} activeOpacity={0.9} width={120} onPress={() => openWine(w.id)}>
                     <Box
                       height={150}
@@ -134,14 +134,14 @@ export default function BagScreen() {
                       alignItems="center"
                       justifyContent="flex-end">
                       <Box marginBottom="s8">
-                        <BottleGraphic width={30} cor={w.cor} iniciais={w.iniciais} showCap={false} />
+                        <BottleGraphic width={30} color={w.color} initials={w.initials} showCap={false} />
                       </Box>
                     </Box>
                     <Text variant="wineNameSm" marginTop="s8" style={{ lineHeight: 18 }}>
-                      {w.nome}
+                      {w.name}
                     </Text>
                     <Text variant="price" fontSize={12} marginTop="s2">
-                      {brl(w.preco)}
+                      {brl(w.price)}
                     </Text>
                   </TouchableOpacityBox>
                 ))}

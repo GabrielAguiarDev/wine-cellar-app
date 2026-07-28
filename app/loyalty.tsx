@@ -6,32 +6,32 @@ import { useToastStore, useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { brandHeaderOptions } from '@theme/navHeader';
 
-const META = 500;
+const GOAL = 500;
 
-const GANHAR = [
+const EARN = [
   { label: 'A cada R$ 1 em compras', pts: '+1 pt' },
   { label: 'Avaliar um vinho', pts: '+15 pts' },
   { label: 'Indicar um amigo', pts: '+80 pts' },
 ];
 
-const RECOMPENSAS = [
-  { titulo: 'R$ 50 de desconto', custo: 250, ok: true },
-  { titulo: 'Frete grátis', custo: 120, ok: true },
-  { titulo: 'Degustação guiada', custo: 600, ok: false },
+const REWARDS = [
+  { title: 'R$ 50 de desconto', cost: 250, ok: true },
+  { title: 'Frete grátis', cost: 120, ok: true },
+  { title: 'Degustação guiada', cost: 600, ok: false },
 ];
 
-const HISTORICO = [
-  { label: 'Compra · Notte Eterna', data: '12 jul', delta: '+678', ganho: true },
-  { label: 'Avaliação registrada', data: '05 jul', delta: '+15', ganho: true },
-  { label: 'Resgate · Frete grátis', data: '20 jun', delta: '−120', ganho: false },
+const HISTORY = [
+  { label: 'Compra · Notte Eterna', date: '12 jul', delta: '+678', earned: true },
+  { label: 'Avaliação registrada', date: '05 jul', delta: '+15', earned: true },
+  { label: 'Resgate · Frete grátis', date: '20 jun', delta: '−120', earned: false },
 ];
 
 export default function LoyaltyScreen() {
   const points = useUserStore(s => s.points);
   const show = useToastStore(s => s.show);
 
-  const progressPct = Math.round((points / META) * 100);
-  const restante = META - points;
+  const progressPct = Math.round((points / GOAL) * 100);
+  const remaining = GOAL - points;
 
   return (
     <Screen scroll nativeHeader>
@@ -49,7 +49,7 @@ export default function LoyaltyScreen() {
               {points}
             </Text>
             <Text variant="body" fontSize={12} color="cremeA62">
-              {restante} pts para o nível VIP
+              {remaining} pts para o nível VIP
             </Text>
             <Box marginTop="s16" flexDirection="row" alignItems="center" alignSelf="stretch" style={{ gap: 10 }}>
               <Text variant="label" fontSize={10} color="accent" style={{ letterSpacing: 1.4 }}>
@@ -71,7 +71,7 @@ export default function LoyaltyScreen() {
             Como ganhar pontos
           </Text>
           <Box style={{ gap: 10 }}>
-            {GANHAR.map(g => (
+            {EARN.map(g => (
               <Box
                 key={g.label}
                 flexDirection="row"
@@ -100,9 +100,9 @@ export default function LoyaltyScreen() {
             Resgatar
           </Text>
           <Box style={{ gap: 12 }}>
-            {RECOMPENSAS.map(r => (
+            {REWARDS.map(r => (
               <Box
-                key={r.titulo}
+                key={r.title}
                 flexDirection="row"
                 alignItems="center"
                 backgroundColor="surface"
@@ -114,10 +114,10 @@ export default function LoyaltyScreen() {
                 style={{ gap: 14 }}>
                 <Box flex={1}>
                   <Text variant="wineName" fontSize={19} color="primary">
-                    {r.titulo}
+                    {r.title}
                   </Text>
                   <Text variant="body" fontSize={11} color="inkA55" marginTop="s4">
-                    {r.custo} pontos
+                    {r.cost} pontos
                   </Text>
                 </Box>
                 <TouchableOpacityBox
@@ -136,7 +136,7 @@ export default function LoyaltyScreen() {
                     fontSize={10}
                     color={r.ok ? 'textOnDark' : 'inkA50'}
                     style={{ letterSpacing: 1.2 }}>
-                    {r.ok ? 'Resgatar' : `${points}/${r.custo}`}
+                    {r.ok ? 'Resgatar' : `${points}/${r.cost}`}
                   </Text>
                 </TouchableOpacityBox>
               </Box>
@@ -149,7 +149,7 @@ export default function LoyaltyScreen() {
           <Text variant="sectionTitle" fontSize={22} marginBottom="s4">
             Histórico
           </Text>
-          {HISTORICO.map(h => (
+          {HISTORY.map(h => (
             <Box
               key={h.label}
               flexDirection="row"
@@ -163,11 +163,11 @@ export default function LoyaltyScreen() {
                   {h.label}
                 </Text>
                 <Text variant="body" fontSize={11} color="inkA50" marginTop="s2">
-                  {h.data}
+                  {h.date}
                 </Text>
               </Box>
               <Text
-                color={h.ganho ? 'accentDark' : 'inkA50'}
+                color={h.earned ? 'accentDark' : 'inkA50'}
                 style={{ fontFamily: fonts.serifRegular, fontSize: 14 }}>
                 {h.delta}
               </Text>

@@ -20,10 +20,10 @@ import { cartSubtotal } from '@data/index';
 import { useCartStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { brandHeaderOptions } from '@theme/navHeader';
-import { brl, checkoutTotal, frete, pointsDiscount } from '@utils/index';
+import { brl, checkoutTotal, shipping, pointsDiscount } from '@utils/index';
 
-type PagamentoMetodo = 'pix' | 'card' | 'boleto';
-const PAGAMENTOS: { key: PagamentoMetodo; label: string }[] = [
+type PaymentMethod = 'pix' | 'card' | 'boleto';
+const PAYMENTS: { key: PaymentMethod; label: string }[] = [
   { key: 'pix', label: 'Pix' },
   { key: 'card', label: 'Cartão' },
   { key: 'boleto', label: 'Boleto' },
@@ -49,7 +49,7 @@ export default function CheckoutScreen() {
   const items = useCartStore(s => s.items);
   const clear = useCartStore(s => s.clear);
 
-  const [pm, setPm] = useState<PagamentoMetodo>('pix');
+  const [pm, setPm] = useState<PaymentMethod>('pix');
   const [usePoints, setUsePoints] = useState(false);
   const [isGift, setIsGift] = useState(false);
   const [giftMsg, setGiftMsg] = useState('');
@@ -65,8 +65,8 @@ export default function CheckoutScreen() {
 
   const subtotal = cartSubtotal(items);
   const hasItems = Object.keys(items).length > 0;
-  const desconto = pointsDiscount(subtotal, usePoints);
-  const freteValor = hasItems ? frete(subtotal) : 0;
+  const discount = pointsDiscount(subtotal, usePoints);
+  const shippingValue = hasItems ? shipping(subtotal) : 0;
   const total = checkoutTotal(subtotal, usePoints, hasItems);
 
   const placeOrder = () => {
@@ -104,10 +104,10 @@ export default function CheckoutScreen() {
             Pagamento
           </Text>
           <SegmentedControl
-            values={PAGAMENTOS.map(p => p.label)}
-            selectedIndex={PAGAMENTOS.findIndex(p => p.key === pm)}
+            values={PAYMENTS.map(p => p.label)}
+            selectedIndex={PAYMENTS.findIndex(p => p.key === pm)}
             onChange={e =>
-              setPm(PAGAMENTOS[e.nativeEvent.selectedSegmentIndex].key)
+              setPm(PAYMENTS[e.nativeEvent.selectedSegmentIndex].key)
             }
             tintColor={palette.wine}
           />
@@ -291,13 +291,13 @@ export default function CheckoutScreen() {
           paddingTop="s18"
           borderTopWidth={1}
           borderTopColor="inkBorder10">
-          <ResumoLinha label="Subtotal" valor={brl(subtotal)} />
+          <SummaryRow label="Subtotal" value={brl(subtotal)} />
           {usePoints && (
-            <ResumoLinha label="Pontos de fidelidade" valor={`− ${brl(desconto)}`} destaque />
+            <SummaryRow label="Pontos de fidelidade" value={`− ${brl(discount)}`} highlight />
           )}
-          <ResumoLinha
+          <SummaryRow
             label="Frete"
-            valor={hasItems && freteValor ? brl(freteValor) : 'Grátis'}
+            value={hasItems && shippingValue ? brl(shippingValue) : 'Grátis'}
           />
           <Box flexDirection="row" alignItems="baseline" justifyContent="space-between" marginTop="s8">
             <Text variant="label" fontSize={11} color="primary" style={{ letterSpacing: 2 }}>
@@ -316,22 +316,22 @@ export default function CheckoutScreen() {
   );
 }
 
-function ResumoLinha({
+function SummaryRow({
   label,
-  valor,
-  destaque,
+  value,
+  highlight,
 }: {
   label: string;
-  valor: string;
-  destaque?: boolean;
+  value: string;
+  highlight?: boolean;
 }) {
   return (
     <Box flexDirection="row" justifyContent="space-between" marginBottom="s8">
-      <Text variant="body" fontSize={13} color={destaque ? 'accentDark' : 'inkA65'}>
+      <Text variant="body" fontSize={13} color={highlight ? 'accentDark' : 'inkA65'}>
         {label}
       </Text>
-      <Text variant="body" fontSize={13} color={destaque ? 'accentDark' : 'inkA65'}>
-        {valor}
+      <Text variant="body" fontSize={13} color={highlight ? 'accentDark' : 'inkA65'}>
+        {value}
       </Text>
     </Box>
   );

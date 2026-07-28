@@ -1,33 +1,33 @@
-export type WineTipo = 'Tinto' | 'Branco' | 'Rosé' | 'Espumante';
+export type WineType = 'Tinto' | 'Branco' | 'Rosé' | 'Espumante';
 
 export interface Wine {
   id: string;
-  nome: string;
-  safra: number;
-  tipo: WineTipo;
-  uva: string;
-  regiao: string;
-  assinatura: string;
-  preco: number; // BRL, inteiro
-  destaque: boolean; // true = produto premium (vídeo + reserva)
-  notaMedia: number;
-  totalAvaliacoes: number;
-  estoqueBaixo: boolean;
-  harmonizacoes: string[];
-  cor: string; // cor do vidro da garrafa (hex)
-  iniciais: string;
-  videoDur?: string; // só destaques
+  name: string;
+  vintage: number;
+  type: WineType;
+  grape: string;
+  region: string;
+  signature: string;
+  price: number; // BRL, inteiro
+  featured: boolean; // true = produto premium (vídeo + reserva)
+  averageRating: number;
+  reviewCount: number;
+  lowStock: boolean;
+  pairings: string[];
+  color: string; // cor do vidro da garrafa (hex)
+  initials: string;
+  videoDuration?: string; // só destaques
 }
 
 export interface Review {
-  nome: string;
-  nota: number; // 1..5
-  comentario: string; // pode ser ''
+  name: string;
+  rating: number; // 1..5
+  comment: string; // pode ser ''
 }
 
 export type ReviewsMap = Record<string, Review[]>;
 
-export type QuizKey = 'estilo' | 'corpo' | 'momento';
+export type QuizKey = 'style' | 'body' | 'moment';
 
 export interface QuizOption {
   label: string;
@@ -37,12 +37,12 @@ export interface QuizOption {
 
 export interface QuizQuestion {
   key: QuizKey;
-  pergunta: string;
+  question: string;
   desc: string;
-  opcoes: QuizOption[];
+  options: QuizOption[];
 }
 
-export interface Ocasiao {
+export interface Occasion {
   key: string;
   label: string;
   desc: string;

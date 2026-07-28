@@ -26,7 +26,7 @@ import { palette } from '@theme/index';
  */
 export default function CatalogScreen() {
   const [rating, setRating] = useState(3);
-  const [seg, setSeg] = useState<'vinho' | 'prato'>('vinho');
+  const [seg, setSeg] = useState<'wine' | 'dish'>('wine');
   const [gift, setGift] = useState(false);
 
   return (
@@ -90,13 +90,13 @@ export default function CatalogScreen() {
         <Box style={{ gap: 12 }}>
           <SectionTitle>Garrafas</SectionTitle>
           <Box flexDirection="row" alignItems="flex-end" style={{ gap: 20 }}>
-            <BottleGraphic width={34} cor="#4a121c" iniciais="NE" showCap={false} />
-            <BottleGraphic width={46} cor="#9aa06a" iniciais="LB" />
+            <BottleGraphic width={34} color="#4a121c" initials="NE" showCap={false} />
+            <BottleGraphic width={46} color="#9aa06a" initials="LB" />
             <BottleGraphic
               width={80}
-              cor="#3a0d15"
-              iniciais="CR"
-              safra={2016}
+              color="#3a0d15"
+              initials="CR"
+              vintage={2016}
               labelMode="full"
               premium
             />
@@ -109,24 +109,24 @@ export default function CatalogScreen() {
           <Box flexDirection="row" style={{ gap: 16 }}>
             <WineCard
               data={{
-                nome: 'Notte Eterna',
-                categoria: 'TINTO · NEBBIOLO',
-                precoFmt: 'R$ 489',
-                notaFmt: '4,7',
-                cor: '#4a121c',
-                iniciais: 'NE',
-                destaque: true,
-                favorito: true,
+                name: 'Notte Eterna',
+                category: 'TINTO · NEBBIOLO',
+                priceFmt: 'R$ 489',
+                ratingFmt: '4,7',
+                color: '#4a121c',
+                initials: 'NE',
+                featured: true,
+                favorite: true,
               }}
             />
             <WineCard
               data={{
-                nome: 'Lumière Blanche',
-                categoria: 'BRANCO · CHARDONNAY',
-                precoFmt: 'R$ 279',
-                notaFmt: '4,6',
-                cor: '#9aa06a',
-                iniciais: 'LB',
+                name: 'Lumière Blanche',
+                category: 'BRANCO · CHARDONNAY',
+                priceFmt: 'R$ 279',
+                ratingFmt: '4,6',
+                color: '#9aa06a',
+                initials: 'LB',
               }}
             />
           </Box>
@@ -137,11 +137,11 @@ export default function CatalogScreen() {
           <SectionTitle>WineRow</SectionTitle>
           <WineRow
             data={{
-              nome: 'Corona Reale',
-              categoria: 'TINTO · CABERNET · BORDEAUX',
-              precoFmt: 'R$ 890',
-              cor: '#3a0d15',
-              iniciais: 'CR',
+              name: 'Corona Reale',
+              category: 'TINTO · CABERNET · BORDEAUX',
+              priceFmt: 'R$ 890',
+              color: '#3a0d15',
+              initials: 'CR',
             }}
             subtitle="★ 4,8 · 210 avaliações"
           />
@@ -151,11 +151,11 @@ export default function CatalogScreen() {
               variant="dark"
               badge="Pré-lançamento"
               data={{
-                nome: 'Perla Nera',
-                categoria: 'ESPUMANTE · CHARDONNAY',
-                precoFmt: 'R$ 620',
-                cor: '#2f4a34',
-                iniciais: 'PN',
+                name: 'Perla Nera',
+                category: 'ESPUMANTE · CHARDONNAY',
+                priceFmt: 'R$ 620',
+                color: '#2f4a34',
+                initials: 'PN',
               }}
             />
           </Box>
@@ -168,8 +168,8 @@ export default function CatalogScreen() {
             value={seg}
             onChange={setSeg}
             options={[
-              { key: 'vinho', label: 'Buscar vinho' },
-              { key: 'prato', label: 'Buscar por prato' },
+              { key: 'wine', label: 'Buscar vinho' },
+              { key: 'dish', label: 'Buscar por prato' },
             ]}
           />
           <Box flexDirection="row" alignItems="center" style={{ gap: 12 }}>

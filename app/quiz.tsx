@@ -10,12 +10,12 @@ import { QUIZ } from '@data/index';
 import { useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 
-const PALADAR_DEFAULT = 'encorpado';
+const DEFAULT_PALATE = 'encorpado';
 
 /** Quiz de paladar (3 perguntas) — grava o paladar e segue para a Home. */
 export default function QuizScreen() {
   const router = useRouter();
-  const setPaladar = useUserStore(s => s.setPaladar);
+  const setPalate = useUserStore(s => s.setPalate);
   const completeOnboarding = useUserStore(s => s.completeOnboarding);
 
   const [step, setStep] = useState(0);
@@ -26,12 +26,12 @@ export default function QuizScreen() {
   // A descrição e os botões esperam a pergunta (StaggeredText) terminar de se
   // revelar (defaults reacticx: 40ms/char + 350ms). Depois disso entram rápido
   // e próximos entre si — só um pouco atrasados um em relação ao outro.
-  const textRevealMs = (question.pergunta.length - 1) * 40 + 350;
+  const textRevealMs = (question.question.length - 1) * 40 + 350;
   const DESC_DELAY = textRevealMs;
   const OPTS_DELAY = textRevealMs + 160;
 
   const finish = (allAnswers: Record<string, string>) => {
-    setPaladar(allAnswers.corpo ?? PALADAR_DEFAULT);
+    setPalate(allAnswers.corpo ?? DEFAULT_PALATE);
     completeOnboarding();
     router.replace('/home');
   };
@@ -87,7 +87,7 @@ export default function QuizScreen() {
         <Box marginBottom="s6">
           <StaggeredText
             key={question.key}
-            text={question.pergunta}
+            text={question.question}
             style={{
               fontFamily: fonts.serifMedium,
               fontSize: 38,
@@ -106,7 +106,7 @@ export default function QuizScreen() {
 
         {/* opções (fade up escalonado) */}
         <Box style={{ gap: 14 }}>
-          {question.opcoes.map((op, i) => (
+          {question.options.map((op, i) => (
             <Animated.View
               key={`${question.key}-${op.val}`}
               entering={FadeInDown.delay(OPTS_DELAY + i * 70).duration(320)}>

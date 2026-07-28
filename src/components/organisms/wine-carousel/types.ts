@@ -8,26 +8,26 @@ import { type Wine } from '@data/types';
  * handler de scroll (offset ÷ intervalo), então quem consome não precisa saber
  * largura nem espaçamento — só comparar com o próprio índice.
  */
-export type ProgressoCarrossel = SharedValue<number>;
+export type CarouselProgress = SharedValue<number>;
 
-export type CarrosselVinhosProps = {
-  vinhos: Wine[];
-  /** Criado por quem compõe a tela e compartilhado com o `FundoVinhos`. */
-  progresso: ProgressoCarrossel;
-  onSelecionar: (id: string) => void;
+export type WineCarouselProps = {
+  wines: Wine[];
+  /** Criado por quem compõe a tela e compartilhado com o `WineBackdrop`. */
+  progress: CarouselProgress;
+  onSelect: (id: string) => void;
 };
 
-export type FundoVinhosProps = {
-  vinhos: Wine[];
+export type WineBackdropProps = {
+  wines: Wine[];
   /** O MESMO shared value passado ao carrossel. */
-  progresso: ProgressoCarrossel;
+  progress: CarouselProgress;
 };
 
-export type SlideVinhoProps = {
-  vinho: Wine;
-  indice: number;
-  progresso: ProgressoCarrossel;
-  largura: number;
-  altura: number;
+export type WineSlideProps = {
+  wine: Wine;
+  index: number;
+  progress: CarouselProgress;
+  width: number;
+  height: number;
   onPress: () => void;
 };

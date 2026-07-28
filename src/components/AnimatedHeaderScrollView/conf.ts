@@ -22,10 +22,10 @@ export const spacing = {
 } as const;
 
 export const Colors = {
-  titulo: palette.wine,
-  subtitulo: alpha.inkA55,
+  title: palette.wine,
+  subtitle: alpha.inkA55,
   /** Fio de separação sob a barra compacta. */
-  fio: alpha.inkBorder14,
+  hairline: alpha.inkBorder14,
 } as const;
 
 /**

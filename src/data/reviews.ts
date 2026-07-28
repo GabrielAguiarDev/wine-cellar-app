@@ -4,44 +4,44 @@ import { type ReviewsMap } from './types';
 export const REVIEWS: ReviewsMap = {
   'notte-eterna': [
     {
-      nome: 'Marina C.',
-      nota: 5,
-      comentario:
+      name: 'Marina C.',
+      rating: 5,
+      comment:
         'Simplesmente inesquecível. Abri num jantar especial e foi o centro das atenções.',
     },
     {
-      nome: 'Rafael T.',
-      nota: 5,
-      comentario: 'Aveludado como prometido. Vale cada centavo.',
+      name: 'Rafael T.',
+      rating: 5,
+      comment: 'Aveludado como prometido. Vale cada centavo.',
     },
     {
-      nome: 'Beatriz L.',
-      nota: 4,
-      comentario: 'Ótimo tinto, precisa de um bom tempo de decantação.',
+      name: 'Beatriz L.',
+      rating: 4,
+      comment: 'Ótimo tinto, precisa de um bom tempo de decantação.',
     },
-    { nome: 'J. P.', nota: 5, comentario: '' },
+    { name: 'J. P.', rating: 5, comment: '' },
   ],
   'perla-nera': [
     {
-      nome: 'Camila R.',
-      nota: 5,
-      comentario: 'O melhor espumante que já provei. Perlage impecável.',
+      name: 'Camila R.',
+      rating: 5,
+      comment: 'O melhor espumante que já provei. Perlage impecável.',
     },
     {
-      nome: 'Otávio M.',
-      nota: 5,
-      comentario: 'Elegante e complexo. Guardo para ocasiões que merecem.',
+      name: 'Otávio M.',
+      rating: 5,
+      comment: 'Elegante e complexo. Guardo para ocasiões que merecem.',
     },
   ],
   'corona-reale': [
     {
-      nome: 'Henrique A.',
-      nota: 5,
-      comentario: 'Um Bordeaux de outra era. Estrutura perfeita.',
+      name: 'Henrique A.',
+      rating: 5,
+      comment: 'Um Bordeaux de outra era. Estrutura perfeita.',
     },
-    { nome: 'Lúcia F.', nota: 4, comentario: 'Imponente. Pede pratos à altura.' },
+    { name: 'Lúcia F.', rating: 4, comment: 'Imponente. Pede pratos à altura.' },
   ],
   'lumiere-blanche': [
-    { nome: 'Sofia D.', nota: 5, comentario: 'Cremoso e mineral, adorei com peixe.' },
+    { name: 'Sofia D.', rating: 5, comment: 'Cremoso e mineral, adorei com peixe.' },
   ],
 };

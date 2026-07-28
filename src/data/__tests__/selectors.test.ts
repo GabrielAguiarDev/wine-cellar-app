@@ -1,21 +1,21 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
-  CAT_ESPECIAIS,
+  CAT_SPECIALS,
   cartCount,
   cartSubtotal,
-  especiais,
   findWine,
-  railMaisVendidos,
-  railSelecionados,
+  railBestSellers,
+  railSelected,
   searchByDish,
   searchWines,
+  specials,
   winesByIds,
 } from '../selectors';
 
 describe('findWine', () => {
   it('encontra por id', () => {
-    expect(findWine('corona-reale').nome).toBe('Corona Reale');
+    expect(findWine('corona-reale').name).toBe('Corona Reale');
   });
   it('faz fallback para o primeiro se não achar', () => {
     expect(findWine('inexistente').id).toBe('notte-eterna');
@@ -23,21 +23,21 @@ describe('findWine', () => {
 });
 
 describe('rails', () => {
-  it('railSelecionados: tintos ou destaques, máx 5', () => {
-    const r = railSelecionados();
+  it('railSelected: tintos ou destaques, máx 5', () => {
+    const r = railSelected();
     expect(r.length).toBe(5);
-    expect(r.every(w => w.tipo === 'Tinto' || w.destaque)).toBe(true);
+    expect(r.every(w => w.type === 'Tinto' || w.featured)).toBe(true);
   });
 
-  it('railMaisVendidos: top 4 por avaliações desc', () => {
-    const r = railMaisVendidos();
+  it('railBestSellers: top 4 por avaliações desc', () => {
+    const r = railBestSellers();
     expect(r.length).toBe(4);
     expect(r[0].id).toBe('corona-reale'); // 210 avaliações
-    expect(r[0].totalAvaliacoes).toBeGreaterThanOrEqual(r[1].totalAvaliacoes);
+    expect(r[0].reviewCount).toBeGreaterThanOrEqual(r[1].reviewCount);
   });
 
-  it('especiais: só destaques', () => {
-    expect(especiais().map(w => w.id).sort()).toEqual(
+  it('specials: só destaques', () => {
+    expect(specials().map(w => w.id).sort()).toEqual(
       ['corona-reale', 'notte-eterna', 'perla-nera'].sort(),
     );
   });
@@ -45,7 +45,7 @@ describe('rails', () => {
 
 describe('winesByIds', () => {
   it('resolve na ordem dada', () => {
-    expect(winesByIds(['perla-nera', 'alba-serena']).map(w => w.nome)).toEqual([
+    expect(winesByIds(['perla-nera', 'alba-serena']).map(w => w.name)).toEqual([
       'Perla Nera',
       'Alba Serena',
     ]);
@@ -54,11 +54,11 @@ describe('winesByIds', () => {
 
 describe('searchWines', () => {
   it('filtra por categoria (tipo)', () => {
-    expect(searchWines({ catFilter: 'Branco' }).every(w => w.tipo === 'Branco')).toBe(true);
+    expect(searchWines({ catFilter: 'Branco' }).every(w => w.type === 'Branco')).toBe(true);
   });
 
   it('categoria especiais retorna destaques', () => {
-    expect(searchWines({ catFilter: CAT_ESPECIAIS }).every(w => w.destaque)).toBe(true);
+    expect(searchWines({ catFilter: CAT_SPECIALS }).every(w => w.featured)).toBe(true);
   });
 
   it('busca textual por nome/uva/região/tipo', () => {

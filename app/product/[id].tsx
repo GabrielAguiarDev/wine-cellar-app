@@ -19,7 +19,7 @@ import {
 import { findWine, type Wine } from '@data/index';
 import { useCartStore, useFavoritesStore, useToastStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
-import { brl, categoriaCompleta, nf } from '@utils/index';
+import { brl, fullCategory, nf } from '@utils/index';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,11 +30,11 @@ export default function ProductScreen() {
   const toggleFav = useFavoritesStore(s => s.toggleFav);
 
   const wine = findWine(id ?? '');
-  const favorito = !!favs[wine.id];
-  const isReserva = wine.destaque && wine.estoqueBaixo;
+  const favorite = !!favs[wine.id];
+  const isReservation = wine.featured && wine.lowStock;
 
   const buy = () => {
-    if (isReserva) {
+    if (isReservation) {
       show('Reservado por 24h — enviamos um lembrete antes de expirar.');
       return;
     }
@@ -48,14 +48,14 @@ export default function ProductScreen() {
 
   const shared = {
     wine,
-    favorito,
+    favorite,
     onBack: () => router.back(),
     onToggleFav: () => toggleFav(wine.id),
     onBuy: buy,
     onReviews: goReviews,
   };
 
-  return wine.destaque ? (
+  return wine.featured ? (
     <ProductPremium {...shared} />
   ) : (
     <ProductStandard {...shared} />
@@ -66,17 +66,17 @@ export default function ProductScreen() {
 
 type LayoutProps = {
   wine: Wine;
-  favorito: boolean;
+  favorite: boolean;
   onBack: () => void;
   onToggleFav: () => void;
   onBuy: () => void;
   onReviews: () => void;
 };
 
-function Harmoniza({ itens, dark }: { itens: string[]; dark?: boolean }) {
+function Pairings({ items, dark }: { items: string[]; dark?: boolean }) {
   return (
     <Box flexDirection="row" flexWrap="wrap" style={{ gap: 8 }}>
-      {itens.map(h => (
+      {items.map(h => (
         <Box
           key={h}
           borderWidth={1}
@@ -95,7 +95,7 @@ function Harmoniza({ itens, dark }: { itens: string[]; dark?: boolean }) {
 
 function ProductPremium({
   wine,
-  favorito,
+  favorite,
   onBack,
   onToggleFav,
   onBuy,
@@ -117,12 +117,12 @@ function ProductPremium({
           Preço
         </Text>
         <Text color="textOnDark" style={{ fontFamily: fonts.serifRegular, fontSize: 28 }}>
-          {brl(wine.preco)}
+          {brl(wine.price)}
         </Text>
       </Box>
       <Box flex={1}>
         <Button
-          label={wine.estoqueBaixo ? 'Reservar por 24h' : 'Adquirir'}
+          label={wine.lowStock ? 'Reservar por 24h' : 'Adquirir'}
           variant="outlineGold"
           fullWidth
           onPress={onBuy}
@@ -144,28 +144,28 @@ function ProductPremium({
             <Icon name="chevronLeft" size={16} color={palette.gold} />
           </TouchableOpacityBox>
           <TouchableOpacityBox accessibilityLabel="Favoritar" activeOpacity={0.7} onPress={onToggleFav} padding="s6">
-            <Icon name="heart" size={22} color={palette.gold} fill={favorito ? palette.gold : 'none'} />
+            <Icon name="heart" size={22} color={palette.gold} fill={favorite ? palette.gold : 'none'} />
           </TouchableOpacityBox>
         </Box>
 
         {/* nome + garrafa */}
         <Box alignItems="center" marginTop="s8">
           <Text variant="eyebrow" style={{ letterSpacing: 3.6 }}>
-            Safra {wine.safra}
+            Safra {wine.vintage}
           </Text>
           <Text
             color="textOnDark"
             textAlign="center"
             marginTop="s8"
             style={{ fontFamily: fonts.serifSemiBold, fontSize: 60, lineHeight: 58 }}>
-            {wine.nome}
+            {wine.name}
           </Text>
           <Box marginTop="s16">
             <BottleGraphic
               width={96}
-              cor={wine.cor}
-              iniciais={wine.iniciais}
-              safra={wine.safra}
+              color={wine.color}
+              initials={wine.initials}
+              vintage={wine.vintage}
               premium
               labelMode="full"
             />
@@ -180,7 +180,7 @@ function ProductPremium({
             fontSize={10}
             color="cremeA82"
             style={{ letterSpacing: 2.4, lineHeight: 17 }}>
-            {categoriaCompleta(wine).toUpperCase()}
+            {fullCategory(wine).toUpperCase()}
           </Text>
         </Box>
 
@@ -191,9 +191,9 @@ function ProductPremium({
           alignItems="center"
           marginTop="s16"
           style={{ gap: 8 }}>
-          <StarRating value={wine.notaMedia} size={14} />
+          <StarRating value={wine.averageRating} size={14} />
           <Text variant="body" fontSize={12} color="accent">
-            {nf(wine.notaMedia)} · {wine.totalAvaliacoes} avaliações
+            {nf(wine.averageRating)} · {wine.reviewCount} avaliações
           </Text>
         </TouchableOpacityBox>
 
@@ -201,7 +201,7 @@ function ProductPremium({
           color="textOnDark"
           marginTop="s22"
           style={{ fontFamily: fonts.serifItalic, fontSize: 22, lineHeight: 31 }}>
-          &quot;{wine.assinatura}&quot;
+          &quot;{wine.signature}&quot;
         </Text>
 
         {/* vídeo sommelier */}
@@ -251,7 +251,7 @@ function ProductPremium({
                   color="cremeA70"
                   marginTop="s14"
                   style={{ letterSpacing: 1.8 }}>
-                  Conheça o {wine.nome} · {wine.videoDur}
+                  Conheça o {wine.name} · {wine.videoDuration}
                 </Text>
               </Box>
             )}
@@ -263,11 +263,11 @@ function ProductPremium({
           <Text variant="eyebrow" marginBottom="s12">
             Harmoniza com
           </Text>
-          <Harmoniza itens={wine.harmonizacoes} dark />
+          <Pairings items={wine.pairings} dark />
         </Box>
 
         {/* estoque baixo */}
-        {wine.estoqueBaixo && (
+        {wine.lowStock && (
           <Box marginTop="s26" flexDirection="row" alignItems="center" style={{ gap: 10 }}>
             <Blip size={7} color={palette.gold} />
             <Text variant="body" fontSize={11} color="cremeA70">
@@ -282,7 +282,7 @@ function ProductPremium({
 
 function ProductStandard({
   wine,
-  favorito,
+  favorite,
   onBack,
   onToggleFav,
   onBuy,
@@ -297,7 +297,7 @@ function ProductStandard({
             label="Voltar"
             right={
               <TouchableOpacityBox accessibilityLabel="Favoritar" activeOpacity={0.7} onPress={onToggleFav} padding="s6">
-                <Icon name="heart" size={22} color={palette.wine} fill={favorito ? palette.wine : 'none'} />
+                <Icon name="heart" size={22} color={palette.wine} fill={favorite ? palette.wine : 'none'} />
               </TouchableOpacityBox>
             }
           />
@@ -307,9 +307,9 @@ function ProductStandard({
         <Box alignItems="center" paddingTop="s24" paddingBottom="s8">
           <BottleGraphic
             width={110}
-            cor={wine.cor}
-            iniciais={wine.iniciais}
-            safra={wine.safra}
+            color={wine.color}
+            initials={wine.initials}
+            vintage={wine.vintage}
             capColor={palette.wine}
             labelMode="full"
             labelBg={palette.cremeSurface}
@@ -318,21 +318,21 @@ function ProductStandard({
 
         <Box paddingHorizontal="s30" alignItems="center">
           <Text variant="eyebrow" style={{ letterSpacing: 3.6 }}>
-            Safra {wine.safra}
+            Safra {wine.vintage}
           </Text>
           <Text
             color="primary"
             textAlign="center"
             marginTop="s8"
             style={{ fontFamily: fonts.serifSemiBold, fontSize: 44, lineHeight: 44 }}>
-            {wine.nome}
+            {wine.name}
           </Text>
           <Text
             color="inkA65"
             textAlign="center"
             marginTop="s4"
             style={{ fontFamily: fonts.serifItalic, fontSize: 18 }}>
-            {wine.uva} · {wine.regiao}
+            {wine.grape} · {wine.region}
           </Text>
           <Text
             variant="label"
@@ -340,7 +340,7 @@ function ProductStandard({
             color="inkA50"
             marginTop="s16"
             style={{ letterSpacing: 2.4 }}>
-            {categoriaCompleta(wine).toUpperCase()}
+            {fullCategory(wine).toUpperCase()}
           </Text>
 
           <TouchableOpacityBox
@@ -350,9 +350,9 @@ function ProductStandard({
             alignItems="center"
             marginTop="s16"
             style={{ gap: 8 }}>
-            <StarRating value={wine.notaMedia} size={14} />
+            <StarRating value={wine.averageRating} size={14} />
             <Text variant="body" fontSize={12} color="accentDark">
-              {nf(wine.notaMedia)} · {wine.totalAvaliacoes}
+              {nf(wine.averageRating)} · {wine.reviewCount}
             </Text>
           </TouchableOpacityBox>
 
@@ -361,11 +361,11 @@ function ProductStandard({
             textAlign="center"
             marginTop="s22"
             style={{ fontFamily: fonts.serifItalic, fontSize: 20, lineHeight: 28, maxWidth: 300 }}>
-            &quot;{wine.assinatura}&quot;
+            &quot;{wine.signature}&quot;
           </Text>
 
           <Text color="primary" marginTop="s24" style={{ fontFamily: fonts.serifRegular, fontSize: 26 }}>
-            {brl(wine.preco)}
+            {brl(wine.price)}
           </Text>
 
           <Box marginTop="s20">
@@ -378,7 +378,7 @@ function ProductStandard({
           <Text variant="eyebrow" color="accent" marginBottom="s14">
             Harmoniza com
           </Text>
-          <Harmoniza itens={wine.harmonizacoes} />
+          <Pairings items={wine.pairings} />
         </Box>
       </Box>
     </Screen>

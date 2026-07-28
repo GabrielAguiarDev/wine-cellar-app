@@ -11,11 +11,11 @@ type BottleGraphicProps = {
   /** Largura do corpo da garrafa em px (define a escala; base de design = 46). */
   width?: number;
   /** Cor do vidro da garrafa. */
-  cor: string;
+  color: string;
   /** Iniciais no rótulo (ex.: 'NE'). */
-  iniciais: string;
+  initials: string;
   /** Safra — exibida no rótulo quando labelMode='full'. */
-  safra?: number;
+  vintage?: number;
   /** Cor da cápsula (default: dourada se premium, senão escura). */
   capColor?: string;
   /** Exibe a cápsula sobre o gargalo. */
@@ -32,9 +32,9 @@ const BASE_W = 46;
 
 export function BottleGraphic({
   width = 46,
-  cor,
-  iniciais,
-  safra,
+  color,
+  initials,
+  vintage,
   capColor,
   showCap = true,
   premium = false,
@@ -59,7 +59,7 @@ export function BottleGraphic({
         width={px(15)}
         height={px(34)}
         style={{
-          backgroundColor: cor,
+          backgroundColor: color,
           borderTopLeftRadius: px(5),
           borderTopRightRadius: px(5),
         }}
@@ -83,7 +83,7 @@ export function BottleGraphic({
         width={px(46)}
         height={px(120)}
         style={{
-          backgroundColor: cor,
+          backgroundColor: color,
           borderTopLeftRadius: px(22),
           borderTopRightRadius: px(22),
           borderBottomLeftRadius: px(12),
@@ -133,9 +133,9 @@ export function BottleGraphic({
             color: palette.wine,
             lineHeight: px(18),
           }}>
-          {iniciais}
+          {initials}
         </Text>
-        {full && safra != null && (
+        {full && vintage != null && (
           <Text
             style={{
               fontFamily: fonts.sansRegular,
@@ -143,7 +143,7 @@ export function BottleGraphic({
               letterSpacing: px(1.4),
               color: alpha.wineA60,
             }}>
-            {safra}
+            {vintage}
           </Text>
         )}
       </Box>

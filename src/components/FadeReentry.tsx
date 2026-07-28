@@ -16,15 +16,15 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { useTransicaoStore } from '@store/index';
+import { useTransitionStore } from '@store/index';
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * ReentradaEmFade — a tela de ORIGEM de um shared element voltando ao foco
+ * FadeReentry — a tela de ORIGEM de um shared element voltando ao foco
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * Contexto: quando um shared element cresce até virar tela cheia (ver
- * `BlocoCuradoria`), a rota de destino é um push com `animation: 'none'` —
+ * `CurationBlock`), a rota de destino é um push com `animation: 'none'` —
  * quem anima é o próprio bloco. O efeito colateral é na VOLTA: a forma encolhe
  * macia até o card, mas o resto da tela de origem (header, busca, pills,
  * rails) reaparece de um frame para o outro, seco, porque a Stack não tem
@@ -37,14 +37,14 @@ import { useTransicaoStore } from '@store/index';
  *
  * ── Uso ─────────────────────────────────────────────────────────────────────
  *
- *   <ReentradaEmFade transitionId={CURADORIA_SEMANA.id}>
- *     <Reaparecer ordem={0}>{header}</Reaparecer>
- *     <Reaparecer ordem={1}>{busca}</Reaparecer>
- *     {card}                            ← o shared element NÃO entra em fade
- *     <Reaparecer ordem={2}>{pills}</Reaparecer>
- *   </ReentradaEmFade>
+ *   <FadeReentry transitionId={WEEKLY_CURATION.id}>
+ *     <Reappear order={0}>{header}</Reappear>
+ *     <Reappear order={1}>{busca}</Reappear>
+ *     {card}                          ← o shared element NÃO entra em fade
+ *     <Reappear order={2}>{pills}</Reappear>
+ *   </FadeReentry>
  *
- * O próprio shared element fica FORA de `Reaparecer`: a forma que encolhe
+ * O próprio shared element fica FORA de `Reappear`: a forma que encolhe
  * aterrissa exatamente sobre ele, então ele precisa estar em opacidade cheia
  * no primeiro frame — em fade, apareceria um card fantasma sob a forma.
  *
@@ -58,113 +58,108 @@ import { useTransicaoStore } from '@store/index';
  * Nada disso vale para as outras navegações da tela (produto, busca, abas):
  * essas rotas têm animação de Stack própria e a tela de origem aparece por
  * baixo durante o gesto — zerar a opacidade ali seria um piscada visível. Daí
- * o gatilho ser a flag `reentradas` do `useTransicaoStore`, gravada SÓ por quem
+ * o gatilho ser a flag `reentries` do `useTransitionStore`, gravada SÓ por quem
  * abre um shared element sem animação de Stack.
  */
 
 /** Duração do fade de cada elemento. */
-const DURACAO_ITEM = 280;
+const ITEM_DURATION = 280;
 
 /** Defasagem entre um elemento e o seguinte. */
-const PASSO = 55;
+const STEP = 55;
 
 /** Deslocamento vertical inicial, em px. Sobe até 0 junto com o fade. */
-const DESLOCAMENTO = 6;
+const OFFSET = 6;
 
 /**
- * Maior `ordem` que o escalonamento reconhece. Ordens acima disto usam este
+ * Maior `order` que o escalonamento reconhece. Ordens acima disto usam este
  * atraso (em vez de nunca completarem o fade, ficando translúcidas).
  */
-const ORDEM_MAX = 8;
+const MAX_ORDER = 8;
 
 /** Janela total: cobre o último elemento possível. */
-const DURACAO_TOTAL = ORDEM_MAX * PASSO + DURACAO_ITEM;
+const TOTAL_DURATION = MAX_ORDER * STEP + ITEM_DURATION;
 
 /**
  * Tempo decorrido da reentrada, em ms — não um progresso 0→1. É o que permite
- * a cada `Reaparecer` derivar sua própria janela (`ordem × PASSO`) sem que o
+ * a cada `Reappear` derivar sua própria janela (`order × STEP`) sem que o
  * provider precise saber quantos filhos existem.
  */
-const TempoContext = createContext<SharedValue<number> | null>(null);
+const TimeContext = createContext<SharedValue<number> | null>(null);
 
-export type ReentradaEmFadeProps = {
+export type FadeReentryProps = {
   /**
    * `transitionId` do shared element que parte desta tela — a mesma chave que
-   * o card grava em `useTransicaoStore`. É o que restringe o fade à volta da
+   * o card grava em `useTransitionStore`. É o que restringe o fade à volta da
    * tela cheia, sem afetar as outras navegações.
    */
   transitionId: string;
   children: ReactNode;
 };
 
-export function ReentradaEmFade({
-  transitionId,
-  children,
-}: ReentradaEmFadeProps) {
+export function FadeReentry({ transitionId, children }: FadeReentryProps) {
   // Começa no fim da janela: sem reentrada pendente (1º acesso, troca de aba),
   // todo mundo já está visível e nada anima.
-  const tempo = useSharedValue(DURACAO_TOTAL);
+  const time = useSharedValue(TOTAL_DURATION);
 
   useFocusEffect(
     useCallback(() => {
-      const { reentradas, limparReentrada } = useTransicaoStore.getState();
-      if (reentradas[transitionId]) {
+      const { reentries, clearReentry } = useTransitionStore.getState();
+      if (reentries[transitionId]) {
         // Pedido consumido: uma volta, um fade.
-        limparReentrada(transitionId);
-        tempo.set(0);
+        clearReentry(transitionId);
+        time.set(0);
         // `Easing.linear` porque o valor animado é o RELÓGIO da reentrada; a
-        // curva de cada elemento é aplicada dentro de `Reaparecer`.
-        tempo.set(
-          withTiming(DURACAO_TOTAL, {
-            duration: DURACAO_TOTAL,
+        // curva de cada elemento é aplicada dentro de `Reappear`.
+        time.set(
+          withTiming(TOTAL_DURATION, {
+            duration: TOTAL_DURATION,
             easing: Easing.linear,
           }),
         );
       }
       return () => {
         // Saindo para a tela cheia: esconde agora, escondido sob o destino.
-        if (useTransicaoStore.getState().reentradas[transitionId]) {
-          tempo.set(0);
+        if (useTransitionStore.getState().reentries[transitionId]) {
+          time.set(0);
         }
       };
-    }, [transitionId, tempo]),
+    }, [transitionId, time]),
   );
 
-  return (
-    <TempoContext.Provider value={tempo}>{children}</TempoContext.Provider>
-  );
+  return <TimeContext.Provider value={time}>{children}</TimeContext.Provider>;
 }
 
-export type ReaparecerProps = {
+export type ReappearProps = {
   /**
    * Posição na fila do escalonamento (0 = primeiro). Segue a leitura da tela,
    * de cima para baixo. Ordens repetidas aparecem juntas.
    */
-  ordem?: number;
+  order?: number;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
 };
 
 /**
- * Um elemento da reentrada. Fora de um `ReentradaEmFade` é um wrapper inerte
+ * Um elemento da reentrada. Fora de um `FadeReentry` é um wrapper inerte
  * (sem contexto, nada anima) — seguro de usar em componentes compartilhados.
  */
-export function Reaparecer({ ordem = 0, style, children }: ReaparecerProps) {
-  const tempo = useContext(TempoContext);
-  const atraso = Math.min(ordem, ORDEM_MAX) * PASSO;
+export function Reappear({ order = 0, style, children }: ReappearProps) {
+  const time = useContext(TimeContext);
+  const delay = Math.min(order, MAX_ORDER) * STEP;
 
-  const estilo = useAnimatedStyle(() => {
-    if (!tempo) {
+  const animatedStyle = useAnimatedStyle(() => {
+    if (!time) {
       return {};
     }
-    const t = Math.min(Math.max((tempo.get() - atraso) / DURACAO_ITEM, 0), 1);
+    const t = Math.min(Math.max((time.get() - delay) / ITEM_DURATION, 0), 1);
     // Ease-out cúbico: chega rápido perto do fim, sem "estalo" no começo.
     const e = 1 - (1 - t) ** 3;
     return {
       opacity: e,
-      transform: [{ translateY: (1 - e) * DESLOCAMENTO }],
+      transform: [{ translateY: (1 - e) * OFFSET }],
     };
   });
 
-  return <Animated.View style={[style, estilo]}>{children}</Animated.View>;
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

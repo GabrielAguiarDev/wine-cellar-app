@@ -13,30 +13,30 @@ import Animated, {
 
 import { type Wine } from '@data/types';
 import { fonts } from '@theme/index';
-import { capColorFor, tipoUva } from '@utils/index';
+import { capColorFor, typeAndGrape } from '@utils/index';
 import { brl } from '@utils/format';
 
 import { Box, TouchableOpacityBox } from '../../Box';
 import { BottleGraphic } from '../../BottleGraphic';
 import { Text } from '../../Text';
 import {
-  ALPHA_TINTA,
-  CORRECAO_LUMINANCIA,
-  DESLOCAMENTO_VIZINHO,
-  ESCALA_VIZINHO,
-  ESPACAMENTO,
-  ALTURA_LEGENDA,
-  FRACAO_ALTURA_TINTA,
-  FRACAO_LARGURA_ITEM,
-  RESPIRO_MOLDURA,
-  OPACIDADE_VIZINHO,
-  ROTACAO_VIZINHO,
+  TINT_ALPHA,
+  LUMINANCE_CORRECTION,
+  NEIGHBOR_OFFSET,
+  NEIGHBOR_SCALE,
+  SPACING,
+  CAPTION_HEIGHT,
+  TINT_HEIGHT_FRACTION,
+  ITEM_WIDTH_FRACTION,
+  FRAME_INSET,
+  NEIGHBOR_OPACITY,
+  NEIGHBOR_ROTATION,
 } from './conf';
 import {
-  type CarrosselVinhosProps,
-  type FundoVinhosProps,
-  type ProgressoCarrossel,
-  type SlideVinhoProps,
+  type WineCarouselProps,
+  type WineBackdropProps,
+  type CarouselProgress,
+  type WineSlideProps,
 } from './types';
 
 /**
@@ -44,19 +44,19 @@ import {
  * Carrossel de vinhos da curadoria + fundo que reage ao vinho em foco
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * São DOIS componentes que dividem um único `progresso` (shared value criado
- * por quem compõe a tela, ver `app/curadoria/[id].tsx`):
+ * São DOIS componentes que dividem um único `progress` (shared value criado
+ * por quem compõe a tela, ver `app/curation/[id].tsx`):
  *
- *  • `FundoVinhos`     — camada de tinta atrás de tudo. Uma camada por vinho,
- *                        em crossfade: a do vinho em foco vai a 1, as vizinhas
- *                        a 0. Vive DENTRO da forma do `BlocoCuradoria`, então
- *                        é recortada por ela e nunca pinta fora.
- *  • `CarrosselVinhos` — lista horizontal com snap, um vinho por vez, com
- *                        profundidade (escala/rotação/deslocamento) conforme a
- *                        distância do centro.
+ *  • `WineBackdrop`  — camada de tinta atrás de tudo. Uma camada por vinho,
+ *                      em crossfade: a do vinho em foco vai a 1, as vizinhas
+ *                      a 0. Vive DENTRO da forma do `CurationBlock`, então
+ *                      é recortada por ela e nunca pinta fora.
+ *  • `WineCarousel`  — lista horizontal com snap, um vinho por vez, com
+ *                      profundidade (escala/rotação/deslocamento) conforme a
+ *                      distância do centro.
  *
- * `progresso` é normalizado em unidades de item dentro do handler de scroll
- * (offset ÷ intervalo). Cada slide só precisa comparar `indice - progresso`, e
+ * `progress` é normalizado em unidades de item dentro do handler de scroll
+ * (offset ÷ intervalo). Cada slide só precisa comparar `index - progress`, e
  * o fundo só precisa interpolar em torno do próprio índice — nenhum dos dois
  * conhece largura ou espaçamento.
  *
@@ -66,24 +66,24 @@ import {
  */
 
 /** Hook das medidas horizontais — a mesma conta usada pelo snap e pelo slide. */
-function useMetricas() {
+function useMetrics() {
   const { width } = useWindowDimensions();
-  const larguraItem = Math.round(width * FRACAO_LARGURA_ITEM);
+  const itemWidth = Math.round(width * ITEM_WIDTH_FRACTION);
   return {
-    larguraItem,
-    intervalo: larguraItem + ESPACAMENTO,
+    itemWidth,
+    interval: itemWidth + SPACING,
     /** Recuo lateral que centraliza o primeiro e o último slide. */
-    recuoLateral: Math.round((width - larguraItem) / 2),
+    sideInset: Math.round((width - itemWidth) / 2),
   };
 }
 
 /** Cria o shared value do scroll. Fica na tela, que o passa aos dois filhos. */
-export function useProgressoCarrossel(): ProgressoCarrossel {
+export function useCarouselProgress(): CarouselProgress {
   return useSharedValue(0);
 }
 
 /** Luminância relativa (0 = preto, 1 = branco) de um hex `#RRGGBB`. */
-function luminancia(hex: string): number {
+function luminance(hex: string): number {
   const n = parseInt(hex.replace('#', ''), 16);
   const r = (n >> 16) & 255;
   const g = (n >> 8) & 255;
@@ -97,43 +97,43 @@ function rgba(hex: string, a: number): string {
 }
 
 /** Uma camada de tinta (um vinho), em crossfade com as vizinhas. */
-function CamadaTinta({
-  vinho,
-  indice,
-  progresso,
-  altura,
+function TintLayer({
+  wine,
+  index,
+  progress,
+  height,
 }: {
-  vinho: Wine;
-  indice: number;
-  progresso: ProgressoCarrossel;
-  altura: number;
+  wine: Wine;
+  index: number;
+  progress: CarouselProgress;
+  height: number;
 }) {
-  const estilo = useAnimatedStyle(() => ({
+  const style = useAnimatedStyle(() => ({
     opacity: interpolate(
-      progresso.get(),
-      [indice - 1, indice, indice + 1],
+      progress.get(),
+      [index - 1, index, index + 1],
       [0, 1, 0],
       Extrapolation.CLAMP,
     ),
   }));
 
-  const alpha = ALPHA_TINTA * (1 - CORRECAO_LUMINANCIA * luminancia(vinho.cor));
+  const alpha = TINT_ALPHA * (1 - LUMINANCE_CORRECTION * luminance(wine.color));
 
   return (
     // Ancorada embaixo e com altura limitada: é onde a garrafa está e onde a
     // tinta realmente aparece.
     <Animated.View
       style={[
-        { position: 'absolute', left: 0, right: 0, bottom: 0, height: altura },
-        estilo,
+        { position: 'absolute', left: 0, right: 0, bottom: 0, height },
+        style,
       ]}>
       {/* Mais forte embaixo (atrás da garrafa) e transparente no topo, onde
           ficam o título e o subtítulo da curadoria. */}
       <LinearGradient
         colors={[
           'transparent',
-          rgba(vinho.cor, alpha * 0.45),
-          rgba(vinho.cor, alpha),
+          rgba(wine.color, alpha * 0.45),
+          rgba(wine.color, alpha),
         ]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
@@ -148,42 +148,42 @@ function CamadaTinta({
  * pior do que manter as camadas prontas). Em coleções grandes (~8+) vale
  * passar a montar só uma janela de índices em volta do foco.
  */
-export function FundoVinhos({ vinhos, progresso }: FundoVinhosProps) {
-  const { height } = useWindowDimensions();
-  const altura = Math.round(height * FRACAO_ALTURA_TINTA);
+export function WineBackdrop({ wines, progress }: WineBackdropProps) {
+  const { height: screenHeight } = useWindowDimensions();
+  const height = Math.round(screenHeight * TINT_HEIGHT_FRACTION);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {vinhos.map((v, i) => (
-        <CamadaTinta
-          key={v.id}
-          vinho={v}
-          indice={i}
-          progresso={progresso}
-          altura={altura}
+      {wines.map((w, i) => (
+        <TintLayer
+          key={w.id}
+          wine={w}
+          index={i}
+          progress={progress}
+          height={height}
         />
       ))}
     </View>
   );
 }
 
-function SlideVinho({
-  vinho,
-  indice,
-  progresso,
-  largura,
-  altura,
+function WineSlide({
+  wine,
+  index,
+  progress,
+  width,
+  height,
   onPress,
-}: SlideVinhoProps) {
-  const estilo = useAnimatedStyle(() => {
+}: WineSlideProps) {
+  const style = useAnimatedStyle(() => {
     // Distância assinada até o centro: -1 = um slide à esquerda, +1 à direita.
-    const d = indice - progresso.get();
-    const entrada = [-1, 0, 1];
+    const d = index - progress.get();
+    const range = [-1, 0, 1];
     return {
       opacity: interpolate(
         Math.abs(d),
         [0, 1],
-        [1, OPACIDADE_VIZINHO],
+        [1, NEIGHBOR_OPACITY],
         Extrapolation.CLAMP,
       ),
       transform: [
@@ -191,7 +191,7 @@ function SlideVinho({
           translateY: interpolate(
             Math.abs(d),
             [0, 1],
-            [0, DESLOCAMENTO_VIZINHO],
+            [0, NEIGHBOR_OFFSET],
             Extrapolation.CLAMP,
           ),
         },
@@ -199,15 +199,15 @@ function SlideVinho({
           scale: interpolate(
             Math.abs(d),
             [0, 1],
-            [1, ESCALA_VIZINHO],
+            [1, NEIGHBOR_SCALE],
             Extrapolation.CLAMP,
           ),
         },
         {
           rotateZ: `${interpolate(
             d,
-            entrada,
-            [-ROTACAO_VIZINHO, 0, ROTACAO_VIZINHO],
+            range,
+            [-NEIGHBOR_ROTATION, 0, NEIGHBOR_ROTATION],
             Extrapolation.CLAMP,
           )}deg`,
         },
@@ -215,30 +215,27 @@ function SlideVinho({
     };
   });
 
-  // A altura vem medida do espaço real disponível (ver `CarrosselVinhos`), não
+  // A altura vem medida do espaço real disponível (ver `WineCarousel`), não
   // de uma fração da tela: com fração a legenda era cortada em telas curtas.
   // Da altura tiro a legenda e um respiro, e o que sobra dimensiona a garrafa
   // (proporção 46×150) — a moldura fica idêntica em todos os slides.
-  const alturaMoldura = altura - ALTURA_LEGENDA;
-  const larguraGarrafa = Math.min(
-    Math.round(largura * 0.5),
-    Math.round(((alturaMoldura - RESPIRO_MOLDURA) * 46) / 150),
+  const frameHeight = height - CAPTION_HEIGHT;
+  const bottleWidth = Math.min(
+    Math.round(width * 0.5),
+    Math.round(((frameHeight - FRAME_INSET) * 46) / 150),
   );
 
   return (
     <Animated.View
-      style={[
-        { width: largura, height: altura, marginRight: ESPACAMENTO },
-        estilo,
-      ]}>
+      style={[{ width, height, marginRight: SPACING }, style]}>
       <TouchableOpacityBox
         activeOpacity={0.9}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${vinho.nome}, ${tipoUva(vinho)}`}
+        accessibilityLabel={`${wine.name}, ${typeAndGrape(wine)}`}
         flex={1}>
         <Box
-          height={alturaMoldura}
+          height={frameHeight}
           borderRadius="r18"
           borderWidth={1}
           borderColor="goldA28"
@@ -247,12 +244,12 @@ function SlideVinho({
           justifyContent="center"
           overflow="hidden">
           <BottleGraphic
-            width={larguraGarrafa}
-            cor={vinho.cor}
-            capColor={capColorFor(vinho)}
-            iniciais={vinho.iniciais}
-            safra={vinho.safra}
-            premium={vinho.destaque}
+            width={bottleWidth}
+            color={wine.color}
+            capColor={capColorFor(wine)}
+            initials={wine.initials}
+            vintage={wine.vintage}
+            premium={wine.featured}
             labelMode="full"
           />
         </Box>
@@ -262,7 +259,7 @@ function SlideVinho({
             variant="eyebrow"
             color="cremeA50"
             style={{ letterSpacing: 2.4 }}>
-            {tipoUva(vinho)}
+            {typeAndGrape(wine)}
           </Text>
           <Text
             color="textOnDark"
@@ -273,13 +270,13 @@ function SlideVinho({
               fontSize: 23,
               lineHeight: 26,
             }}>
-            {vinho.nome}
+            {wine.name}
           </Text>
           <Text
             color="accent"
             marginTop="s4"
             style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
-            {brl(vinho.preco)}
+            {brl(wine.price)}
           </Text>
         </Box>
       </TouchableOpacityBox>
@@ -287,49 +284,45 @@ function SlideVinho({
   );
 }
 
-export function CarrosselVinhos({
-  vinhos,
-  progresso,
-  onSelecionar,
-}: CarrosselVinhosProps) {
-  const { larguraItem, intervalo, recuoLateral } = useMetricas();
+export function WineCarousel({ wines, progress, onSelect }: WineCarouselProps) {
+  const { itemWidth, interval, sideInset } = useMetrics();
   // Altura real disponível, medida em vez de estimada.
-  const [altura, setAltura] = useState(0);
+  const [height, setHeight] = useState(0);
 
   // Normaliza o offset em unidades de item já aqui: é o que permite que slides
   // e fundo raciocinem só com índices.
-  const aoRolar = useAnimatedScrollHandler(evento => {
-    progresso.set(evento.contentOffset.x / intervalo);
+  const onScroll = useAnimatedScrollHandler(event => {
+    progress.set(event.contentOffset.x / interval);
   });
 
   return (
     <View
       style={{ flex: 1 }}
-      onLayout={e => setAltura(Math.round(e.nativeEvent.layout.height))}>
-      {altura > 0 && (
+      onLayout={e => setHeight(Math.round(e.nativeEvent.layout.height))}>
+      {height > 0 && (
         <Animated.ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          onScroll={aoRolar}
+          onScroll={onScroll}
           scrollEventThrottle={16}
-          snapToInterval={intervalo}
+          snapToInterval={interval}
           decelerationRate="fast"
           disableIntervalMomentum
           contentContainerStyle={{
             // O último item também precisa poder centralizar: o recuo direito
             // desconta o `marginRight` que todo slide carrega.
-            paddingLeft: recuoLateral,
-            paddingRight: recuoLateral - ESPACAMENTO,
+            paddingLeft: sideInset,
+            paddingRight: sideInset - SPACING,
           }}>
-          {vinhos.map((v, i) => (
-            <SlideVinho
-              key={v.id}
-              vinho={v}
-              indice={i}
-              progresso={progresso}
-              largura={larguraItem}
-              altura={altura}
-              onPress={() => onSelecionar(v.id)}
+          {wines.map((w, i) => (
+            <WineSlide
+              key={w.id}
+              wine={w}
+              index={i}
+              progress={progress}
+              width={itemWidth}
+              height={height}
+              onPress={() => onSelect(w.id)}
             />
           ))}
         </Animated.ScrollView>
@@ -339,7 +332,7 @@ export function CarrosselVinhos({
 }
 
 export {
-  type CarrosselVinhosProps,
-  type FundoVinhosProps,
-  type ProgressoCarrossel,
+  type WineCarouselProps,
+  type WineBackdropProps,
+  type CarouselProgress,
 } from './types';

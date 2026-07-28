@@ -37,7 +37,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           {/*
             Curadoria: a tela cresce a partir do card da Home (shared element em
-            `BlocoCuradoria`), então a Stack não pode animar por cima —
+            `CurationBlock`), então a Stack não pode animar por cima —
             `animation: 'none'` deixa o bloco ser o único a animar.
 
             É um push NORMAL (`card`), NÃO um modal. Já foi `transparentModal`,
@@ -57,7 +57,7 @@ export default function RootLayout() {
             fechamento — sair daqui é pelo "Voltar", que a anima.
           */}
           <Stack.Screen
-            name="curadoria/[id]"
+            name="curation/[id]"
             options={{
               animation: 'none',
               contentStyle: { backgroundColor: palette.creme },

@@ -14,52 +14,52 @@ import {
   TouchableOpacityBox,
   WineRow,
 } from '@components/index';
-import { CAT_ESPECIAIS, searchByDish, searchWines } from '@data/index';
+import { CAT_SPECIALS, searchByDish, searchWines } from '@data/index';
 import { fonts, palette } from '@theme/index';
 import { toWineRowData } from '@utils/index';
 
-type Modo = 'vinho' | 'prato';
+type Mode = 'wine' | 'dish';
 
-const MODOS: { key: Modo; label: string }[] = [
-  { key: 'vinho', label: 'Buscar vinho' },
-  { key: 'prato', label: 'Buscar por prato' },
+const MODES: { key: Mode; label: string }[] = [
+  { key: 'wine', label: 'Buscar vinho' },
+  { key: 'dish', label: 'Buscar por prato' },
 ];
-const FILTROS = ['Uva', 'País', 'Preço', 'Corpo', 'Harmonização'];
-const EXEMPLOS_PRATO = ['salmão grelhado', 'risoto', 'churrasco', 'queijos'];
+const FILTERS = ['Uva', 'País', 'Preço', 'Corpo', 'Harmonização'];
+const DISH_EXAMPLES = ['salmão grelhado', 'risoto', 'churrasco', 'queijos'];
 
 export default function SearchScreen() {
   const router = useRouter();
   const { cat } = useLocalSearchParams<{ cat?: string }>();
 
-  const [modo, setModo] = useState<Modo>('vinho');
+  const [mode, setMode] = useState<Mode>('wine');
   const [query, setQuery] = useState('');
   const [dishQuery, setDishQuery] = useState('');
 
   const catFilter = cat ?? null;
-  const titulo = cat === CAT_ESPECIAIS ? 'Especiais' : (cat ?? 'Coleção');
+  const title = cat === CAT_SPECIALS ? 'Especiais' : (cat ?? 'Coleção');
 
-  const resultados = searchWines({ catFilter, query });
-  const dishResultados = searchByDish(dishQuery);
+  const results = searchWines({ catFilter, query });
+  const dishResults = searchByDish(dishQuery);
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
   return (
-    <Screen scroll largeTitle={titulo}>
-      <Stack.Screen options={{ title: titulo }} />
+    <Screen scroll largeTitle={title}>
+      <Stack.Screen options={{ title: title }} />
       <Box paddingBottom="s108" paddingTop="s10">
         {/* toggle vinho / prato (segmented nativo) */}
         <Box paddingHorizontal="s22" marginTop="s4" marginBottom="s16">
           <SegmentedControl
-            values={MODOS.map(m => m.label)}
-            selectedIndex={MODOS.findIndex(m => m.key === modo)}
+            values={MODES.map(m => m.label)}
+            selectedIndex={MODES.findIndex(m => m.key === mode)}
             onChange={e =>
-              setModo(MODOS[e.nativeEvent.selectedSegmentIndex].key)
+              setMode(MODES[e.nativeEvent.selectedSegmentIndex].key)
             }
             tintColor={palette.wine}
           />
         </Box>
 
-        {modo === 'vinho' ? (
+        {mode === 'wine' ? (
           <>
             {/* input */}
             <Box
@@ -89,21 +89,21 @@ export default function SearchScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 22, gap: 8, paddingBottom: 18 }}>
-              {FILTROS.map(f => (
+              {FILTERS.map(f => (
                 <Chip key={f} label={f} />
               ))}
             </ScrollView>
 
             {/* resultados */}
             <Box paddingHorizontal="s22" style={{ gap: 14 }}>
-              {resultados.map(w => (
+              {results.map(w => (
                 <WineRow
                   key={w.id}
                   data={toWineRowData(w, { full: true })}
                   onPress={() => openWine(w.id)}
                 />
               ))}
-              {resultados.length === 0 && (
+              {results.length === 0 && (
                 <Text variant="quote" color="wineA70" textAlign="center" marginTop="s40">
                   Nenhum vinho encontrado.
                 </Text>
@@ -140,7 +140,7 @@ export default function SearchScreen() {
 
             {/* exemplos */}
             <Box flexDirection="row" flexWrap="wrap" marginBottom="s22" style={{ gap: 8 }}>
-              {EXEMPLOS_PRATO.map(d => (
+              {DISH_EXAMPLES.map(d => (
                 <TouchableOpacityBox
                   key={d}
                   activeOpacity={0.8}
@@ -158,13 +158,13 @@ export default function SearchScreen() {
             </Box>
 
             {/* resultados por prato */}
-            {dishResultados.length > 0 && (
+            {dishResults.length > 0 && (
               <>
                 <Text variant="eyebrow" marginBottom="s14">
                   Harmonizam com &quot;{dishQuery}&quot;
                 </Text>
                 <Box style={{ gap: 14 }}>
-                  {dishResultados.map(w => (
+                  {dishResults.map(w => (
                     <WineRow key={w.id} data={toWineRowData(w)} onPress={() => openWine(w.id)} />
                   ))}
                 </Box>

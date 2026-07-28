@@ -8,13 +8,13 @@ import {
   Text,
   WineRow,
 } from '@components/index';
-import { especiais } from '@data/index';
+import { specials } from '@data/index';
 import { fonts, palette } from '@theme/index';
 import { toWineRowData } from '@utils/index';
 
 export default function VipScreen() {
   const router = useRouter();
-  const lancamentos = especiais();
+  const releases = specials();
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
@@ -45,7 +45,7 @@ export default function VipScreen() {
         </Box>
 
         <Box paddingHorizontal="s22" paddingTop="s26" style={{ gap: 16 }}>
-          {lancamentos.map(w => (
+          {releases.map(w => (
             <WineRow
               key={w.id}
               variant="dark"

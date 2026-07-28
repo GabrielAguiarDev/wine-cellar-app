@@ -5,13 +5,13 @@ import { useRouter } from 'expo-router';
 
 import {
   AnimatedHeaderScrollView,
-  BlocoCuradoria,
   Box,
+  CurationBlock,
+  FadeReentry,
   Icon,
   Logo,
   Pill,
-  Reaparecer,
-  ReentradaEmFade,
+  Reappear,
   SectionTitle,
   Text,
   TouchableOpacityBox,
@@ -19,10 +19,10 @@ import {
   WineRow,
 } from '@components/index';
 import {
-  CAT_ESPECIAIS,
-  CURADORIA_SEMANA,
-  railMaisVendidos,
-  railSelecionados,
+  CAT_SPECIALS,
+  WEEKLY_CURATION,
+  railBestSellers,
+  railSelected,
 } from '@data/index';
 import { useFavoritesStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
@@ -41,22 +41,22 @@ export default function HomeScreen() {
   const favs = useFavoritesStore(s => s.favs);
   const toggleFav = useFavoritesStore(s => s.toggleFav);
 
-  const selecionados = railSelecionados();
-  const maisVendidos = railMaisVendidos();
+  const selected = railSelected();
+  const bestSellers = railBestSellers();
 
   const goCat = (cat: string | null) =>
     router.navigate(cat ? { pathname: '/search', params: { cat } } : '/search');
-  const goEspeciais = () =>
-    router.navigate({ pathname: '/search', params: { cat: CAT_ESPECIAIS } });
+  const goSpecials = () =>
+    router.navigate({ pathname: '/search', params: { cat: CAT_SPECIALS } });
   /**
    * Destino do bloco de curadoria. Rota fora de `(tabs)` (push da Stack raiz)
    * → tela cheia, sem tab bar. É daqui que a shared element transition parte:
-   * o `BlocoCuradoria` mede o card antes de deixar esta navegação rolar.
+   * o `CurationBlock` mede o card antes de deixar esta navegação rolar.
    */
-  const goCuradoria = () =>
+  const goCuration = () =>
     router.navigate({
-      pathname: '/curadoria/[id]',
-      params: { id: CURADORIA_SEMANA.id },
+      pathname: '/curation/[id]',
+      params: { id: WEEKLY_CURATION.id },
     });
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
@@ -65,7 +65,7 @@ export default function HomeScreen() {
     /*
       A rota da curadoria não tem animação de Stack (quem anima é o card),
       então também não há animação de pop: na volta, tudo o que está AO REDOR
-      do card reapareceria de um frame para o outro. O `ReentradaEmFade` faz
+      do card reapareceria de um frame para o outro. O `FadeReentry` faz
       esses elementos voltarem em fade curto e escalonado, de cima para
       baixo. O card fica de fora de propósito — é sobre ele que a forma
       encolhe, então precisa estar em opacidade cheia no primeiro frame.
@@ -73,10 +73,10 @@ export default function HomeScreen() {
       Ele envolve o HEADER, não só o conteúdo: o logo grande é desenhado dentro
       do `AnimatedHeaderScrollView`, e só entra no escalonamento se o provider
       estiver acima dele. Contexto resolve por posição de RENDER, não de
-      criação — o `Reaparecer` do slot é criado aqui e renderizado lá dentro,
+      criação — o `Reappear` do slot é criado aqui e renderizado lá dentro,
       já sob este provider.
     */
-    <ReentradaEmFade transitionId={CURADORIA_SEMANA.id}>
+    <FadeReentry transitionId={WEEKLY_CURATION.id}>
       <Box flex={1} backgroundColor="background">
         {/*
           A Home usa o header direto, não via `Screen`: é a única tela que
@@ -87,11 +87,11 @@ export default function HomeScreen() {
           // Marca não estica: sem o crescimento no overscroll do original.
           growOnOverscroll={false}
           largeTitleSlot={
-            <Reaparecer ordem={0}>
-              <Logo tamanho={32} />
-            </Reaparecer>
+            <Reappear order={0}>
+              <Logo size={32} />
+            </Reappear>
           }
-          smallTitleSlot={<Logo tamanho={18} tagline={false} />}
+          smallTitleSlot={<Logo size={18} tagline={false} />}
           rightComponent={
             <TouchableOpacityBox
               accessibilityLabel="Favoritos"
@@ -103,7 +103,7 @@ export default function HomeScreen() {
           }>
           <Box paddingBottom="s108">
             {/* busca (fake) */}
-            <Reaparecer ordem={1}>
+            <Reappear order={1}>
               <TouchableOpacityBox
                 activeOpacity={0.8}
                 onPress={() => router.navigate('/search')}
@@ -123,26 +123,26 @@ export default function HomeScreen() {
                   Buscar vinho ou prato…
                 </Text>
               </TouchableOpacityBox>
-            </Reaparecer>
+            </Reappear>
 
-            {/* banner curadoria — a MESMA peça visual da tela /curadoria/[id], aqui
-              em `variante="card"`. Ao tocar (no bloco ou no CTA) a forma cresce
-              até virar a tela cheia: ver src/components/BlocoCuradoria.tsx. */}
+            {/* banner curadoria — a MESMA peça visual da tela /curation/[id], aqui
+              em `variant="card"`. Ao tocar (no bloco ou no CTA) a forma cresce
+              até virar a tela cheia: ver src/components/CurationBlock.tsx. */}
             <Box marginHorizontal="s22" marginBottom="s24">
-              <BlocoCuradoria
-                variante="card"
-                transitionId={CURADORIA_SEMANA.id}
-                eyebrow={CURADORIA_SEMANA.eyebrow}
-                titulo={CURADORIA_SEMANA.titulo}
-                subtitulo={CURADORIA_SEMANA.subtitulo}
-                botaoLabel={CURADORIA_SEMANA.botaoLabel}
-                cores={CURADORIA_SEMANA.cores}
-                onPress={goCuradoria}
+              <CurationBlock
+                variant="card"
+                transitionId={WEEKLY_CURATION.id}
+                eyebrow={WEEKLY_CURATION.eyebrow}
+                title={WEEKLY_CURATION.title}
+                subtitle={WEEKLY_CURATION.subtitle}
+                buttonLabel={WEEKLY_CURATION.buttonLabel}
+                colors={WEEKLY_CURATION.colors}
+                onPress={goCuration}
               />
             </Box>
 
             {/* pills */}
-            <Reaparecer ordem={2}>
+            <Reappear order={2}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -156,10 +156,10 @@ export default function HomeScreen() {
                   />
                 ))}
               </ScrollView>
-            </Reaparecer>
+            </Reappear>
 
             {/* rail selecionados */}
-            <Reaparecer ordem={3}>
+            <Reappear order={3}>
               <Box marginTop="s30">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Selecionados para você</SectionTitle>
@@ -168,7 +168,7 @@ export default function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 22, gap: 16 }}>
-                  {selecionados.map(w => (
+                  {selected.map(w => (
                     <WineCard
                       key={w.id}
                       data={toWineCardData(w, !!favs[w.id])}
@@ -178,13 +178,13 @@ export default function HomeScreen() {
                   ))}
                 </ScrollView>
               </Box>
-            </Reaparecer>
+            </Reappear>
 
             {/* coleção reservada */}
-            <Reaparecer ordem={4}>
+            <Reappear order={4}>
               <TouchableOpacityBox
                 activeOpacity={0.9}
-                onPress={goEspeciais}
+                onPress={goSpecials}
                 marginTop="s30"
                 marginHorizontal="s22"
                 borderRadius="r16"
@@ -235,29 +235,29 @@ export default function HomeScreen() {
                   </Box>
                 </LinearGradient>
               </TouchableOpacityBox>
-            </Reaparecer>
+            </Reappear>
 
             {/* rail mais vendidos */}
-            <Reaparecer ordem={5}>
+            <Reappear order={5}>
               <Box marginTop="s32">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Mais vendidos</SectionTitle>
                 </Box>
                 <Box paddingHorizontal="s22" style={{ gap: 14 }}>
-                  {maisVendidos.map(w => (
+                  {bestSellers.map(w => (
                     <WineRow
                       key={w.id}
                       data={toWineRowData(w)}
-                      subtitle={`★ ${nf(w.notaMedia)} · ${w.totalAvaliacoes} avaliações`}
+                      subtitle={`★ ${nf(w.averageRating)} · ${w.reviewCount} avaliações`}
                       onPress={() => openWine(w.id)}
                     />
                   ))}
                 </Box>
               </Box>
-            </Reaparecer>
+            </Reappear>
 
             {/* rodapé */}
-            <Reaparecer ordem={6}>
+            <Reappear order={6}>
               <Text
                 textAlign="center"
                 marginTop="s40"
@@ -265,10 +265,10 @@ export default function HomeScreen() {
                 style={{ fontFamily: fonts.serifMediumItalic, fontSize: 15 }}>
                 — curadoria IL DiVino —
               </Text>
-            </Reaparecer>
+            </Reappear>
           </Box>
         </AnimatedHeaderScrollView>
       </Box>
-    </ReentradaEmFade>
+    </FadeReentry>
   );
 }

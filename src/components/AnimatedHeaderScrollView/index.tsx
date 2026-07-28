@@ -134,7 +134,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
 
     // Overscroll (scrollY negativo) engorda o título — o "puxar" do iOS.
     // Desligado, os dois worklets devolvem {} e nem interpolam.
-    const tamanhoTituloGrande = useAnimatedStyle(() => {
+    const largeTitleSize = useAnimatedStyle(() => {
       if (!growOnOverscroll) {
         return {};
       }
@@ -150,7 +150,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     });
 
     // Equivalente do crescimento acima, para um slot (logo): escala, não corpo.
-    const escalaTituloGrande = useAnimatedStyle(() => {
+    const largeTitleScale = useAnimatedStyle(() => {
       if (!growOnOverscroll) {
         return {};
       }
@@ -168,11 +168,11 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
       };
     });
 
-    const opacidadeTituloGrande = useAnimatedStyle(() => ({
+    const largeTitleOpacity = useAnimatedStyle(() => ({
       opacity: interpolate(scrollY.get(), [0, 60], [1, 0], Extrapolation.CLAMP),
     }));
 
-    const estiloBarra = useAnimatedStyle(() => ({
+    const barStyle = useAnimatedStyle(() => ({
       opacity: withTiming(
         interpolate(scrollY.get(), [40, 80], [0, 1], Extrapolation.CLAMP),
         { duration: 600 },
@@ -187,25 +187,25 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
       ],
     }));
 
-    const estiloSubtituloBarra = useAnimatedStyle(() => {
-      const visivel = scrollY.get() > 100;
+    const barSubtitleStyle = useAnimatedStyle(() => {
+      const visible = scrollY.get() > 100;
       return {
-        opacity: withSpring(visivel ? 0.5 : 0, {
+        opacity: withSpring(visible ? 0.5 : 0, {
           damping: 18,
           stiffness: 120,
           mass: 1.2,
         }),
         transform: [
-          { translateY: withTiming(visivel ? 0 : 10, { duration: 900 }) },
+          { translateY: withTiming(visible ? 0 : 10, { duration: 900 }) },
         ],
       };
     });
 
-    const estiloFundoHeader = useAnimatedStyle(() => ({
+    const headerBackgroundStyle = useAnimatedStyle(() => ({
       opacity: interpolate(scrollY.get(), [0, 80], [0, 1], Extrapolation.CLAMP),
     }));
 
-    const blurFundoHeader = useAnimatedProps(() => ({
+    const headerBackgroundBlur = useAnimatedProps(() => ({
       intensity: interpolate(
         scrollY.get(),
         [0, 100],
@@ -215,8 +215,8 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     }));
 
     // Pico no meio do colapso: um "sopro" de blur que passa e vai embora.
-    const blurTituloCompacto = useAnimatedProps(() => {
-      const intensidade = interpolate(
+    const smallTitleBlur = useAnimatedProps(() => {
+      const intensity = interpolate(
         scrollY.get(),
         [0, 80, 100],
         [0, 15, 0],
@@ -224,7 +224,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
       );
       return {
         intensity:
-          scrollY.get() < 30 ? withTiming(0, { duration: 900 }) : intensidade,
+          scrollY.get() < 30 ? withTiming(0, { duration: 900 }) : intensity,
       };
     });
 
@@ -238,7 +238,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
       extraColorStopsPerTransition: 20,
     });
 
-    const mascara = (
+    const mask = (
       <LinearGradient
         locations={maskLocations as [number, number, ...number[]]}
         colors={maskColors as [string, string, ...string[]]}
@@ -256,10 +256,10 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           style={[
             styles.headerBackgroundContainer,
             { height: HEADER_HEIGHT + insets.top + 50 },
-            estiloFundoHeader,
+            headerBackgroundStyle,
           ]}>
           {Platform.OS !== 'web' ? (
-            <MaskedView maskElement={mascara} style={StyleSheet.absoluteFill}>
+            <MaskedView maskElement={mask} style={StyleSheet.absoluteFill}>
               <LinearGradient
                 colors={headerBackgroundGradient.colors}
                 locations={headerBackgroundGradient.locations ?? undefined}
@@ -268,7 +268,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
                 style={StyleSheet.absoluteFill}
               />
               <AnimatedBlurView
-                animatedProps={blurFundoHeader}
+                animatedProps={headerBackgroundBlur}
                 tint={headerBlurConfig.tint}
                 blurMethod={ANDROID_BLUR_METHOD}
                 style={StyleSheet.absoluteFill}
@@ -286,7 +286,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           style={[
             styles.fixedHeader,
             { paddingTop: insets.top, height: HEADER_HEIGHT + insets.top },
-            estiloBarra,
+            barStyle,
           ]}>
           <View style={styles.fixedHeaderContent}>
             <View style={styles.fixedHeaderTextContainer}>
@@ -302,7 +302,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
                   numberOfLines={1}
                   style={[
                     styles.smallHeaderSubtitle,
-                    estiloSubtituloBarra,
+                    barSubtitleStyle,
                     smallHeaderSubtitleStyle,
                   ]}>
                   {subtitle}
@@ -310,11 +310,11 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
               )}
             </View>
             <MaskedView
-              maskElement={mascara}
+              maskElement={mask}
               style={StyleSheet.absoluteFill}
               pointerEvents="none">
               <AnimatedBlurView
-                animatedProps={blurTituloCompacto}
+                animatedProps={smallTitleBlur}
                 intensity={smallTitleBlurIntensity}
                 tint={smallTitleBlurTint}
                 blurMethod={ANDROID_BLUR_METHOD}
@@ -367,11 +367,11 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           ]}>
           {/* 1. Título grande */}
           <Animated.View
-            style={[styles.largeTitleContainer, opacidadeTituloGrande]}>
+            style={[styles.largeTitleContainer, largeTitleOpacity]}>
             {largeTitleSlot ? (
               <Animated.View
                 accessibilityLabel={largeTitle}
-                style={[styles.largeTitleSlot, escalaTituloGrande]}>
+                style={[styles.largeTitleSlot, largeTitleScale]}>
                 {largeTitleSlot}
               </Animated.View>
             ) : (
@@ -379,7 +379,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
                 style={[
                   styles.largeTitle,
                   largeHeaderTitleStyle,
-                  tamanhoTituloGrande,
+                  largeTitleSize,
                 ]}>
                 {largeTitle}
               </Animated.Text>
@@ -442,13 +442,13 @@ const styles = StyleSheet.create({
   smallHeaderTitle: {
     fontFamily: fonts.serifSemiBold,
     fontSize: 18,
-    color: Colors.titulo,
+    color: Colors.title,
     textAlign: 'center',
   },
   smallHeaderSubtitle: {
     fontFamily: fonts.sansRegular,
     fontSize: 11,
-    color: Colors.subtitulo,
+    color: Colors.subtitle,
     textAlign: 'center',
   },
   rightComponentContainer: {
@@ -470,14 +470,14 @@ const styles = StyleSheet.create({
   },
   largeTitle: {
     fontFamily: fonts.serifSemiBold,
-    color: Colors.titulo,
+    color: Colors.title,
     letterSpacing: -0.5,
     paddingTop: 5,
   },
   largeSubtitle: {
     fontFamily: fonts.sansRegular,
     fontSize: 13,
-    color: Colors.subtitulo,
+    color: Colors.subtitle,
     marginTop: spacing.xs,
   },
   /* Sem padding horizontal: cada tela do app controla o próprio. */

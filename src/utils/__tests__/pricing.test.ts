@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { checkoutTotal, frete, pointsDiscount } from '../pricing';
+import { checkoutTotal, shipping, pointsDiscount } from '../pricing';
 
 describe('pointsDiscount', () => {
   it('é zero quando não usa pontos', () => {
@@ -16,14 +16,14 @@ describe('pointsDiscount', () => {
   });
 });
 
-describe('frete', () => {
+describe('shipping', () => {
   it('é grátis acima de R$ 300', () => {
-    expect(frete(301)).toBe(0);
+    expect(shipping(301)).toBe(0);
   });
 
   it('cobra R$ 29 até R$ 300', () => {
-    expect(frete(300)).toBe(29);
-    expect(frete(50)).toBe(29);
+    expect(shipping(300)).toBe(29);
+    expect(shipping(50)).toBe(29);
   });
 });
 

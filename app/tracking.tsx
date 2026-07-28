@@ -18,17 +18,17 @@ import { useToastStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { brl } from '@utils/index';
 
-type Etapa = {
+type Step = {
   label: string;
   time: string;
-  estado: 'feito' | 'atual' | 'futuro';
+  status: 'done' | 'current' | 'upcoming';
 };
 
-const ETAPAS: Etapa[] = [
-  { label: 'Confirmado', time: '14:02', estado: 'feito' },
-  { label: 'Preparando', time: '14:09', estado: 'feito' },
-  { label: 'Saiu para entrega', time: 'Agora · 14:21', estado: 'atual' },
-  { label: 'Entregue', time: '~14:46', estado: 'futuro' },
+const STEPS: Step[] = [
+  { label: 'Confirmado', time: '14:02', status: 'done' },
+  { label: 'Preparando', time: '14:09', status: 'done' },
+  { label: 'Saiu para entrega', time: 'Agora · 14:21', status: 'current' },
+  { label: 'Entregue', time: '~14:46', status: 'upcoming' },
 ];
 
 const ORDER: { id: string; qty: number }[] = [
@@ -37,16 +37,16 @@ const ORDER: { id: string; qty: number }[] = [
 ];
 
 const ETA = 'Chega em ~25 min';
-const PEDIDO = '#ILD-4821';
+const ORDER_ID = '#ILD-4821';
 
-const feitas = ETAPAS.filter(e => e.estado !== 'futuro').length;
-const etapaAtual = ETAPAS.find(e => e.estado === 'atual')?.label ?? '';
+const doneCount = STEPS.filter(e => e.status !== 'upcoming').length;
+const currentStep = STEPS.find(e => e.status === 'current')?.label ?? '';
 
 export default function TrackingScreen() {
   const router = useRouter();
   const show = useToastStore(s => s.show);
 
-  const total = ORDER.reduce((acc, o) => acc + findWine(o.id).preco * o.qty, 0);
+  const total = ORDER.reduce((acc, o) => acc + findWine(o.id).price * o.qty, 0);
 
   return (
     <Screen scroll>
@@ -63,7 +63,7 @@ export default function TrackingScreen() {
           Seu pedido a caminho
         </Text>
         <Text variant="body" fontSize={12} color="inkA60" paddingHorizontal="s22" marginTop="s2">
-          Pedido {PEDIDO}
+          Pedido {ORDER_ID}
         </Text>
 
         {/* mapa ao vivo (topo) */}
@@ -142,17 +142,17 @@ export default function TrackingScreen() {
               {ETA}
             </Text>
             <Text variant="label" fontSize={10} color="accentDark" style={{ letterSpacing: 1.4 }}>
-              {etapaAtual}
+              {currentStep}
             </Text>
           </Box>
           <Box flexDirection="row" marginTop="s14" style={{ gap: 6 }}>
-            {ETAPAS.map((e, i) => (
+            {STEPS.map((e, i) => (
               <Box
                 key={e.label}
                 flex={1}
                 height={4}
                 borderRadius="r5"
-                backgroundColor={i < feitas ? 'accent' : 'inkBorder16'}
+                backgroundColor={i < doneCount ? 'accent' : 'inkBorder16'}
               />
             ))}
           </Box>
@@ -211,9 +211,9 @@ export default function TrackingScreen() {
             Status do pedido
           </Text>
           <Box paddingLeft="s8">
-            {ETAPAS.map((e, i) => {
-              const on = e.estado !== 'futuro';
-              const isLast = i === ETAPAS.length - 1;
+            {STEPS.map((e, i) => {
+              const on = e.status !== 'upcoming';
+              const isLast = i === STEPS.length - 1;
               return (
                 <Box key={e.label} flexDirection="row" style={{ gap: 16 }}>
                   <Box alignItems="center">
@@ -224,9 +224,9 @@ export default function TrackingScreen() {
                       borderWidth={2}
                       borderColor={on ? 'primary' : 'inkBorder20'}
                       backgroundColor={
-                        e.estado === 'feito'
+                        e.status === 'done'
                           ? 'primary'
-                          : e.estado === 'atual'
+                          : e.status === 'current'
                             ? 'accent'
                             : 'transparent'
                       }
@@ -236,7 +236,7 @@ export default function TrackingScreen() {
                         width={2}
                         minHeight={30}
                         flex={1}
-                        backgroundColor={e.estado === 'feito' ? 'primary' : 'inkBorder16'}
+                        backgroundColor={e.status === 'done' ? 'primary' : 'inkBorder16'}
                       />
                     )}
                   </Box>
@@ -266,17 +266,17 @@ export default function TrackingScreen() {
               const w = findWine(o.id);
               return (
                 <Box key={o.id} flexDirection="row" alignItems="center" style={{ gap: 14 }}>
-                  <BottleGraphic width={26} cor={w.cor} iniciais={w.iniciais} showCap={false} />
+                  <BottleGraphic width={26} color={w.color} initials={w.initials} showCap={false} />
                   <Box flex={1}>
                     <Text variant="wineNameSm" fontSize={17} style={{ lineHeight: 19 }}>
-                      {w.nome}
+                      {w.name}
                     </Text>
                     <Text variant="label" fontSize={8} color="inkA50" marginTop="s2" style={{ letterSpacing: 1.2 }}>
                       {o.qty} {o.qty === 1 ? 'garrafa' : 'garrafas'}
                     </Text>
                   </Box>
                   <Text color="primary" style={{ fontFamily: fonts.serifRegular, fontSize: 15 }}>
-                    {brl(w.preco * o.qty)}
+                    {brl(w.price * o.qty)}
                   </Text>
                 </Box>
               );

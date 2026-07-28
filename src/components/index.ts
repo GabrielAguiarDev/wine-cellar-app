@@ -23,19 +23,19 @@ export type {
 export { Icon, type IconName } from './Icon';
 export { Logo } from './Logo';
 export {
-  BlocoCuradoria,
-  DURACAO_ABERTURA,
-  PADDING_TELA_CHEIA,
-  type BlocoCuradoriaProps,
-  type ConteudoCuradoria,
-  type VarianteBloco,
-} from './BlocoCuradoria';
+  CurationBlock,
+  OPEN_DURATION,
+  FULLSCREEN_PADDING,
+  type CurationBlockProps,
+  type CurationContent,
+  type BlockVariant,
+} from './CurationBlock';
 export {
-  ReentradaEmFade,
-  Reaparecer,
-  type ReentradaEmFadeProps,
-  type ReaparecerProps,
-} from './ReentradaEmFade';
+  FadeReentry,
+  Reappear,
+  type FadeReentryProps,
+  type ReappearProps,
+} from './FadeReentry';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';

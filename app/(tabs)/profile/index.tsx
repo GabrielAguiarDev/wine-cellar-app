@@ -14,9 +14,9 @@ import { useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 
 const META = 500;
-const PEDIDOS = [
-  { titulo: 'Notte Eterna + 1', data: '12 jul', status: 'Entregue', total: 'R$ 678' },
-  { titulo: 'Lumière Blanche', data: '28 jun', status: 'Entregue', total: 'R$ 279' },
+const ORDERS = [
+  { title: 'Notte Eterna + 1', date: '12 jul', status: 'Entregue', total: 'R$ 678' },
+  { title: 'Lumière Blanche', date: '28 jun', status: 'Entregue', total: 'R$ 279' },
 ];
 const LINKS = ['Dados pessoais', 'Endereços salvos', 'Formas de pagamento', 'Notificações'];
 
@@ -25,11 +25,11 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export default function ProfileScreen() {
   const router = useRouter();
   const points = useUserStore(s => s.points);
-  const paladar = useUserStore(s => s.paladar);
+  const palate = useUserStore(s => s.palate);
 
-  const restante = META - points;
+  const remaining = META - points;
   const progressPct = Math.round((points / META) * 100);
-  const tags = [cap(paladar), 'Seco', 'Tintos'];
+  const tags = [cap(palate), 'Seco', 'Tintos'];
 
   return (
     <Screen scroll largeTitle="Perfil">
@@ -70,7 +70,7 @@ export default function ProfileScreen() {
                   {points} <Text color="cremeA60" fontSize={12}>pontos</Text>
                 </Text>
                 <Text variant="body" fontSize={10} color="cremeA55" marginTop="s2">
-                  {restante} pts para o nível VIP
+                  {remaining} pts para o nível VIP
                 </Text>
               </Box>
               <Button label="Ver programa" variant="outlineGold" onPress={() => router.navigate('/loyalty')} />
@@ -128,7 +128,7 @@ export default function ProfileScreen() {
               </TouchableOpacityBox>
             }>
             <Text variant="sectionTitle" fontSize={21}>
-              Seu paladar
+              Seu palate
             </Text>
           </SectionTitle>
           <Box flexDirection="row" flexWrap="wrap" marginTop="s12" style={{ gap: 8 }}>
@@ -148,9 +148,9 @@ export default function ProfileScreen() {
             Pedidos recentes
           </Text>
           <Box style={{ gap: 10 }}>
-            {PEDIDOS.map(p => (
+            {ORDERS.map(p => (
               <TouchableOpacityBox
-                key={p.titulo}
+                key={p.title}
                 activeOpacity={0.85}
                 onPress={() => router.navigate('/tracking')}
                 flexDirection="row"
@@ -164,10 +164,10 @@ export default function ProfileScreen() {
                 paddingHorizontal="s16">
                 <Box>
                   <Text variant="body" fontSize={13} style={{ fontFamily: fonts.sansMedium }}>
-                    {p.titulo}
+                    {p.title}
                   </Text>
                   <Text variant="body" fontSize={11} color="inkA50" marginTop="s2">
-                    {p.data} · {p.status}
+                    {p.date} · {p.status}
                   </Text>
                 </Box>
                 <Text color="primary" style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>

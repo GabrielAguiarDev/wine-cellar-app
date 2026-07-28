@@ -7,16 +7,16 @@ import { Text } from './Text';
 
 
 export type WineCardData = {
-  nome: string;
+  name: string;
   /** Ex.: "Tinto · Nebbiolo". */
-  categoria: string;
-  precoFmt: string;
-  notaFmt: string;
-  cor: string;
+  category: string;
+  priceFmt: string;
+  ratingFmt: string;
+  color: string;
   capColor?: string;
-  iniciais: string;
-  destaque?: boolean;
-  favorito?: boolean;
+  initials: string;
+  featured?: boolean;
+  favorite?: boolean;
 };
 
 type WineCardProps = {
@@ -40,7 +40,7 @@ export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
         justifyContent="flex-end"
         overflow="hidden"
         position="relative">
-        {data.destaque && (
+        {data.featured && (
           <Box
             position="absolute"
             top={10}
@@ -67,21 +67,21 @@ export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
             name="heart"
             size={17}
             color={palette.wine}
-            fill={data.favorito ? palette.wine : 'none'}
+            fill={data.favorite ? palette.wine : 'none'}
           />
         </TouchableOpacityBox>
         <Box marginBottom="s6">
           <BottleGraphic
             width={46}
-            cor={data.cor}
+            color={data.color}
             capColor={data.capColor}
-            iniciais={data.iniciais}
+            initials={data.initials}
           />
         </Box>
       </Box>
       {/* infos */}
       <Text variant="wineName" fontSize={19} marginTop="s8" style={{ lineHeight: 20 }}>
-        {data.nome}
+        {data.name}
       </Text>
       <Text
         variant="label"
@@ -89,7 +89,7 @@ export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
         color="inkA50"
         marginTop="s2"
         style={{ letterSpacing: 1.3 }}>
-        {data.categoria}
+        {data.category}
       </Text>
       <Box
         flexDirection="row"
@@ -97,10 +97,10 @@ export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
         justifyContent="space-between"
         marginTop="s8">
         <Text variant="price" fontSize={13}>
-          {data.precoFmt}
+          {data.priceFmt}
         </Text>
         <Text fontSize={10} color="accent">
-          ★ {data.notaFmt}
+          ★ {data.ratingFmt}
         </Text>
       </Box>
     </TouchableOpacityBox>

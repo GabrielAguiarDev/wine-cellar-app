@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /** Geometria (em coordenadas da janela) de onde a transição deve partir. */
-export type RetanguloOrigem = {
+export type SourceRect = {
   x: number;
   y: number;
   width: number;
@@ -14,16 +14,16 @@ export type RetanguloOrigem = {
    * crossfade (que o olho identifica como blocos diferentes), o destino move e
    * escala um único bloco desta posição até a posição final.
    */
-  texto?: { x: number; y: number };
+  text?: { x: number; y: number };
   /** Canto superior esquerdo do CTA do card — o único elemento sem par no destino. */
-  botao?: { x: number; y: number };
+  button?: { x: number; y: number };
 };
 
-type TransicaoState = {
+type TransitionState = {
   /** Origens medidas, indexadas pelo `transitionId` do shared element. */
-  origens: Record<string, RetanguloOrigem>;
-  setOrigem: (id: string, rect: RetanguloOrigem) => void;
-  limparOrigem: (id: string) => void;
+  sources: Record<string, SourceRect>;
+  setSource: (id: string, rect: SourceRect) => void;
+  clearSource: (id: string) => void;
   /**
    * Shared elements que saíram da tela de origem por um push SEM animação de
    * Stack (`animation: 'none'`), indexados pelo `transitionId`.
@@ -32,11 +32,11 @@ type TransicaoState = {
    * ela reaparece de um frame para o outro, seca, enquanto o shared element
    * termina de encolher macio. Esta flag é o pedido de "reapareça em fade" que
    * o card deixa para a tela de origem consumir quando voltar ao foco (ver
-   * `ReentradaEmFade`).
+   * `FadeReentry`).
    */
-  reentradas: Record<string, boolean>;
-  pedirReentrada: (id: string) => void;
-  limparReentrada: (id: string) => void;
+  reentries: Record<string, boolean>;
+  requestReentry: (id: string) => void;
+  clearReentry: (id: string) => void;
 };
 
 /**
@@ -48,29 +48,28 @@ type TransicaoState = {
  * Sem origem gravada (deep link, refresh), o destino simplesmente aparece já
  * em tela cheia, sem animação.
  */
-export const useTransicaoStore = create<TransicaoState>(set => ({
-  origens: {},
-  setOrigem: (id, rect) =>
-    set(s => ({ origens: { ...s.origens, [id]: rect } })),
-  limparOrigem: id =>
+export const useTransitionStore = create<TransitionState>(set => ({
+  sources: {},
+  setSource: (id, rect) => set(s => ({ sources: { ...s.sources, [id]: rect } })),
+  clearSource: id =>
     set(s => {
-      if (!s.origens[id]) {
+      if (!s.sources[id]) {
         return s;
       }
-      const origens = { ...s.origens };
-      delete origens[id];
-      return { origens };
+      const sources = { ...s.sources };
+      delete sources[id];
+      return { sources };
     }),
-  reentradas: {},
-  pedirReentrada: id =>
-    set(s => ({ reentradas: { ...s.reentradas, [id]: true } })),
-  limparReentrada: id =>
+  reentries: {},
+  requestReentry: id =>
+    set(s => ({ reentries: { ...s.reentries, [id]: true } })),
+  clearReentry: id =>
     set(s => {
-      if (!s.reentradas[id]) {
+      if (!s.reentries[id]) {
         return s;
       }
-      const reentradas = { ...s.reentradas };
-      delete reentradas[id];
-      return { reentradas };
+      const reentries = { ...s.reentries };
+      delete reentries[id];
+      return { reentries };
     }),
 }));

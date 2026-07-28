@@ -5,13 +5,13 @@ import { Box, TouchableOpacityBox } from './Box';
 import { Text } from './Text';
 
 export type WineRowData = {
-  nome: string;
+  name: string;
   /** Ex.: "Tinto · Nebbiolo" ou categoria completa. */
-  categoria: string;
-  precoFmt?: string;
-  cor: string;
+  category: string;
+  priceFmt?: string;
+  color: string;
   capColor?: string;
-  iniciais: string;
+  initials: string;
 };
 
 type WineRowProps = {
@@ -58,10 +58,10 @@ export function WineRow({
       style={{ gap: 16 }}>
       <BottleGraphic
         width={bottleWidth}
-        cor={data.cor}
+        color={data.color}
         capColor={data.capColor}
         showCap={false}
-        iniciais={data.iniciais}
+        initials={data.initials}
       />
       <Box flex={1}>
         {badge && (
@@ -77,7 +77,7 @@ export function WineRow({
           variant="wineName"
           color={dark ? 'textOnDark' : 'textPrimary'}
           style={{ lineHeight: 21 }}>
-          {data.nome}
+          {data.name}
         </Text>
         <Text
           variant="label"
@@ -85,7 +85,7 @@ export function WineRow({
           color={dark ? 'cremeA50' : 'inkA50'}
           marginTop="s4"
           style={{ letterSpacing: 1.3 }}>
-          {data.categoria}
+          {data.category}
         </Text>
         {subtitle && (
           <Text fontSize={10} color="accent" marginTop="s6">
@@ -94,9 +94,9 @@ export function WineRow({
         )}
       </Box>
       {rightSlot ??
-        (data.precoFmt ? (
+        (data.priceFmt ? (
           <Text variant="price" fontSize={15} color={dark ? 'accent' : 'primary'}>
-            {data.precoFmt}
+            {data.priceFmt}
           </Text>
         ) : null)}
     </TouchableOpacityBox>

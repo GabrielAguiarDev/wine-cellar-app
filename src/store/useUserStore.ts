@@ -4,12 +4,12 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 type UserState = {
   /** Resultado do quiz de paladar (default 'encorpado'). */
-  paladar: string;
+  palate: string;
   /** Pontos de fidelidade. */
   points: number;
   /** True após concluir/pular o quiz de preferências (1º acesso). */
   onboarded: boolean;
-  setPaladar: (paladar: string) => void;
+  setPalate: (palate: string) => void;
   /** Marca o onboarding como concluído (chamado ao fim do quiz). */
   completeOnboarding: () => void;
 };
@@ -21,17 +21,17 @@ type UserState = {
 export const useUserStore = create<UserState>()(
   persist(
     set => ({
-      paladar: 'encorpado',
+      palate: 'encorpado',
       points: 320,
       onboarded: false,
-      setPaladar: paladar => set({ paladar }),
+      setPalate: palate => set({ palate }),
       completeOnboarding: () => set({ onboarded: true }),
     }),
     {
       name: 'ildivino-user',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: state => ({
-        paladar: state.paladar,
+        palate: state.palate,
         points: state.points,
         onboarded: state.onboarded,
       }),
