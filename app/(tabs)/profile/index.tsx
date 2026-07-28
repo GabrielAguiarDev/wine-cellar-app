@@ -32,7 +32,7 @@ export default function ProfileScreen() {
   const tags = [cap(paladar), 'Seco', 'Tintos'];
 
   return (
-    <Screen scroll nativeHeader>
+    <Screen scroll largeTitle="Perfil">
       <Box paddingBottom="s108" paddingTop="s6">
         {/* card VIP */}
         <Box marginHorizontal="s22" borderRadius="r18" overflow="hidden" borderWidth={1} borderColor="goldA35">

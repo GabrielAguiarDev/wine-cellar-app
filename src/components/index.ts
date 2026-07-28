@@ -13,9 +13,15 @@ export { Text, type TextProps } from './Text';
 export { AppProviders } from './AppProviders';
 export { AnimatedSplash } from './AnimatedSplash';
 export { Screen } from './Screen';
+export { AnimatedHeaderScrollView } from './AnimatedHeaderScrollView';
+export type {
+  AnimatedHeaderProps,
+  GradientConfig,
+} from './AnimatedHeaderScrollView/types';
 
 // Design system
 export { Icon, type IconName } from './Icon';
+export { Logo } from './Logo';
 export {
   BlocoCuradoria,
   DURACAO_ABERTURA,

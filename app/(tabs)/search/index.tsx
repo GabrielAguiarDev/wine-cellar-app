@@ -44,7 +44,7 @@ export default function SearchScreen() {
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
   return (
-    <Screen scroll nativeHeader>
+    <Screen scroll largeTitle={titulo}>
       <Stack.Screen options={{ title: titulo }} />
       <Box paddingBottom="s108" paddingTop="s10">
         {/* toggle vinho / prato (segmented nativo) */}

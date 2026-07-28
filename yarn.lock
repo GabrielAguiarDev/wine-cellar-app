@@ -2421,7 +2421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-masked-view/masked-view@npm:^0.3.2":
+"@react-native-masked-view/masked-view@npm:0.3.2, @react-native-masked-view/masked-view@npm:^0.3.2":
   version: 0.3.2
   resolution: "@react-native-masked-view/masked-view@npm:0.3.2"
   peerDependencies:
@@ -9033,6 +9033,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-easing-gradient@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "react-native-easing-gradient@npm:1.1.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/bc27f256816c65a7a706484832636d56ce1a654d47805fc3460a0a1ee77db4aece68d35091cba1125e1e13e36e753c7f917502206eca1912f25e36919e253720
+  languageName: node
+  linkType: hard
+
 "react-native-gesture-handler@npm:~2.32.0":
   version: 2.32.0
   resolution: "react-native-gesture-handler@npm:2.32.0"
@@ -11134,6 +11144,7 @@ __metadata:
     "@expo-google-fonts/jost": "npm:^0.4.2"
     "@expo/ui": "npm:~57.0.7"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
+    "@react-native-masked-view/masked-view": "npm:0.3.2"
     "@shopify/restyle": "npm:^2.4.5"
     "@types/jest": "npm:29.5.14"
     "@types/react": "npm:~19.2.2"
@@ -11158,6 +11169,7 @@ __metadata:
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
     react-native: "npm:0.86.0"
+    react-native-easing-gradient: "npm:^1.1.1"
     react-native-gesture-handler: "npm:~2.32.0"
     react-native-reanimated: "npm:4.5.0"
     react-native-safe-area-context: "npm:~5.7.0"
