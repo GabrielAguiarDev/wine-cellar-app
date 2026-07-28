@@ -23,8 +23,9 @@ import {
   WEEKLY_CURATION,
   railBestSellers,
   railSelected,
+  unreadNotificationCount,
 } from '@data/index';
-import { useFavoritesStore } from '@store/index';
+import { useFavoritesStore, useNotificationsStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { nf, toWineCardData, toWineRowData } from '@utils/index';
 
@@ -40,9 +41,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const favs = useFavoritesStore(s => s.favs);
   const toggleFav = useFavoritesStore(s => s.toggleFav);
+  const notificationsRead = useNotificationsStore(s => s.read);
 
   const selected = railSelected();
   const bestSellers = railBestSellers();
+  const unread = unreadNotificationCount(notificationsRead);
 
   const goCat = (cat: string | null) =>
     router.navigate(cat ? { pathname: '/search', params: { cat } } : '/search');
@@ -94,11 +97,33 @@ export default function HomeScreen() {
           smallTitleSlot={<Logo size={18} tagline={false} />}
           rightComponent={
             <TouchableOpacityBox
-              accessibilityLabel="Favoritos"
+              accessibilityLabel={
+                unread === 0
+                  ? 'Notificações'
+                  : `Notificações, ${unread} não ${unread === 1 ? 'lida' : 'lidas'}`
+              }
               activeOpacity={0.7}
               padding="s4"
-              onPress={() => router.navigate('/favorites')}>
-              <Icon name="heart" size={21} color={palette.wine} />
+              position="relative"
+              onPress={() => router.navigate('/notifications')}>
+              <Icon name="bell" size={21} color={palette.wine} />
+              {unread > 0 && (
+                <Box
+                  position="absolute"
+                  top={2}
+                  right={0}
+                  minWidth={15}
+                  height={15}
+                  borderRadius="rFull"
+                  backgroundColor="primary"
+                  alignItems="center"
+                  justifyContent="center"
+                  paddingHorizontal="s4">
+                  <Text style={{ color: palette.creme, fontSize: 9 }}>
+                    {unread}
+                  </Text>
+                </Box>
+              )}
             </TouchableOpacityBox>
           }>
           <Box paddingBottom="s108">

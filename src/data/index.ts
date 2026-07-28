@@ -9,4 +9,15 @@ export {
   findCuration,
   type Curation,
 } from './curations';
+export {
+  NOTIFICATIONS,
+  NOTIFICATION_GROUPS,
+  notificationsByGroup,
+  unreadNotificationCount,
+  unreadNotifications,
+  type AppNotification,
+  type NotificationGroup,
+  type NotificationKind,
+  type NotificationTarget,
+} from './notifications';
 export * from './selectors';

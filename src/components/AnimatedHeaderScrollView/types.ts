@@ -33,6 +33,16 @@ export type AnimatedHeaderProps = {
    * ficam, só o título compacto aparece ao rolar.
    */
   rightComponent?: ReactNode;
+  /**
+   * Ação à esquerda no topo — na prática, o VOLTAR de telas empilhadas. Sempre
+   * visível, como o `rightComponent`.
+   *
+   * Com ele, o título grande deixa de nascer colado na status bar e passa a
+   * começar abaixo da faixa da nav bar (senão o botão cairia em cima da
+   * primeira linha do título); o colapso inteiro é adiado na mesma medida, para
+   * o comportamento continuar idêntico ao das telas sem voltar.
+   */
+  leftComponent?: ReactNode;
   showsVerticalScrollIndicator?: boolean;
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Gradiente que entra atrás do header ao rolar. */

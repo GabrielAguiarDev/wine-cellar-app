@@ -82,6 +82,12 @@ import { type AnimatedHeaderProps } from './types';
  *   comentário no JSX.
  * - Props novas `largeTitleSlot` / `smallTitleSlot`: trocam o texto do título por
  *   um nó — é o que permite usar o logo na Home em vez do nome da tela.
+ * - Prop nova `leftComponent`: o voltar de telas EMPILHADAS (`/notifications`).
+ *   No original só existe ação à direita, porque ele só cobre raiz de aba. Com
+ *   ela o título grande deixa de nascer na faixa da nav bar (senão o botão cairia
+ *   sobre a primeira linha) e todo o colapso é adiado por `collapseOffset` — o
+ *   ponto em que o título começa a sumir e a barra a entrar continua sendo o
+ *   mesmo, relativo ao título.
  */
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
@@ -94,6 +100,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     largeTitleSlot,
     smallTitleSlot,
     rightComponent,
+    leftComponent,
     showsVerticalScrollIndicator = false,
     contentContainerStyle,
     headerBackgroundGradient = {
@@ -125,6 +132,14 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
   }) => {
     const insets = useSafeAreaInsets();
     const scrollY = useSharedValue(0);
+
+    /**
+     * Com botão à esquerda (voltar), o título grande nasce uma faixa de nav bar
+     * mais abaixo — e TODO o colapso (fade do título, entrada da barra, fundo,
+     * blur) é adiado nessa mesma distância. Sem ele o valor é 0 e as contas
+     * ficam exatamente as de antes.
+     */
+    const collapseOffset = leftComponent ? HEADER_HEIGHT : 0;
 
     const onScroll = useAnimatedScrollHandler({
       onScroll: event => {
@@ -169,18 +184,33 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     });
 
     const largeTitleOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(scrollY.get(), [0, 60], [1, 0], Extrapolation.CLAMP),
+      opacity: interpolate(
+        scrollY.get(),
+        [collapseOffset, collapseOffset + 60],
+        [1, 0],
+        Extrapolation.CLAMP,
+      ),
     }));
 
     const barStyle = useAnimatedStyle(() => ({
       opacity: withTiming(
-        interpolate(scrollY.get(), [40, 80], [0, 1], Extrapolation.CLAMP),
+        interpolate(
+          scrollY.get(),
+          [collapseOffset + 40, collapseOffset + 80],
+          [0, 1],
+          Extrapolation.CLAMP,
+        ),
         { duration: 600 },
       ),
       transform: [
         {
           translateY: withTiming(
-            interpolate(scrollY.get(), [40, 80], [20, 0], Extrapolation.CLAMP),
+            interpolate(
+              scrollY.get(),
+              [collapseOffset + 40, collapseOffset + 80],
+              [20, 0],
+              Extrapolation.CLAMP,
+            ),
             { duration: 600 },
           ),
         },
@@ -188,7 +218,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     }));
 
     const barSubtitleStyle = useAnimatedStyle(() => {
-      const visible = scrollY.get() > 100;
+      const visible = scrollY.get() > collapseOffset + 100;
       return {
         opacity: withSpring(visible ? 0.5 : 0, {
           damping: 18,
@@ -202,13 +232,18 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     });
 
     const headerBackgroundStyle = useAnimatedStyle(() => ({
-      opacity: interpolate(scrollY.get(), [0, 80], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(
+        scrollY.get(),
+        [collapseOffset, collapseOffset + 80],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
     }));
 
     const headerBackgroundBlur = useAnimatedProps(() => ({
       intensity: interpolate(
         scrollY.get(),
-        [0, 100],
+        [collapseOffset, collapseOffset + 100],
         [0, headerBlurConfig.intensity],
         Extrapolation.CLAMP,
       ),
@@ -218,13 +253,15 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     const smallTitleBlur = useAnimatedProps(() => {
       const intensity = interpolate(
         scrollY.get(),
-        [0, 80, 100],
+        [collapseOffset, collapseOffset + 80, collapseOffset + 100],
         [0, 15, 0],
         Extrapolation.CLAMP,
       );
       return {
         intensity:
-          scrollY.get() < 30 ? withTiming(0, { duration: 900 }) : intensity,
+          scrollY.get() < collapseOffset + 30
+            ? withTiming(0, { duration: 900 })
+            : intensity,
       };
     });
 
@@ -347,6 +384,18 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           </View>
         )}
 
+        {/* Mesma regra do `rightComponent`, do outro lado: é o voltar. */}
+        {leftComponent && (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.leftComponentContainer,
+              { paddingTop: insets.top, height: HEADER_HEIGHT + insets.top },
+            ]}>
+            {leftComponent}
+          </View>
+        )}
+
         <Animated.ScrollView
           onScroll={onScroll}
           scrollEventThrottle={16}
@@ -360,9 +409,16 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
 
             Sem `paddingBottom`: as telas deste app já reservam o rodapé da tab
             bar (`paddingBottom="s108"`).
+
+            Com `leftComponent` (voltar), aí sim entra a faixa de nav bar: o
+            botão mora nela e o título grande começa abaixo — é o `collapseOffset`
+            que mantém o colapso na mesma cadência.
           */
           contentContainerStyle={[
-            { paddingTop: insets.top + spacing.sm },
+            {
+              paddingTop:
+                insets.top + (leftComponent ? HEADER_HEIGHT : spacing.sm),
+            },
             contentContainerStyle,
           ]}>
           {/* 1. Título grande */}
@@ -456,6 +512,14 @@ const styles = StyleSheet.create({
     top: 0,
     right: spacing.lg,
     // Acima da barra (11) e do blur do título compacto (99).
+    zIndex: 100,
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.sm,
+  },
+  leftComponentContainer: {
+    position: 'absolute',
+    top: 0,
+    left: spacing.lg,
     zIndex: 100,
     justifyContent: 'flex-end',
     paddingBottom: spacing.sm,

@@ -5,6 +5,8 @@ import { palette } from '@theme/index';
 export type IconName =
   | 'search'
   | 'heart'
+  | 'bell'
+  | 'gift'
   | 'bag'
   | 'home'
   | 'profile'
@@ -33,7 +35,11 @@ type IconSpec = {
   strokeWidth: number;
   /** true → o ícone é preenchível (heart/star); usa `fill`. */
   fillable?: boolean;
-  render: (p: { color: string; fill: string; strokeWidth: number }) => React.ReactNode;
+  render: (p: {
+    color: string;
+    fill: string;
+    strokeWidth: number;
+  }) => React.ReactNode;
 };
 
 const ICONS: Record<IconName, IconSpec> = {
@@ -42,8 +48,19 @@ const ICONS: Record<IconName, IconSpec> = {
     strokeWidth: 1.5,
     render: ({ color, strokeWidth }) => (
       <>
-        <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={strokeWidth} />
-        <Path d="M16.5 16.5L21 21" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        <Circle
+          cx={11}
+          cy={11}
+          r={7}
+          stroke={color}
+          strokeWidth={strokeWidth}
+        />
+        <Path
+          d="M16.5 16.5L21 21"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
       </>
     ),
   },
@@ -58,6 +75,57 @@ const ICONS: Record<IconName, IconSpec> = {
         strokeWidth={strokeWidth}
         fill={fill}
       />
+    ),
+  },
+  bell: {
+    viewBox: '0 0 24 24',
+    strokeWidth: 1.5,
+    render: ({ color, strokeWidth }) => (
+      <>
+        <Path
+          d="M12 3.6a5.6 5.6 0 015.6 5.6c0 3 .6 4.7 1.6 5.9H4.8c1-1.2 1.6-2.9 1.6-5.9A5.6 5.6 0 0112 3.6z"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <Path
+          d="M9.8 18c.4 1.1 1.2 1.7 2.2 1.7s1.8-.6 2.2-1.7"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </>
+    ),
+  },
+  gift: {
+    viewBox: '0 0 24 24',
+    strokeWidth: 1.4,
+    render: ({ color, strokeWidth }) => (
+      <>
+        <Path
+          d="M4.6 10.6h14.8V19a1 1 0 01-1 1H5.6a1 1 0 01-1-1v-8.4zM3.6 7.2h16.8v3.4H3.6z"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <Path
+          d="M12 7.2V20"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <Path
+          d="M12 7.2c-1.4 0-3.4-.4-3.7-1.8-.2-1 .6-1.9 1.6-1.8 1.3.2 2.1 2 2.1 3.6zM12 7.2c1.4 0 3.4-.4 3.7-1.8.2-1-.6-1.9-1.6-1.8-1.3.2-2.1 2-2.1 3.6z"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </>
     ),
   },
   bag: {
@@ -93,7 +161,13 @@ const ICONS: Record<IconName, IconSpec> = {
     strokeWidth: 1.5,
     render: ({ color, strokeWidth }) => (
       <>
-        <Circle cx={12} cy={8} r={3.6} stroke={color} strokeWidth={strokeWidth} />
+        <Circle
+          cx={12}
+          cy={8}
+          r={3.6}
+          stroke={color}
+          strokeWidth={strokeWidth}
+        />
         <Path
           d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"
           stroke={color}
