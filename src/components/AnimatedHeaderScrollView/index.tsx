@@ -211,6 +211,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
      */
     const pullToSearch = useScrollableSearchOptional();
     const onPullScroll = pullToSearch?.onScroll;
+    const onPullBeginDrag = pullToSearch?.onBeginDrag;
     const onPullEndDrag = pullToSearch?.onEndDrag;
 
     const onScroll = useAnimatedScrollHandler(
@@ -221,13 +222,18 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
             onPullScroll(event.contentOffset.y);
           }
         },
+        onBeginDrag: () => {
+          if (onPullBeginDrag) {
+            onPullBeginDrag();
+          }
+        },
         onEndDrag: () => {
           if (onPullEndDrag) {
             onPullEndDrag();
           }
         },
       },
-      [onPullScroll, onPullEndDrag],
+      [onPullScroll, onPullBeginDrag, onPullEndDrag],
     );
 
     /**

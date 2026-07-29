@@ -204,18 +204,34 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
         const distance = -offsetY;
         pullDistance.set(distance);
 
-        if (distance > pullThreshold && !armed.get()) {
+        // `dragging`: o gesto é do dedo, não de qualquer offset negativo (ver a
+        // declaração). `armed`: um disparo por arrasto.
+        if (distance > pullThreshold && dragging.get() && !armed.get()) {
           armed.set(true);
           scheduleOnRN(triggerPullToFocus);
         }
       },
-      [armed, pullDistance, pullThreshold, scrollY, triggerPullToFocus],
+      [
+        armed,
+        dragging,
+        pullDistance,
+        pullThreshold,
+        scrollY,
+        triggerPullToFocus,
+      ],
     );
+
+    const onBeginDrag = useCallback(() => {
+      'worklet';
+      dragging.set(true);
+      armed.set(false);
+    }, [armed, dragging]);
 
     const onEndDrag = useCallback(() => {
       'worklet';
+      dragging.set(false);
       armed.set(false);
-    }, [armed]);
+    }, [armed, dragging]);
 
     const value = useMemo<ScrollableSearchContextValue>(
       () => ({
@@ -225,6 +241,7 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
         pullDistance,
         onPullToFocusRef,
         onScroll,
+        onBeginDrag,
         onEndDrag,
         contentVersion,
         notifyContentResize,
@@ -235,6 +252,7 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
         scrollY,
         pullDistance,
         onScroll,
+        onBeginDrag,
         onEndDrag,
         contentVersion,
         notifyContentResize,
