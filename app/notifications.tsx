@@ -10,7 +10,6 @@ import {
   type IconName,
 } from '@components/index';
 import {
-  CAT_SPECIALS,
   NOTIFICATION_GROUPS,
   notificationsByGroup,
   unreadNotificationCount,
@@ -79,7 +78,7 @@ export default function NotificationsScreen() {
         });
         return;
       case 'specials':
-        router.navigate({ pathname: '/search', params: { cat: CAT_SPECIALS } });
+        router.navigate('/reserved');
         return;
       case 'sommelier':
         router.navigate('/sommelier');

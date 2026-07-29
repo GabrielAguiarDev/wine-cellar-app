@@ -19,7 +19,7 @@ import {
   WineRow,
 } from '@components/index';
 import {
-  CAT_SPECIALS,
+  RESERVED_COLLECTION,
   WEEKLY_CURATION,
   countriesWithCount,
   railBestSellers,
@@ -46,8 +46,13 @@ export default function HomeScreen() {
   const goSearch = () => router.navigate('/search');
   const goCountry = (country: string) =>
     router.navigate({ pathname: '/search', params: { country } });
-  const goSpecials = () =>
-    router.navigate({ pathname: '/search', params: { cat: CAT_SPECIALS } });
+  /**
+   * Coleção reservada. Rota fora de `(tabs)` (push da Stack raiz) → tela cheia,
+   * sem tab bar. Já foi `/search?cat=__specials`: os três rótulos de edição
+   * limitada apareciam como resultado de busca, com chips de filtro por cima.
+   * Agora têm tela própria (`app/reserved.tsx`).
+   */
+  const goReserved = () => router.navigate('/reserved');
   /**
    * Destino do bloco de curadoria. Rota fora de `(tabs)` (push da Stack raiz)
    * → tela cheia, sem tab bar. É daqui que a shared element transition parte:
@@ -226,11 +231,15 @@ export default function HomeScreen() {
               </Box>
             </Reappear>
 
-            {/* coleção reservada */}
+            {/* coleção reservada — texto vem de `RESERVED_COLLECTION` (@data),
+              a mesma fonte da tela `/reserved`: card e tela mostram o mesmo
+              eyebrow e o mesmo título, e duplicá-los aqui os faria divergir. */}
             <Reappear order={4}>
               <TouchableOpacityBox
+                accessibilityRole="button"
+                accessibilityLabel={`${RESERVED_COLLECTION.eyebrow}: ${RESERVED_COLLECTION.title}`}
                 activeOpacity={0.9}
-                onPress={goSpecials}
+                onPress={goReserved}
                 marginTop="s30"
                 marginHorizontal="s22"
                 borderRadius="r16"
@@ -249,7 +258,7 @@ export default function HomeScreen() {
                   }}>
                   <Box flex={1}>
                     <Text variant="eyebrow" marginBottom="s8">
-                      Coleção reservada
+                      {RESERVED_COLLECTION.eyebrow}
                     </Text>
                     <Text
                       color="textOnDark"
@@ -258,7 +267,7 @@ export default function HomeScreen() {
                         fontSize: 26,
                         lineHeight: 28,
                       }}>
-                      Vinhos raros & especiais
+                      {RESERVED_COLLECTION.title}
                     </Text>
                     <Text
                       variant="body"
@@ -266,7 +275,7 @@ export default function HomeScreen() {
                       color="cremeA60"
                       marginTop="s8"
                       style={{ lineHeight: 17 }}>
-                      Garrafas de edição limitada, com vídeo do sommelier.
+                      {RESERVED_COLLECTION.teaser}
                     </Text>
                   </Box>
                   <Box

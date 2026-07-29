@@ -18,6 +18,8 @@ export type {
   AnimatedHeaderProps,
   GradientConfig,
 } from './AnimatedHeaderScrollView/types';
+export { ParallaxHeaderScrollView } from './ParallaxHeaderScrollView';
+export type { ParallaxHeaderProps } from './ParallaxHeaderScrollView/types';
 export {
   ScrollableSearch,
   useScrollableSearch,
@@ -54,6 +56,7 @@ export { Pill } from './Pill';
 export { Chip } from './Chip';
 export { FilterSheet, type FilterSheetOption } from './FilterSheet';
 export { SectionTitle } from './SectionTitle';
+export { RareWineCard, type RareWineCardData } from './RareWineCard';
 export { WineCard, type WineCardData } from './WineCard';
 export {
   WineCountryCard,

@@ -49,6 +49,44 @@ export function specials(wines: Wine[] = WINES): Wine[] {
   return wines.filter(w => w.featured);
 }
 
+export type CollectionSummary = {
+  count: number;
+  /** Safra mais antiga da coleção. */
+  vintageFrom: number;
+  /** Safra mais recente. Igual a `vintageFrom` se houver uma só. */
+  vintageTo: number;
+  /**
+   * Média simples das notas, arredondada a 1 casa — a mesma precisão das notas
+   * do catálogo. Sem arredondar, a soma de floats devolve `4.800000000000001`.
+   */
+  averageRating: number;
+};
+
+/**
+ * Resumo da coleção reservada — alimenta a faixa de dados de `/reserved`.
+ * Sai do catálogo (via `specials`), então marcar/desmarcar um rótulo como
+ * `featured` já move a faixa. `null` com a coleção vazia: sem rótulos não há
+ * faixa de safras nem média a exibir, e a tela esconde a faixa inteira.
+ */
+export function specialsSummary(
+  wines: Wine[] = WINES,
+): CollectionSummary | null {
+  const list = specials(wines);
+  if (list.length === 0) {
+    return null;
+  }
+
+  const vintages = list.map(w => w.vintage);
+  const ratingSum = list.reduce((acc, w) => acc + w.averageRating, 0);
+
+  return {
+    count: list.length,
+    vintageFrom: Math.min(...vintages),
+    vintageTo: Math.max(...vintages),
+    averageRating: Math.round((ratingSum / list.length) * 10) / 10,
+  };
+}
+
 /** Vinhos de uma ocasião do sommelier (por lista de ids). */
 export function winesByIds(ids: string[], wines: Wine[] = WINES): Wine[] {
   return ids.map(id => findWine(id, wines));

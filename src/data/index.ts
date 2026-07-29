@@ -9,6 +9,7 @@ export {
   findCuration,
   type Curation,
 } from './curations';
+export { RESERVED_COLLECTION } from './collections';
 export {
   NOTIFICATIONS,
   NOTIFICATION_GROUPS,

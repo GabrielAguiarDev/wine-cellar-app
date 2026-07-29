@@ -12,6 +12,7 @@ import {
   searchByDish,
   searchWines,
   specials,
+  specialsSummary,
   winesByIds,
 } from '../selectors';
 
@@ -42,6 +43,32 @@ describe('rails', () => {
     expect(specials().map(w => w.id).sort()).toEqual(
       ['corona-reale', 'notte-eterna', 'perla-nera'].sort(),
     );
+  });
+});
+
+describe('specialsSummary', () => {
+  it('resume contagem, faixa de safras e média da coleção reservada', () => {
+    // notte-eterna 2019/4,7 · perla-nera 2018/4,9 · corona-reale 2016/4,8
+    expect(specialsSummary()).toEqual({
+      count: 3,
+      vintageFrom: 2016,
+      vintageTo: 2019,
+      averageRating: 4.8,
+    });
+  });
+
+  it('com um rótulo só, a faixa de safras colapsa nele', () => {
+    const one = specials().slice(0, 1);
+    expect(specialsSummary(one)).toEqual({
+      count: 1,
+      vintageFrom: 2019,
+      vintageTo: 2019,
+      averageRating: 4.7,
+    });
+  });
+
+  it('devolve null quando não há destaques', () => {
+    expect(specialsSummary([])).toBeNull();
   });
 });
 

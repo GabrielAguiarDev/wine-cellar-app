@@ -1,4 +1,8 @@
-import { type WineCardData, type WineRowData } from '@components/index';
+import {
+  type RareWineCardData,
+  type WineCardData,
+  type WineRowData,
+} from '@components/index';
 import { type Wine } from '@data/types';
 import { palette } from '@theme/index';
 
@@ -33,6 +37,27 @@ export function toWineCardData(wine: Wine, favorite = false): WineCardData {
     initials: wine.initials,
     featured: wine.featured,
     favorite,
+  };
+}
+
+/**
+ * Mapeia um `Wine` para as props do `RareWineCard` (coleção reservada). Leva a
+ * ficha inteira — assinatura, safra, avaliações, vídeo, estoque baixo: a ficha
+ * existe para mostrar tudo isso de uma vez, ao contrário do card/linha.
+ */
+export function toRareWineCardData(wine: Wine): RareWineCardData {
+  return {
+    name: wine.name,
+    category: fullCategory(wine),
+    signature: wine.signature,
+    vintage: wine.vintage,
+    priceFmt: brl(wine.price),
+    ratingFmt: nf(wine.averageRating),
+    reviewCount: wine.reviewCount,
+    color: wine.color,
+    initials: wine.initials,
+    videoDuration: wine.videoDuration,
+    lowStock: wine.lowStock,
   };
 }
 
