@@ -31,6 +31,7 @@ export type {
 
 // Design system
 export { Icon, type IconName } from './Icon';
+export { Flag } from './Flag';
 export { Logo } from './Logo';
 export {
   CurationBlock,
@@ -54,7 +55,11 @@ export { Chip } from './Chip';
 export { FilterSheet, type FilterSheetOption } from './FilterSheet';
 export { SectionTitle } from './SectionTitle';
 export { WineCard, type WineCardData } from './WineCard';
-export { WineTypeCard, type WineTypeCardData } from './WineTypeCard';
+export {
+  WineCountryCard,
+  COUNTRY_CARD_WIDTH,
+  type WineCountryCardData,
+} from './WineCountryCard';
 export { WineRow, type WineRowData } from './WineRow';
 export { SegmentedToggle } from './SegmentedToggle';
 export { Toggle } from './Toggle';

@@ -4,6 +4,7 @@ import { CAT_SPECIALS, WINE_TYPES } from '../filters';
 import {
   cartCount,
   countByType,
+  countriesWithCount,
   cartSubtotal,
   findWine,
   railBestSellers,
@@ -52,6 +53,27 @@ describe('countByType', () => {
   it('a soma dos tipos cobre o catálogo inteiro', () => {
     const total = WINE_TYPES.reduce((acc, t) => acc + countByType(t), 0);
     expect(total).toBe(searchWines({}).length);
+  });
+});
+
+describe('countriesWithCount', () => {
+  it('ordena por quantidade de rótulos (desc)', () => {
+    expect(countriesWithCount()).toEqual([
+      { country: 'Itália', count: 5 },
+      { country: 'França', count: 4 },
+      { country: 'Argentina', count: 1 },
+    ]);
+  });
+
+  it('a soma dos países cobre o catálogo inteiro', () => {
+    const total = countriesWithCount().reduce((acc, c) => acc + c.count, 0);
+    expect(total).toBe(searchWines({}).length);
+  });
+
+  it('cada contagem bate com o filtro de país', () => {
+    for (const { country, count } of countriesWithCount()) {
+      expect(searchWines({ filters: { country } }).length).toBe(count);
+    }
   });
 });
 

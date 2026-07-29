@@ -1,10 +1,32 @@
-import { matchesFilters, type WineFilters } from './filters';
+import { matchesFilters, wineCountry, type WineFilters } from './filters';
 import { type Wine, type WineType } from './types';
 import { WINES } from './wines';
 
 /** Quantos rótulos do catálogo são de um tipo (contagem dos atalhos). */
 export function countByType(type: WineType, wines: Wine[] = WINES): number {
   return wines.filter(w => w.type === type).length;
+}
+
+/**
+ * Países presentes no catálogo com a contagem de rótulos, do mais representado
+ * ao menos (empate: ordem alfabética). Alimenta os atalhos por país da Home —
+ * a lista sai do catálogo, então um país novo aparece sozinho.
+ */
+export function countriesWithCount(
+  wines: Wine[] = WINES,
+): { country: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const wine of wines) {
+    const country = wineCountry(wine);
+    counts.set(country, (counts.get(country) ?? 0) + 1);
+  }
+
+  return [...counts]
+    .map(([country, count]) => ({ country, count }))
+    .sort(
+      (a, b) =>
+        b.count - a.count || a.country.localeCompare(b.country, 'pt-BR'),
+    );
 }
 
 /** Busca um vinho por id (fallback: primeiro do catálogo). */

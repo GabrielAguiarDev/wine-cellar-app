@@ -46,6 +46,11 @@ const GRAPE_SUGGESTIONS = 8;
 /** Resultados mostrados sobre o blur — a lista completa fica atrás dele. */
 const FOCUSED_RESULT_LIMIT = 8;
 
+/** Filtros iniciais vindos da rota (`cat` = tipo/especiais, `country` = país). */
+function paramFilters(cat?: string, country?: string): WineFilters {
+  return { ...(cat && { type: cat }), ...(country && { country }) };
+}
+
 /**
  * A tela inteira mora dentro de um `<ScrollableSearch>`: puxar a lista para
  * baixo passa a focar o campo de busca (em vez de engordar o título grande, que
@@ -62,13 +67,18 @@ export default function SearchScreen() {
 
 function SearchContent() {
   const router = useRouter();
-  const { cat } = useLocalSearchParams<{ cat?: string }>();
+  const { cat, country } = useLocalSearchParams<{
+    cat?: string;
+    country?: string;
+  }>();
 
   const [mode, setMode] = useState<Mode>('wine');
   const [query, setQuery] = useState('');
   const [dishQuery, setDishQuery] = useState('');
-  // A categoria que vem da Home não vira título: entra como o filtro "Tipo".
-  const [filters, setFilters] = useState<WineFilters>(cat ? { type: cat } : {});
+  // O que vem da Home não vira título: entra como filtro ("Tipo" / "País").
+  const [filters, setFilters] = useState<WineFilters>(
+    paramFilters(cat, country),
+  );
   const [openFilter, setOpenFilter] = useState<WineFilterKey | null>(null);
 
   const { isFocused, setIsFocused } = useScrollableSearch();
@@ -89,12 +99,13 @@ function SearchContent() {
   }, [isFocused]);
 
   // A tela é uma aba: já pode estar montada quando a Home navega com outro
-  // `cat`. Ajuste em render (e não em effect) para não renderizar um frame
-  // com os filtros antigos.
-  const [lastCat, setLastCat] = useState(cat);
-  if (cat !== lastCat) {
-    setLastCat(cat);
-    setFilters(cat ? { type: cat } : {});
+  // `cat`/`country`. Ajuste em render (e não em effect) para não renderizar um
+  // frame com os filtros antigos.
+  const params = `${cat ?? ''}|${country ?? ''}`;
+  const [lastParams, setLastParams] = useState(params);
+  if (params !== lastParams) {
+    setLastParams(params);
+    setFilters(paramFilters(cat, country));
   }
 
   const isDish = mode === 'dish';

@@ -15,15 +15,13 @@ import {
   Text,
   TouchableOpacityBox,
   WineCard,
+  WineCountryCard,
   WineRow,
-  WineTypeCard,
-  type WineTypeCardData,
 } from '@components/index';
 import {
   CAT_SPECIALS,
   WEEKLY_CURATION,
-  WINE_TYPES,
-  countByType,
+  countriesWithCount,
   railBestSellers,
   railSelected,
   unreadNotificationCount,
@@ -32,22 +30,8 @@ import { useFavoritesStore, useNotificationsStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 import { nf, toWineCardData, toWineRowData } from '@utils/index';
 
-/** Cor do líquido de cada tipo — swatch dos atalhos "Explorar por tipo". */
-const TYPE_COLORS: Record<string, [string, string]> = {
-  Tinto: [palette.pourRedLight, palette.pourRed],
-  Branco: [palette.pourWhiteLight, palette.pourWhite],
-  Rosé: [palette.pourRoseLight, palette.pourRose],
-  Espumante: [palette.pourSparklingLight, palette.pourSparkling],
-};
-
-const TYPE_SHORTCUTS: (WineTypeCardData & { type: string })[] = WINE_TYPES.map(
-  type => ({
-    type,
-    label: type,
-    count: countByType(type),
-    colors: TYPE_COLORS[type],
-  }),
-);
+/** Atalhos "Explorar por país" — derivados do catálogo, não uma lista fixa. */
+const COUNTRY_SHORTCUTS = countriesWithCount();
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -59,8 +43,9 @@ export default function HomeScreen() {
   const bestSellers = railBestSellers();
   const unread = unreadNotificationCount(notificationsRead);
 
-  const goCat = (cat: string | null) =>
-    router.navigate(cat ? { pathname: '/search', params: { cat } } : '/search');
+  const goSearch = () => router.navigate('/search');
+  const goCountry = (country: string) =>
+    router.navigate({ pathname: '/search', params: { country } });
   const goSpecials = () =>
     router.navigate({ pathname: '/search', params: { cat: CAT_SPECIALS } });
   /**
@@ -178,7 +163,7 @@ export default function HomeScreen() {
               />
             </Box>
 
-            {/* atalhos por tipo — abrem a busca já filtrada (não filtram aqui) */}
+            {/* atalhos por país — abrem a busca já filtrada (não filtram aqui) */}
             <Reappear order={2}>
               <Box paddingHorizontal="s22" marginBottom="s14">
                 <SectionTitle
@@ -187,7 +172,7 @@ export default function HomeScreen() {
                       accessibilityRole="button"
                       accessibilityLabel="Ver toda a coleção na busca"
                       activeOpacity={0.7}
-                      onPress={() => goCat(null)}
+                      onPress={goSearch}
                       flexDirection="row"
                       alignItems="center"
                       paddingVertical="s4"
@@ -202,15 +187,19 @@ export default function HomeScreen() {
                       <Icon name="arrowRight" size={11} color={palette.goldDark} />
                     </TouchableOpacityBox>
                   }>
-                  Explorar por tipo
+                  Explorar por país
                 </SectionTitle>
               </Box>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 22, gap: 12 }}>
-                {TYPE_SHORTCUTS.map(t => (
-                  <WineTypeCard key={t.type} data={t} onPress={() => goCat(t.type)} />
+                {COUNTRY_SHORTCUTS.map(c => (
+                  <WineCountryCard
+                    key={c.country}
+                    data={c}
+                    onPress={() => goCountry(c.country)}
+                  />
                 ))}
               </ScrollView>
             </Reappear>
