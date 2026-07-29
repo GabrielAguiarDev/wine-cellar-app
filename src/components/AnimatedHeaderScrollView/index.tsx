@@ -222,9 +222,9 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
             onPullScroll(event.contentOffset.y);
           }
         },
-        onBeginDrag: () => {
+        onBeginDrag: event => {
           if (onPullBeginDrag) {
-            onPullBeginDrag();
+            onPullBeginDrag(event.contentOffset.y);
           }
         },
         onEndDrag: () => {

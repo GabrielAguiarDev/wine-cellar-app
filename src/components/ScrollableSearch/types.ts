@@ -39,11 +39,12 @@ export type ScrollableSearchContextValue = {
    */
   onScroll: (offsetY: number) => void;
   /**
-   * WORKLET. Início do arrasto. O gesto SÓ dispara entre um `onBeginDrag` e o
-   * `onEndDrag` correspondente — ver o comentário do `onScroll` no componente.
+   * WORKLET. Início do arrasto, com o offset do momento: é aqui que se decide se
+   * este gesto é uma PUXADA (começou no topo) ou uma rolagem comum. Ver o
+   * comentário do `onScroll` no componente.
    */
-  onBeginDrag: () => void;
-  /** WORKLET. Fim do arrasto: desarma e rearma para o próximo. */
+  onBeginDrag: (offsetY: number) => void;
+  /** WORKLET. Fim do arrasto: rearma o disparo para o gesto seguinte. */
   onEndDrag: () => void;
 };
 

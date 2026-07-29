@@ -42,6 +42,7 @@ import {
   PULL_SPRING,
   PULL_THRESHOLD,
   spacing,
+  TOP_TOLERANCE,
 } from './conf';
 import {
   type ScrollableSearchAnchorProps,
@@ -79,8 +80,8 @@ import {
  * absoluteFill) só para ler o scroll. Aqui esse papel é do
  * `AnimatedHeaderScrollView`, que já tem o ScrollView da tela e já lê o offset
  * para colapsar o título — dois ScrollViews empilhados seria absurdo. Em vez do
- * componente, o contexto expõe dois WORKLETS (`onScroll`, `onEndDrag`) que o
- * dono do ScrollView chama de dentro do handler dele. É por isso que o
+ * componente, o contexto expõe três WORKLETS (`onScroll`, `onBeginDrag`,
+ * `onEndDrag`) que o dono do ScrollView chama do handler dele. É por isso que o
  * `AnimatedHeaderScrollView` consulta este contexto com
  * `useScrollableSearchOptional`.
  *
@@ -99,6 +100,10 @@ import {
  * - O fade ao rolar é relativo ao header compacto, não fixo em [0, 100] px
  *   (ver `BAR_FADE_WINDOW`).
  * - `pullThreshold` migrou de `ScrollContent` (que não existe aqui) para a raiz.
+ * - A puxada segue a regra do `RefreshControl`: vale só o arrasto que COMEÇA com
+ *   a lista no topo. O original reage a qualquer offset negativo, então o blur
+ *   entrava sozinho em todo bounce de inércia ao voltar ao topo — e o usuário só
+ *   estava navegando a lista. Ver `pulling` e `onBeginDrag`.
  * - Sem o `memo` duplo do original (`memo(memo(Root))`) e sem o
  *   `animatedStyle` que devolve `opacity: 1` fixo.
  *
@@ -150,13 +155,17 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
      */
     const armed = useSharedValue(false);
     /**
-     * O dedo está na tela. O gesto exige isso porque offset negativo NÃO é
-     * sinônimo de "puxada": no mount o iOS ajusta o content inset e reporta
-     * offset negativo sozinho, e uma mudança de tamanho do conteúdo faz o mesmo
-     * — sem esta guarda a busca abria por conta própria ao entrar na aba. O
-     * original não checa isso.
+     * Este gesto é uma PUXADA — não uma rolagem qualquer que passou pelo topo.
+     * Liga no `onBeginDrag` só se o dedo desceu com a lista já no topo, e desliga
+     * assim que o offset volta a ser positivo (aí virou rolagem).
+     *
+     * Sem isso, offset negativo é ambíguo e o efeito aparece sem ninguém ter
+     * pedido: o iOS reporta negativo no ajuste de inset do mount, numa mudança de
+     * tamanho do conteúdo, e — o caso mais incômodo — em todo bounce de inércia
+     * quando a lista volta ao topo com o dedo já fora da tela. O original reage a
+     * todos eles.
      */
-    const dragging = useSharedValue(false);
+    const pulling = useSharedValue(false);
     const onPullToFocusRef = useRef<(() => void) | null>(null);
 
     const [contentVersion, setContentVersion] = useState(0);
@@ -191,6 +200,15 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
       onPullToFocusRef.current?.();
     }, []);
 
+    /**
+     * O `pullDistance` (e com ele o blur, a escala e o disparo) só existe DENTRO
+     * de uma puxada — mesma regra do `RefreshControl`: com o offset positivo o
+     * gesto virou rolagem e a puxada morre ali; sem `pulling`, nada acontece.
+     *
+     * Note que a puxada não termina no `onEndDrag`: ela sobrevive até o offset
+     * voltar ao zero. É o que deixa o efeito sair junto com a lista relaxando,
+     * em vez de piscar para fora no instante em que o dedo sai.
+     */
     const onScroll = useCallback(
       (offsetY: number) => {
         'worklet';
@@ -198,22 +216,25 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
 
         if (offsetY >= 0) {
           pullDistance.set(0);
+          pulling.set(false);
+          return;
+        }
+        if (!pulling.get()) {
           return;
         }
 
         const distance = -offsetY;
         pullDistance.set(distance);
 
-        // `dragging`: o gesto é do dedo, não de qualquer offset negativo (ver a
-        // declaração). `armed`: um disparo por arrasto.
-        if (distance > pullThreshold && dragging.get() && !armed.get()) {
+        // `armed`: um disparo por gesto.
+        if (distance > pullThreshold && !armed.get()) {
           armed.set(true);
           scheduleOnRN(triggerPullToFocus);
         }
       },
       [
         armed,
-        dragging,
+        pulling,
         pullDistance,
         pullThreshold,
         scrollY,
@@ -221,17 +242,20 @@ const ScrollableSearchRoot = memo<ScrollableSearchProps>(
       ],
     );
 
-    const onBeginDrag = useCallback(() => {
-      'worklet';
-      dragging.set(true);
-      armed.set(false);
-    }, [armed, dragging]);
+    /** É puxada só se o dedo desceu com a lista já no topo. */
+    const onBeginDrag = useCallback(
+      (offsetY: number) => {
+        'worklet';
+        pulling.set(offsetY <= TOP_TOLERANCE);
+        armed.set(false);
+      },
+      [armed, pulling],
+    );
 
     const onEndDrag = useCallback(() => {
       'worklet';
-      dragging.set(false);
       armed.set(false);
-    }, [armed, dragging]);
+    }, [armed]);
 
     const value = useMemo<ScrollableSearchContextValue>(
       () => ({

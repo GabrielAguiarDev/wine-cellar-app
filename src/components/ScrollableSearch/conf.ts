@@ -13,6 +13,13 @@ import { HEADER_HEIGHT } from '../AnimatedHeaderScrollView/conf';
 export const PULL_THRESHOLD = 80;
 
 /**
+ * Folga (px) para considerar que o arrasto começou NO TOPO. Só um arrasto que
+ * nasce aqui conta como puxada — ver `onBeginDrag`. Não é zero por causa de
+ * arredondamento de layout e do resto de offset que sobra depois de uma inércia.
+ */
+export const TOP_TOLERANCE = 2;
+
+/**
  * Altura da barra compacta do header, importada em vez de redigitada: é ela que
  * define onde a barra de busca desaparece ao rolar (ver `SearchBar`).
  */
