@@ -63,9 +63,6 @@ export function WineCountryCard({ data, onPress }: WineCountryCardProps) {
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        // A última parada é ANTES da base (0.62): daí para baixo o véu fica
-        // uniforme — é a faixa onde o nome descansa, e uma rampa que só fecha
-        // no último pixel deixaria o texto sobre bandeira clara.
         colors={[`${VEIL}0)`, `${VEIL}0.22)`, `${VEIL}0.82)`]}
         locations={[0, 0.32, 0.82]}
         style={StyleSheet.absoluteFill}
