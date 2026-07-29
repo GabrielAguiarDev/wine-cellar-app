@@ -19,8 +19,8 @@ const TEXT_SHADOW = {
   textShadowRadius: 6,
 } as const;
 
-export const COUNTRY_CARD_WIDTH = 152;
-const CARD_HEIGHT = 98;
+export const COUNTRY_CARD_WIDTH = 132;
+const CARD_HEIGHT = 84;
 
 export type WineCountryCardData = {
   /** Nome do país como vem do catálogo (`wineCountry`). */
@@ -68,17 +68,17 @@ export function WineCountryCard({ data, onPress }: WineCountryCardProps) {
         style={StyleSheet.absoluteFill}
       />
 
-      <Box flex={1} justifyContent="flex-end" padding="s12">
+      <Box flex={1} justifyContent="flex-end" padding="s10">
         <Text
           variant="wineName"
-          fontSize={19}
+          fontSize={17}
           color="textOnDark"
-          style={{ lineHeight: 21, ...TEXT_SHADOW }}>
+          style={{ lineHeight: 19, ...TEXT_SHADOW }}>
           {country}
         </Text>
         <Text
           variant="label"
-          fontSize={8.5}
+          fontSize={8}
           color="cremeA82"
           marginTop="s2"
           style={{ letterSpacing: 1.3, ...TEXT_SHADOW }}>
