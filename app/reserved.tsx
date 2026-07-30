@@ -1,14 +1,6 @@
-import { type ReactNode } from 'react';
-
-import { type StyleProp, type ViewStyle } from 'react-native';
-
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -17,6 +9,7 @@ import {
   Button,
   ParallaxHeaderScrollView,
   RareWineCard,
+  Reveal,
   Text,
 } from '@components/index';
 import { RESERVED_COLLECTION, specials, specialsSummary } from '@data/index';
@@ -25,16 +18,7 @@ import { fonts } from '@theme/index';
 import { nf, toRareWineCardData } from '@utils/index';
 
 /** Fotografia da adega da loja — o hero em parallax. */
-const HERO = require('../assets/images/banner-loja.png');
-
-/** Defasagem entre um elemento e o seguinte na entrada da tela. */
-const STEP = 60;
-
-/** Duração do fade de cada elemento. */
-const FADE = 340;
-
-/** Deslocamento vertical inicial de cada elemento, em px. */
-const OFFSET = 12;
+const HERO = require('../assets/images/banner-cellar.png');
 
 /**
  * Posição de cada elemento na fila da entrada, na ordem de leitura da tela.
@@ -66,9 +50,12 @@ const ORDER = {
  * ── As três decisões visuais ────────────────────────────────────────────────
  *
  * 1. **Hero fotográfico em parallax** (`ParallaxHeaderScrollView`) com a foto da
- *    adega da própria loja. É a única tela do app com fotografia — as demais são
- *    desenhadas (garrafas procedurais, bandeiras SVG). O peso disso é o
- *    argumento: a coleção reservada é o lugar onde a adega FÍSICA aparece.
+ *    adega da própria loja — esta é a tela onde o padrão nasceu, e de onde saiu
+ *    para `/vip` e `/sommelier`. Fotografia é exceção no app (o resto é
+ *    desenhado: garrafas procedurais, bandeiras SVG), e é isso que lhe dá peso:
+ *    a coleção reservada é o lugar onde a adega FÍSICA aparece. `banner-cellar`
+ *    é o corredor central em 16:9; as outras duas telas usam OUTRAS fotos da
+ *    mesma casa, para o hero não se repetir de tela em tela.
  * 2. **Corpo escuro contínuo** (`primaryDeep`). O véu da foto termina
  *    exatamente em `palette.wineDeep`, que é o fundo daqui — não existe emenda
  *    entre fotografia e conteúdo, a foto simplesmente escurece até virar tela.
@@ -82,15 +69,15 @@ const ORDER = {
  *
  * A tela inteira nasce em cascata, de cima para baixo: a fotografia em fade
  * puro (`FadeIn` na raiz — ela é o fundo, não pode deslizar), e sobre ela cada
- * elemento subindo `OFFSET` px a cada `STEP` (ver `Reveal` e `ORDER`). Antes só
+ * elemento subindo um degrau atrás do outro (ver `Reveal` e `ORDER`). Antes só
  * o bloco do título e as fichas animavam, o que dava o efeito contrário do
  * pretendido: o miolo da tela — faixa de dados, seção, nota de fechamento —
  * aparecia pronto no primeiro frame e as poucas peças animadas pareciam
  * atrasadas em relação a ele.
  *
- * A janela toda fecha em ~940ms (`ORDER.signature × STEP + FADE`). É um teto
- * deliberado: passa disso e a cascata deixa de ser a tela se apresentando para
- * virar espera.
+ * A janela toda fecha em ~940ms (`ORDER.signature × REVEAL_STEP + REVEAL_FADE`).
+ * É um teto deliberado: passa disso e a cascata deixa de ser a tela se
+ * apresentando para virar espera.
  *
  * ── Chrome do sistema ───────────────────────────────────────────────────────
  *  • Status bar `light`, com a foto sangrando por baixo dela (full bleed).
@@ -281,35 +268,6 @@ export default function ReservedScreen() {
         </Box>
       </Animated.View>
     </>
-  );
-}
-
-/**
- * Um degrau da cascata de entrada: fade + subida de `OFFSET` px, atrasado em
- * `order × STEP`.
- *
- * `Easing.out(Easing.cubic)` é o que separa "elegante" de "lento": o elemento
- * cobre a maior parte da distância no início e desacelera na chegada, então a
- * cascata parece mais rápida do que os `FADE` ms que de fato dura.
- */
-function Reveal({
-  order,
-  style,
-  children,
-}: {
-  order: number;
-  style?: StyleProp<ViewStyle>;
-  children: ReactNode;
-}) {
-  return (
-    <Animated.View
-      style={style}
-      entering={FadeInDown.delay(order * STEP)
-        .duration(FADE)
-        .easing(Easing.out(Easing.cubic))
-        .withInitialValues({ transform: [{ translateY: OFFSET }] })}>
-      {children}
-    </Animated.View>
   );
 }
 

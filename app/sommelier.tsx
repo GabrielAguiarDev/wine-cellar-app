@@ -2,30 +2,92 @@ import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   BackButton,
   Box,
-  Screen,
+  ParallaxHeaderScrollView,
+  Reveal,
   Text,
   TouchableOpacityBox,
   WineRow,
 } from '@components/index';
-import { StaggeredText } from '@components/organisms/animated-text';
 import { OCCASIONS, winesByIds } from '@data/index';
-import { fonts, palette } from '@theme/index';
+import { useGoBack } from '@hooks/useGoBack';
+import { fonts } from '@theme/index';
 import { toWineRowData } from '@utils/index';
+
+/**
+ * O brinde na mesa da adega — três taças de tinto em primeiro plano, a parede de
+ * garrafas retroiluminada ao fundo.
+ *
+ * É a única das três fotos com PESSOAS, e é por isso que ela é desta tela: o
+ * sommelier não apresenta um acervo (isso é `/reserved` e `/vip`, onde a adega
+ * aparece vazia), ele responde a um momento — e o momento é gente à mesa. A
+ * pergunta "qual é a ocasião?" fica em cima da resposta.
+ */
+const HERO = require('../assets/images/wine-glass.png');
 
 const TITLE = 'Qual é a ocasião?';
 
-// A revelação caractere a caractere do título (defaults: 40ms/char + 350ms)
-// define quando o resto da tela pode entrar.
-const TITLE_REVEAL_MS = (TITLE.length - 1) * 40 + 350;
-const GRID_DELAY = TITLE_REVEAL_MS;
+/**
+ * Hero mais baixo que o das telas de coleção (380). Ali a fotografia é o
+ * assunto; aqui o assunto é a ESCOLHA, e com a foto na altura cheia a grade de
+ * ocasiões — a única interação da tela — nascia inteira abaixo da dobra. Em 300
+ * a primeira fileira de cartões já aparece, e o resto se resolve num arrasto.
+ */
+const IMAGE_HEIGHT = 300;
 
+/**
+ * Posição de cada elemento na fila da entrada, na ordem de leitura da tela —
+ * mesma convenção de `/reserved` e `/vip`, ver `Reveal`.
+ */
+const ORDER = {
+  rule: 0,
+  eyebrow: 1,
+  title: 2,
+  lead: 3,
+  /** Os quatro cartões de ocasião ocupam 4, 5, 6 e 7. */
+  cards: 4,
+} as const;
+
+/**
+ * Sommelier virtual — escolher pela OCASIÃO, não pelo rótulo. Push da Stack
+ * raiz, aberta da busca, de `/reserved` e de `/notifications`.
+ *
+ * ── Por que esta tela também ganhou hero fotográfico ────────────────────────
+ *
+ * Ela abria em gradiente bordô liso, com o título em máquina de escrever. O que
+ * mudou não foi o gosto: `/reserved` e `/vip` passaram a se abrir em fotografia,
+ * e as três são o mesmo gesto do app — "deixa eu te mostrar". Uma delas em fundo
+ * liso lia-se como tela de outro app.
+ *
+ * A diferença de dosagem está no `IMAGE_HEIGHT` acima: esta é a única das três
+ * que PEDE uma ação, então a foto cede altura para a grade.
+ *
+ * ── O que saiu: o `StaggeredText` ───────────────────────────────────────────
+ *
+ * Mesmo motivo de `/vip`: sobre a fotografia, com o parallax rodando, a
+ * revelação caractere a caractere era um segundo efeito disputando a mesma
+ * atenção — e o título do hero ainda tem de sair em fade ao rolar para dar lugar
+ * ao título compacto da barra, o que fazia a máquina de escrever aparecer e
+ * desaparecer no mesmo gesto. O `StaggeredText` ficou em `/quiz`, a tela sem
+ * fotografia em que o texto é o único acontecimento.
+ *
+ * ── A lista da ocasião NÃO entra na cascata ─────────────────────────────────
+ *
+ * Os vinhos abaixo da grade seguem em `FadeInDown` com `key` por ocasião, e não
+ * em `Reveal`: a cascata é a tela SE APRESENTANDO (atrasos contados da montagem,
+ * ver `ORDER`), enquanto aquela lista é a RESPOSTA a um toque, que precisa vir
+ * imediata e se refazer a cada nova escolha.
+ */
 export default function SommelierScreen() {
   const router = useRouter();
+  const goBack = useGoBack('/home');
+  const insets = useSafeAreaInsets();
+
   const [sel, setSel] = useState<string | null>(null);
 
   const occasion = OCCASIONS.find(o => o.key === sel);
@@ -34,100 +96,146 @@ export default function SommelierScreen() {
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
   return (
-    <Screen scroll gradient={[palette.wine, palette.wineDeeper]}>
+    <>
       <StatusBar style="light" />
-      <Box paddingBottom="s108" paddingTop="s6">
-        <Box paddingHorizontal="s22">
-          <BackButton variant="dark" onPress={() => router.back()} />
-        </Box>
-
-        <Box paddingHorizontal="s24" paddingTop="s14">
-          <Animated.View entering={FadeInDown.duration(320)}>
-            <Text variant="eyebrow">Sommelier virtual</Text>
-          </Animated.View>
-          {/* título (revelação caractere a caractere — reacticx) */}
-          <Box marginTop="s8">
-            <StaggeredText
-              text={TITLE}
-              style={{
-                fontFamily: fonts.serifSemiBold,
-                fontSize: 36,
-                lineHeight: 38,
-                color: palette.creme,
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* grade 2x2 (fade up escalonado) */}
-        <Box
-          flexDirection="row"
-          flexWrap="wrap"
-          justifyContent="space-between"
-          paddingHorizontal="s22"
-          paddingTop="s22"
-          style={{ rowGap: 12 }}>
-          {OCCASIONS.map((o, i) => {
-            const active = o.key === sel;
-            return (
-              <Animated.View
-                key={o.key}
-                entering={FadeInDown.delay(GRID_DELAY + i * 70).duration(320)}
-                style={{ width: '48%' }}>
-                <TouchableOpacityBox
-                  activeOpacity={0.85}
-                  onPress={() => setSel(o.key)}
-                  backgroundColor={active ? 'accent' : 'cremeA06'}
-                  borderWidth={1}
-                  borderColor={active ? 'accent' : 'goldA35'}
-                  borderRadius="r14"
-                  padding="s18"
-                  minHeight={118}
-                  justifyContent="flex-end">
+      {/*
+        Fade da tela inteira: é a fotografia entrando. Ela é o fundo de tudo o
+        que vem por cima, então não desliza — deslizar arrastaria a cascata
+        junto e nada teria referência parada.
+      */}
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(320)}>
+        <Box flex={1} backgroundColor="primaryDeep">
+          <ParallaxHeaderScrollView
+            image={HERO}
+            imageHeight={IMAGE_HEIGHT}
+            compactTitle="Sommelier virtual"
+            leftComponent={<BackButton variant="dark" onPress={goBack} />}
+            overlay={
+              <>
+                {/* fio curto: o mesmo remate dourado das etiquetas da marca */}
+                <Reveal order={ORDER.rule}>
+                  <Box width={34} height={1} backgroundColor="goldA60" />
+                </Reveal>
+                <Reveal order={ORDER.eyebrow}>
+                  <Text
+                    variant="eyebrow"
+                    marginTop="s16"
+                    style={{ letterSpacing: 3.4 }}>
+                    Sommelier virtual
+                  </Text>
+                </Reveal>
+                <Reveal order={ORDER.title}>
                   <Text
                     color="textOnDark"
-                    style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, lineHeight: 23 }}>
-                    {o.label}
+                    marginTop="s10"
+                    style={{
+                      fontFamily: fonts.serifSemiBold,
+                      fontSize: 36,
+                      lineHeight: 38,
+                    }}>
+                    {TITLE}
                   </Text>
+                </Reveal>
+                <Reveal order={ORDER.lead}>
                   <Text
-                    variant="body"
-                    fontSize={10.5}
-                    color={active ? 'cremeA82' : 'cremeA60'}
-                    marginTop="s6"
-                    style={{ lineHeight: 15 }}>
-                    {o.desc}
+                    color="cremeA70"
+                    marginTop="s10"
+                    style={{
+                      fontFamily: fonts.serifItalic,
+                      fontSize: 15.5,
+                      lineHeight: 22,
+                    }}>
+                    Diga o momento e a casa escolhe a garrafa.
                   </Text>
-                </TouchableOpacityBox>
-              </Animated.View>
-            );
-          })}
-        </Box>
+                </Reveal>
+              </>
+            }>
+            {/*
+              Fundo OPACO obrigatório: a foto rola a meia velocidade, então o
+              conteúdo passa por cima dela. Translúcido aqui, a fotografia
+              apareceria atrás do texto.
+            */}
+            <Box
+              backgroundColor="primaryDeep"
+              style={{ paddingBottom: insets.bottom + 40 }}>
+              {/* grade 2x2 das ocasiões */}
+              <Box
+                flexDirection="row"
+                flexWrap="wrap"
+                justifyContent="space-between"
+                paddingHorizontal="s22"
+                paddingTop="s24"
+                style={{ rowGap: 12 }}>
+                {OCCASIONS.map((o, i) => {
+                  const active = o.key === sel;
+                  return (
+                    <Reveal
+                      key={o.key}
+                      order={ORDER.cards + i}
+                      style={{ width: '48%' }}>
+                      <TouchableOpacityBox
+                        activeOpacity={0.85}
+                        onPress={() => setSel(o.key)}
+                        backgroundColor={active ? 'accent' : 'cremeA06'}
+                        borderWidth={1}
+                        borderColor={active ? 'accent' : 'goldA35'}
+                        borderRadius="r14"
+                        padding="s18"
+                        minHeight={118}
+                        justifyContent="flex-end">
+                        <Text
+                          color="textOnDark"
+                          style={{
+                            fontFamily: fonts.serifSemiBold,
+                            fontSize: 22,
+                            lineHeight: 23,
+                          }}>
+                          {o.label}
+                        </Text>
+                        <Text
+                          variant="body"
+                          fontSize={10.5}
+                          color={active ? 'cremeA82' : 'cremeA60'}
+                          marginTop="s6"
+                          style={{ lineHeight: 15 }}>
+                          {o.desc}
+                        </Text>
+                      </TouchableOpacityBox>
+                    </Reveal>
+                  );
+                })}
+              </Box>
 
-        {/* vinhos da ocasião */}
-        {occasion && (
-          <Box paddingHorizontal="s22" paddingTop="s20">
-            <Animated.View key={`${occasion.key}-label`} entering={FadeInDown.duration(300)}>
-              <Text variant="eyebrow" marginBottom="s14">
-                Para &quot;{occasion.label}&quot;
-              </Text>
-            </Animated.View>
-            <Box style={{ gap: 12 }}>
-              {wines.map((w, i) => (
-                <Animated.View
-                  key={`${occasion.key}-${w.id}`}
-                  entering={FadeInDown.delay(90 + i * 70).duration(320)}>
-                  <WineRow
-                    variant="dark"
-                    bottleWidth={30}
-                    data={toWineRowData(w)}
-                    onPress={() => openWine(w.id)}
-                  />
-                </Animated.View>
-              ))}
+              {/* vinhos da ocasião */}
+              {occasion && (
+                <Box paddingHorizontal="s22" paddingTop="s20">
+                  <Animated.View
+                    key={`${occasion.key}-label`}
+                    entering={FadeInDown.duration(300)}>
+                    <Text variant="eyebrow" marginBottom="s14">
+                      Para &quot;{occasion.label}&quot;
+                    </Text>
+                  </Animated.View>
+                  <Box style={{ gap: 12 }}>
+                    {wines.map((w, i) => (
+                      <Animated.View
+                        key={`${occasion.key}-${w.id}`}
+                        entering={FadeInDown.delay(90 + i * 70).duration(320)}>
+                        <WineRow
+                          variant="dark"
+                          bottleWidth={30}
+                          data={toWineRowData(w)}
+                          onPress={() => openWine(w.id)}
+                        />
+                      </Animated.View>
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Box>
-          </Box>
-        )}
-      </Box>
-    </Screen>
+          </ParallaxHeaderScrollView>
+        </Box>
+      </Animated.View>
+    </>
   );
 }

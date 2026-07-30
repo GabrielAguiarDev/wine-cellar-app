@@ -50,6 +50,13 @@ export {
   type FadeReentryProps,
   type ReappearProps,
 } from './FadeReentry';
+export {
+  Reveal,
+  REVEAL_STEP,
+  REVEAL_FADE,
+  REVEAL_OFFSET,
+  type RevealProps,
+} from './Reveal';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';
