@@ -27,6 +27,16 @@ import { findCuration, winesByIds } from '@data/index';
 const ENTER_OFFSET = 20;
 
 /**
+ * Quanto o carrossel desce dentro da área de conteúdo.
+ *
+ * Ancorado no topo, o bloco garrafa+legenda ficava alto demais e deixava uma
+ * faixa morta sob o preço. Estes pontos vêm do respiro inferior encurtado no
+ * `CurationBlock` (`insets.bottom + 10`), então o slide não perde altura: a
+ * moldura continua do mesmo tamanho, apenas mais baixa na tela.
+ */
+const CAROUSEL_DROP = 18;
+
+/**
  * Tela de destino da curadoria — o "dentro" do card da Home.
  *
  * O fundo bordô NÃO é recriado aqui: é o próprio `<CurationBlock
@@ -143,7 +153,12 @@ export default function CurationScreen() {
           </Text>
           {/* O carrossel sangra até as bordas: o recuo lateral dele é o que
               centraliza os slides, então anulo o padding do bloco aqui. */}
-          <Box flex={1} style={{ marginHorizontal: -FULLSCREEN_PADDING }}>
+          <Box
+            flex={1}
+            style={{
+              marginHorizontal: -FULLSCREEN_PADDING,
+              marginTop: CAROUSEL_DROP,
+            }}>
             {ready && (
               <Animated.View style={[{ flex: 1 }, carouselEnterStyle]}>
                 <WineCarousel

@@ -53,8 +53,10 @@ export default function RootLayout() {
             no creme da Home: perde-se o conteúdo da Home ao redor, mas a COR
             não salta e a leitura continua sendo "o card virou a tela".
 
-            `gestureEnabled: false` porque o swipe pularia a animação de
-            fechamento — sair daqui é pelo "Voltar", que a anima.
+            `gestureEnabled: false` porque o swipe-back da Stack pularia a
+            animação de fechamento (a rota não tem animação de pop). Quem faz o
+            papel dele é o ARRASTO VERTICAL do próprio bloco, que anima a saída
+            — ver "Como se SAI da tela cheia" em `CurationBlock`.
           */}
           <Stack.Screen
             name="curation/[id]"

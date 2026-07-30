@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -15,12 +16,17 @@ import {
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Gesture,
+  GestureDetector,
+} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,9 +36,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useTransitionStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 
+import { BackButton } from './BackButton';
 import { Box, TouchableOpacityBox } from './Box';
 import { Button } from './Button';
-import { ScreenHeader } from './ScreenHeader';
 import { Text } from './Text';
 
 /**
@@ -127,6 +133,21 @@ import { Text } from './Text';
  *    A tab bar NÃO deve reaparecer por cima do bloco em tela cheia.
  *  • O padding inferior da tela de destino NÃO usa `s108` (reservado p/ tab
  *    bar); usa o inset de home indicator, já aplicado aqui.
+ *
+ * ── Como se SAI da tela cheia ───────────────────────────────────────────────
+ *
+ * São TRÊS caminhos, e todos terminam em `onBack` — nunca em `router.back()`
+ * solto, senão a forma desapareceria de um frame para o outro:
+ *  1. `BackButton` do topo → `close()`: encolhe de volta até o card.
+ *  2. Botão físico do Android → o MESMO `close()` (ver o `BackHandler` abaixo).
+ *  3. Arrastar o bloco para baixo → o MESMO `close()`. O arrasto move o bloco
+ *     com o dedo, mas não é ele que fecha: ao soltar, o deslocamento se desfaz
+ *     na mesma curva do encolhimento e o bloco volta a ser o card. É a saída
+ *     "nativa" que falta no iOS, onde não há botão de sistema — o swipe-back da
+ *     Stack fica desligado (`gestureEnabled: false` em `app/_layout.tsx`)
+ *     porque ele pularia a animação da forma.
+ * O gesto só é armado DEPOIS da abertura e respeita a mesma trava `closing`,
+ * então nenhum par de caminhos consegue navegar duas vezes.
  */
 
 export type BlockVariant = 'card' | 'fullscreen';
@@ -230,6 +251,54 @@ export const FULLSCREEN_PADDING = 24;
 export const OPEN_DURATION = 560;
 export const CLOSE_DURATION = 420;
 
+/* ── Arrastar para baixo e fechar (só `fullscreen`) ─────────────────────────
+   O ARRASTO é só o pré-movimento: o bloco segue o dedo 1:1, encolhendo de leve
+   e ganhando canto, como uma folha se desencaixando. A SAÍDA não é dele — ao
+   soltar, quem termina é o `close()`, o mesmo encolhimento até o card do botão
+   "Voltar". Nada de deslizar para fora como modal: esta tela nasceu de um card
+   e volta a ser aquele card, seja qual for o caminho de saída.
+   Quem paga o custo visual do arrasto é a cor da rota por baixo (`contentStyle`
+   no creme da Home, ver `app/_layout.tsx`) — a mesma moldura que aparece em
+   volta durante a abertura, então o gesto não inventa nenhum estado novo. */
+
+/** Deslocamento a partir do qual soltar FECHA em vez de voltar ao lugar. */
+const DISMISS_DISTANCE = 120;
+
+/** Atalho por velocidade: um flick curto para baixo também fecha. */
+const DISMISS_VELOCITY = 900;
+
+/**
+ * Ponto de referência do arrasto: onde o encolhimento chega ao mínimo.
+ *
+ * Deliberadamente longe (55% da tela): o arrasto não deve consumir o efeito de
+ * saída, só insinuá-lo. Quem encolhe de verdade é o `close()`, e se o dedo já
+ * tivesse levado o bloco a uma escala pequena não sobraria movimento para ele.
+ */
+const DRAG_RANGE_FRACTION = 0.55;
+
+/** Escala mínima do bloco no fim do arrasto. */
+const DRAG_SCALE_MIN = 0.9;
+
+/** Raio máximo ganho ao arrastar (0 em repouso: em tela cheia não há canto). */
+const DRAG_RADIUS = 26;
+
+/**
+ * Saída "de modal" pela borda de baixo. Usada num caso só: arrasto numa tela
+ * aberta SEM card de origem (deep link), onde não há retângulo para encolher.
+ */
+const MODAL_EXIT_DURATION = 300;
+
+/**
+ * Volta ao lugar. Sem overshoot de propósito: o bloco ocupa a tela inteira, e
+ * um repique aqui mostraria a rota por baixo por um ou dois frames.
+ */
+const DRAG_SPRING = {
+  damping: 26,
+  stiffness: 260,
+  mass: 0.9,
+  overshootClamping: true,
+} as const;
+
 /**
  * Curva "emphasized": sai devagar, acelera no meio e desacelera no fim.
  * Um `Easing.out` aqui resolvia 70% do trajeto nos primeiros 150ms e a
@@ -328,22 +397,67 @@ export function CurationBlock({
 
   /** 0 = geometria do card (origem) · 1 = tela cheia. */
   const progress = useSharedValue(fullscreen && !source ? 1 : 0);
-  /** Evita disparar dois fechamentos (header + botão físico). */
-  const closing = useRef(false);
+  /** Quanto o dedo já arrastou o bloco para baixo, em pontos. */
+  const dragY = useSharedValue(0);
+  /**
+   * O arrasto só é armado depois da abertura: durante a expansão a geometria da
+   * forma ainda está viajando, e mover o bloco no meio disso brigaria com ela.
+   */
+  const [dragArmed, setDragArmed] = useState(false);
+  /**
+   * Evita disparar dois fechamentos (voltar + botão físico + arrasto). É um
+   * shared value, e não um ref, porque quem consulta a trava também é o worklet
+   * do gesto — na UI thread um `ref.current` não existe.
+   */
+  const closing = useSharedValue(false);
 
   /**
-   * Fecha animando de volta até o card e só então navega.
+   * Fecha animando de volta até o card e só então navega. É o ÚNICO caminho de
+   * saída — voltar, botão físico e arrasto terminam todos aqui, para que a saída
+   * seja sempre a mesma peça de volta ao mesmo lugar.
+   *
    * Declarado antes dos efeitos de propósito: a regra `react-hooks/immutability`
    * não aceita mutar um valor depois de ele já ter sido usado por um efeito.
    */
   const close = useCallback(() => {
-    if (!onBack || closing.current) {
+    if (!onBack || closing.get()) {
       return;
     }
-    closing.current = true;
+    closing.set(true);
+    const dragged = dragY.get();
     if (!source) {
+      // Sem card de origem (deep link) não existe retângulo para onde encolher.
+      // Se o gesto já tinha deslocado o bloco, ele termina de sair por baixo —
+      // interromper um arrasto no meio para navegar seco é o único caso em que
+      // a saída "de modal" continua sendo a leitura certa.
+      if (dragged > 0) {
+        dragY.set(
+          withTiming(
+            screenHeight,
+            { duration: MODAL_EXIT_DURATION, easing: Easing.out(Easing.cubic) },
+            finished => {
+              if (finished) {
+                scheduleOnRN(onBack);
+              }
+            },
+          ),
+        );
+        return;
+      }
       onBack();
       return;
+    }
+    /**
+     * O deslocamento do arrasto se desfaz com a MESMA curva e a MESMA duração
+     * do encolhimento. Somadas, as duas animações são UM movimento só: o bloco
+     * parte de onde o dedo soltou e vai direto ao retângulo do card, sem voltar
+     * ao lugar antes de encolher (isso sim seria lido como dois passos).
+     *
+     * Quando não houve arrasto, `dragged` é 0 e este `withTiming` não existe —
+     * o caminho do "Voltar" continua sendo exatamente o de antes.
+     */
+    if (dragged !== 0) {
+      dragY.set(withTiming(0, { duration: CLOSE_DURATION, easing: CURVE }));
     }
     // `.set()` em vez de `.value =`: é a API do reanimated 4 compatível com
     // as regras de imutabilidade do React Compiler.
@@ -354,7 +468,50 @@ export function CurationBlock({
         }
       }),
     );
-  }, [onBack, source, progress]);
+  }, [onBack, source, progress, dragY, screenHeight, closing]);
+
+  /**
+   * Arrastar para baixo para fechar.
+   *
+   * `activeOffsetY(14)` (só o limite POSITIVO, ver assinatura do RNGH) faz o
+   * gesto nascer apenas descendo e depois de 14pt: menos que isso e um toque
+   * torto no card do carrossel já arrastaria a tela. `failOffsetX` desiste na
+   * primeira dúzia de pontos na horizontal, que é o que devolve o arrasto ao
+   * ScrollView do carrossel — sem isso os dois disputariam o mesmo movimento.
+   */
+  const dismissGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(fullscreen && !!onBack && dragArmed)
+        .activeOffsetY(14)
+        .failOffsetX([-14, 14])
+        .onUpdate(e => {
+          if (closing.get()) {
+            return;
+          }
+          // Só para baixo: puxar para cima não estica a tela, apenas não anda.
+          dragY.set(Math.max(0, e.translationY));
+        })
+        .onEnd((e, success) => {
+          if (closing.get()) {
+            return;
+          }
+          // `success` é falso quando o gesto é cancelado (o SO tomou o toque):
+          // aí o bloco volta ao lugar, nunca fecha.
+          const shouldDismiss =
+            success &&
+            (e.translationY > DISMISS_DISTANCE ||
+              e.velocityY > DISMISS_VELOCITY);
+          if (shouldDismiss) {
+            // Mesma saída do "Voltar": o `close()` encolhe de volta até o card
+            // e desfaz o arrasto na mesma curva.
+            scheduleOnRN(close);
+            return;
+          }
+          dragY.set(withSpring(0, DRAG_SPRING));
+        }),
+    [fullscreen, onBack, dragArmed, dragY, close, closing],
+  );
 
   /**
    * Card: mede a forma e grava a origem ANTES de deixar a navegação rolar.
@@ -403,15 +560,22 @@ export function CurationBlock({
     [resolvedShapeRef, setSource, requestReentry, transitionId],
   );
 
+  /** Fim da abertura: libera o conteúdo pesado e arma o arrasto. */
+  const handleOpened = useCallback(() => {
+    setDragArmed(true);
+    onOpenComplete?.();
+  }, [onOpenComplete]);
+
   // Abertura: só no destino e só quando há um retângulo de origem medido.
   useEffect(() => {
     if (!fullscreen) {
       return;
     }
     if (!source) {
-      // Sem transição (deep link): libera o conteúdo pesado de imediato.
-      onOpenComplete?.();
-      return;
+      // Sem transição (deep link): libera no frame seguinte. Chamar direto aqui
+      // seria setState no corpo do efeito — cascata de renders na montagem.
+      const frame = requestAnimationFrame(handleOpened);
+      return () => cancelAnimationFrame(frame);
     }
     // Começa no frame SEGUINTE: montar o destino consome o primeiro frame, e
     // sem esse respiro os ~100ms iniciais da animação não chegam a ser
@@ -419,14 +583,14 @@ export function CurationBlock({
     const frame = requestAnimationFrame(() => {
       progress.set(
         withTiming(1, { duration: OPEN_DURATION, easing: CURVE }, finished => {
-          if (finished && onOpenComplete) {
-            scheduleOnRN(onOpenComplete);
+          if (finished) {
+            scheduleOnRN(handleOpened);
           }
         }),
       );
     });
     return () => cancelAnimationFrame(frame);
-  }, [fullscreen, source, progress, onOpenComplete]);
+  }, [fullscreen, source, progress, handleOpened]);
 
   // A origem serve para uma viagem só: limpa ao desmontar o destino para que
   // uma entrada futura sem card (deep link) não anime a partir de lixo.
@@ -457,17 +621,53 @@ export function CurationBlock({
    * (gradiente linear é invariante à escala).
    */
   const shapeStyle = useAnimatedStyle(() => {
+    /**
+     * Cantos ganhos no arrasto: em tela cheia o bloco não tem canto, e é o raio
+     * nascendo que o transforma em folha solta em vez de tela empurrada. Fica
+     * aqui dentro (e não num estilo próprio) porque o raio é UMA propriedade só
+     * — dois estilos animados disputando `borderRadius` na mesma View fariam o
+     * último sobrescrever o da abertura.
+     */
+    const dragRadius = interpolate(
+      dragY.get(),
+      [0, 140],
+      [0, DRAG_RADIUS],
+      Extrapolation.CLAMP,
+    );
     if (!source) {
-      return {};
+      return { borderRadius: dragRadius };
     }
     const p = progress.get();
     return {
       width: interpolate(p, [0, 1], [source.width, screenWidth]),
       height: interpolate(p, [0, 1], [source.height, screenHeight]),
-      borderRadius: interpolate(p, [0, 1], [source.radius, 0]),
+      borderRadius: Math.max(
+        interpolate(p, [0, 1], [source.radius, 0]),
+        dragRadius,
+      ),
       transform: [
         { translateX: interpolate(p, [0, 1], [source.x, 0]) },
         { translateY: interpolate(p, [0, 1], [source.y, 0]) },
+      ],
+    };
+  });
+
+  /**
+   * O arrasto move a TELA INTEIRA (forma + conteúdo + fantasma), num nó só
+   * acima de todos: o bloco tem de andar como peça única, e translate/scale/
+   * opacity num único transform não custa layout nenhum por frame.
+   */
+  const dragStyle = useAnimatedStyle(() => {
+    const y = dragY.get();
+    const k = Math.min(y / (screenHeight * DRAG_RANGE_FRACTION), 1);
+    // Sem fade: o bloco continua opaco do começo ao fim. Um fade aqui teria de
+    // ser DESFEITO no fechamento (que devolve `dragY` a zero), e o bloco
+    // clarearia de volta justamente enquanto encolhe — dois sentidos de leitura
+    // ao mesmo tempo. Quem apaga o conteúdo na saída é `secondaryStyle`.
+    return {
+      transform: [
+        { translateY: y },
+        { scale: interpolate(k, [0, 1], [1, DRAG_SCALE_MIN]) },
       ],
     };
   });
@@ -699,15 +899,23 @@ export function CurationBlock({
       style={{
         flex: fullscreen ? 1 : undefined,
         paddingTop: fullscreen ? insets.top + 6 : 30,
-        paddingBottom: fullscreen ? insets.bottom + 24 : 26,
+        // Em `fullscreen` o respiro extra sobre o home indicator é curto (10, e
+        // não 24): a área de conteúdo abaixo é um carrossel que ocupa o espaço
+        // restante, e cada ponto sobrando aqui virava faixa vazia sob a legenda
+        // da garrafa. Ver `CAROUSEL_DROP` em `app/curation/[id].tsx` — esses 14
+        // pontos reclamados são justamente o que desce o carrossel.
+        paddingBottom: fullscreen ? insets.bottom + 10 : 26,
         paddingHorizontal: fullscreen ? FULLSCREEN_PADDING : CARD_PADDING,
         opacity: contentVisible ? 1 : 0,
       }}
       pointerEvents={contentVisible ? 'auto' : 'none'}>
       {fullscreen && onBack && (
         <Animated.View style={secondaryStyle}>
-          <Box marginBottom="s20">
-            <ScreenHeader onBack={close} variant="dark" />
+          {/* Voltar redondo `dark`: aqui o topo tem SÓ esta ação, e é para isso
+              que o `BackButton` existe — a linha "‹ Voltar" do `ScreenHeader`
+              competia em peso com o título da curadoria logo abaixo. */}
+          <Box marginBottom="s20" alignItems="flex-start">
+            <BackButton onPress={close} variant="dark" />
           </Box>
         </Animated.View>
       )}
@@ -752,11 +960,13 @@ export function CurationBlock({
     // bleed (desenha sob a status bar). O container é transparente — quem
     // pinta é a forma, que pode estar menor que a tela durante a transição.
     return (
-      <View style={{ flex: 1 }}>
-        {shape}
-        {content}
-        {ghostButton}
-      </View>
+      <GestureDetector gesture={dismissGesture}>
+        <Animated.View style={[{ flex: 1 }, dragStyle]}>
+          {shape}
+          {content}
+          {ghostButton}
+        </Animated.View>
+      </GestureDetector>
     );
   }
 
