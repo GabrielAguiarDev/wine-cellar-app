@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 
 import {
+  Accordion,
   Box,
   Button,
   Icon,
@@ -10,15 +11,35 @@ import {
   Text,
   TouchableOpacityBox,
 } from '@components/index';
+import { FAQ } from '@data/index';
 import { useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
 
 const META = 500;
 const ORDERS = [
-  { title: 'Notte Eterna + 1', date: '12 jul', status: 'Entregue', total: 'R$ 678' },
-  { title: 'Lumière Blanche', date: '28 jun', status: 'Entregue', total: 'R$ 279' },
+  {
+    title: 'Notte Eterna + 1',
+    date: '12 jul',
+    status: 'Entregue',
+    total: 'R$ 678',
+  },
+  {
+    title: 'Lumière Blanche',
+    date: '28 jun',
+    status: 'Entregue',
+    total: 'R$ 279',
+  },
 ];
-const LINKS = ['Dados pessoais', 'Endereços salvos', 'Formas de pagamento', 'Notificações'];
+/**
+ * Atalhos de conta. Sem `route` a linha é só texto (a tela ainda não existe) —
+ * de propósito: uma linha que parece botão e não navega é pior que uma linha que
+ * nunca se ofereceu como toque.
+ */
+const LINKS: { label: string; route?: Href }[] = [
+  { label: 'Dados pessoais' },
+  { label: 'Endereços salvos' },
+  { label: 'Formas de pagamento', route: '/payment-methods' },
+];
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -35,7 +56,12 @@ export default function ProfileScreen() {
     <Screen scroll largeTitle="Perfil">
       <Box paddingBottom="s108" paddingTop="s6">
         {/* card VIP */}
-        <Box marginHorizontal="s22" borderRadius="r18" overflow="hidden" borderWidth={1} borderColor="goldA35">
+        <Box
+          marginHorizontal="s22"
+          borderRadius="r18"
+          overflow="hidden"
+          borderWidth={1}
+          borderColor="goldA35">
           <LinearGradient
             colors={[palette.wineDeep, palette.wine]}
             start={{ x: 0, y: 0 }}
@@ -51,12 +77,16 @@ export default function ProfileScreen() {
                 backgroundColor="cremeA08"
                 alignItems="center"
                 justifyContent="center">
-                <Text color="textOnDark" style={{ fontFamily: fonts.serifRegular, fontSize: 24 }}>
+                <Text
+                  color="textOnDark"
+                  style={{ fontFamily: fonts.serifRegular, fontSize: 24 }}>
                   HP
                 </Text>
               </Box>
               <Box flex={1}>
-                <Text color="textOnDark" style={{ fontFamily: fonts.serifSemiBold, fontSize: 26 }}>
+                <Text
+                  color="textOnDark"
+                  style={{ fontFamily: fonts.serifSemiBold, fontSize: 26 }}>
                   Helena Prado
                 </Text>
                 <Text variant="eyebrow" marginTop="s6">
@@ -64,19 +94,46 @@ export default function ProfileScreen() {
                 </Text>
               </Box>
             </Box>
-            <Box marginTop="s20" flexDirection="row" alignItems="center" justifyContent="space-between">
+            <Box
+              marginTop="s20"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between">
               <Box>
-                <Text color="textOnDark" style={{ fontFamily: fonts.serifRegular, fontSize: 22 }}>
-                  {points} <Text color="cremeA60" fontSize={12}>pontos</Text>
+                <Text
+                  color="textOnDark"
+                  style={{ fontFamily: fonts.serifRegular, fontSize: 22 }}>
+                  {points}{' '}
+                  <Text color="cremeA60" fontSize={12}>
+                    pontos
+                  </Text>
                 </Text>
-                <Text variant="body" fontSize={10} color="cremeA55" marginTop="s2">
+                <Text
+                  variant="body"
+                  fontSize={10}
+                  color="cremeA55"
+                  marginTop="s2">
                   {remaining} pts para o nível VIP
                 </Text>
               </Box>
-              <Button label="Ver programa" variant="outlineGold" onPress={() => router.navigate('/loyalty')} />
+              <Button
+                label="Ver programa"
+                variant="outlineGold"
+                onPress={() => router.navigate('/loyalty')}
+              />
             </Box>
-            <Box marginTop="s14" height={5} borderRadius="r5" backgroundColor="cremeA15" overflow="hidden">
-              <Box height={5} borderRadius="r5" backgroundColor="accent" style={{ width: `${progressPct}%` }} />
+            <Box
+              marginTop="s14"
+              height={5}
+              borderRadius="r5"
+              backgroundColor="cremeA15"
+              overflow="hidden">
+              <Box
+                height={5}
+                borderRadius="r5"
+                backgroundColor="accent"
+                style={{ width: `${progressPct}%` }}
+              />
             </Box>
           </LinearGradient>
         </Box>
@@ -104,7 +161,12 @@ export default function ProfileScreen() {
             borderColor="accent"
             alignItems="center"
             justifyContent="center">
-            <Icon name="star" size={16} color={palette.gold} fill={palette.gold} />
+            <Icon
+              name="star"
+              size={16}
+              color={palette.gold}
+              fill={palette.gold}
+            />
           </Box>
           <Box flex={1}>
             <Text variant="wineName" color="primary">
@@ -121,7 +183,9 @@ export default function ProfileScreen() {
         <Box marginHorizontal="s22" marginTop="s22">
           <SectionTitle
             right={
-              <TouchableOpacityBox activeOpacity={0.7} onPress={() => router.navigate('/quiz')}>
+              <TouchableOpacityBox
+                activeOpacity={0.7}
+                onPress={() => router.navigate('/quiz')}>
                 <Text variant="body" fontSize={11} color="accentDark">
                   Refazer
                 </Text>
@@ -131,10 +195,24 @@ export default function ProfileScreen() {
               Seu palate
             </Text>
           </SectionTitle>
-          <Box flexDirection="row" flexWrap="wrap" marginTop="s12" style={{ gap: 8 }}>
+          <Box
+            flexDirection="row"
+            flexWrap="wrap"
+            marginTop="s12"
+            style={{ gap: 8 }}>
             {tags.map(t => (
-              <Box key={t} borderWidth={1} borderColor="goldA50" borderRadius="r8" paddingVertical="s8" paddingHorizontal="s14">
-                <Text variant="label" fontSize={10} color="primary" style={{ letterSpacing: 1.6 }}>
+              <Box
+                key={t}
+                borderWidth={1}
+                borderColor="goldA50"
+                borderRadius="r8"
+                paddingVertical="s8"
+                paddingHorizontal="s14">
+                <Text
+                  variant="label"
+                  fontSize={10}
+                  color="primary"
+                  style={{ letterSpacing: 1.6 }}>
                   {t}
                 </Text>
               </Box>
@@ -163,14 +241,23 @@ export default function ProfileScreen() {
                 paddingVertical="s14"
                 paddingHorizontal="s16">
                 <Box>
-                  <Text variant="body" fontSize={13} style={{ fontFamily: fonts.sansMedium }}>
+                  <Text
+                    variant="body"
+                    fontSize={13}
+                    style={{ fontFamily: fonts.sansMedium }}>
                     {p.title}
                   </Text>
-                  <Text variant="body" fontSize={11} color="inkA50" marginTop="s2">
+                  <Text
+                    variant="body"
+                    fontSize={11}
+                    color="inkA50"
+                    marginTop="s2">
                     {p.date} · {p.status}
                   </Text>
                 </Box>
-                <Text color="primary" style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
+                <Text
+                  color="primary"
+                  style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
                   {p.total}
                 </Text>
               </TouchableOpacityBox>
@@ -180,21 +267,69 @@ export default function ProfileScreen() {
 
         {/* links */}
         <Box marginHorizontal="s22" marginTop="s22">
-          {LINKS.map(l => (
-            <Box
-              key={l}
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              paddingVertical="s16"
-              borderBottomWidth={1}
-              borderBottomColor="inkBorder10">
-              <Text variant="body" fontSize={14}>
-                {l}
-              </Text>
-              <Icon name="chevronRight" size={12} color={palette.mutedIcon} />
-            </Box>
-          ))}
+          {LINKS.map(l => {
+            const row = (
+              <>
+                <Text variant="body" fontSize={14}>
+                  {l.label}
+                </Text>
+                <Icon name="chevronRight" size={12} color={palette.mutedIcon} />
+              </>
+            );
+
+            const rowProps = {
+              flexDirection: 'row' as const,
+              alignItems: 'center' as const,
+              justifyContent: 'space-between' as const,
+              paddingVertical: 's16' as const,
+              borderBottomWidth: 1,
+              borderBottomColor: 'inkBorder10' as const,
+            };
+
+            return l.route ? (
+              <TouchableOpacityBox
+                key={l.label}
+                accessibilityRole="button"
+                activeOpacity={0.7}
+                onPress={() => router.navigate(l.route as Href)}
+                {...rowProps}>
+                {row}
+              </TouchableOpacityBox>
+            ) : (
+              <Box key={l.label} {...rowProps}>
+                {row}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* perguntas frequentes */}
+        <Box marginHorizontal="s22" marginTop="s24">
+          <Text variant="sectionTitle" fontSize={21} marginBottom="s12">
+            Perguntas frequentes
+          </Text>
+          {/*
+            `type="single"`: com duas respostas abertas ao mesmo tempo a lista
+            fica mais alta que a tela e a pergunta que se acabou de tocar sai
+            de vista. Indicador `plus` (não o chevron dos atalhos acima) para
+            uma coisa que ABRE não parecer uma coisa que NAVEGA.
+          */}
+          <Accordion type="single">
+            {FAQ.map(item => (
+              <Accordion.Item key={item.id} value={item.id} indicator="plus">
+                <Accordion.Trigger>{item.question}</Accordion.Trigger>
+                <Accordion.Content>
+                  <Text
+                    variant="body"
+                    fontSize={12.5}
+                    color="inkA65"
+                    style={{ lineHeight: 19 }}>
+                    {item.answer}
+                  </Text>
+                </Accordion.Content>
+              </Accordion.Item>
+            ))}
+          </Accordion>
         </Box>
       </Box>
     </Screen>

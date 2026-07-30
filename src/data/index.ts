@@ -10,6 +10,8 @@ export {
   type Curation,
 } from './curations';
 export { RESERVED_COLLECTION } from './collections';
+export { FAQ, type FaqEntry } from './faq';
+export { SAVED_CARDS, type SavedCard } from './paymentMethods';
 export {
   NOTIFICATIONS,
   NOTIFICATION_GROUPS,

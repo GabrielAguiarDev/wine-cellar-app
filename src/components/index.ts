@@ -57,6 +57,21 @@ export {
   REVEAL_OFFSET,
   type RevealProps,
 } from './Reveal';
+export { Accordion } from './Accordion';
+export { ACCORDION_APPEARANCE } from './Accordion/presets';
+export type {
+  AccordionAppearance,
+  AccordionIndicator,
+  AccordionItemProps,
+  AccordionProps,
+  AccordionType,
+} from './Accordion/types';
+export { FlipCard } from './FlipCard';
+export type {
+  FlipCardFaceProps,
+  FlipCardProps,
+  FlipCardTriggerProps,
+} from './FlipCard/types';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';

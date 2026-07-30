@@ -77,4 +77,11 @@ export type AnimatedHeaderProps = {
    * não há texto para medir, vale o valor cheio.
    */
   maxOverscrollGrowth?: number;
+  /**
+   * Recua o conteúdo quando o teclado abre (`automaticallyAdjustKeyboardInsets`,
+   * iOS). Ligar só nas telas com FORMULÁRIO: onde não há campo, o ajuste é
+   * inócuo, mas onde o teclado é aberto por uma barra de busca fixa ele briga
+   * com o inset que a própria barra já reserva.
+   */
+  adjustsForKeyboard?: boolean;
 };

@@ -12,6 +12,7 @@ export type IconName =
   | 'profile'
   | 'chevronLeft'
   | 'chevronRight'
+  | 'chevronDown'
   | 'arrowRight'
   | 'play'
   | 'star'
@@ -201,6 +202,23 @@ const ICONS: Record<IconName, IconSpec> = {
     render: ({ color, strokeWidth }) => (
       <Path
         d="M1 1l6 6-6 6"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+  // viewBox deitado (14×8), não o `chevronRight` girado 90°: o Svg é quadrado
+  // (`size`×`size`) e um viewBox alto centralizado deixaria a seta pequena e
+  // fora do eixo do texto ao lado.
+  chevronDown: {
+    viewBox: '0 0 14 8',
+    strokeWidth: 1.5,
+    render: ({ color, strokeWidth }) => (
+      <Path
+        d="M1 1l6 6 6-6"
         stroke={color}
         strokeWidth={strokeWidth}
         fill="none"

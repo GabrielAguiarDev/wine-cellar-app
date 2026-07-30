@@ -144,6 +144,7 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
     smallHeaderSubtitleStyle,
     growOnOverscroll = true,
     maxOverscrollGrowth = 2,
+    adjustsForKeyboard = false,
   }) => {
     const insets = useSafeAreaInsets();
     const scrollY = useSharedValue(0);
@@ -510,6 +511,13 @@ export const AnimatedHeaderScrollView = memo<AnimatedHeaderProps>(
           onScroll={onScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+          /*
+            Mesmos ajustes de teclado do `Screen`: sem `handled`, o primeiro
+            toque num botão só fecha o teclado e é preciso tocar de novo.
+          */
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={adjustsForKeyboard}
           /* Só serve à busca puxável: é o gatilho para o `Anchor` remedir. */
           onContentSizeChange={pullToSearch?.notifyContentResize}
           /*
