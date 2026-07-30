@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import {
   BackButton,
   Box,
   ParallaxHeaderScrollView,
+  REVEAL_STEP,
   Reveal,
   Text,
   TouchableOpacityBox,
@@ -31,6 +32,15 @@ import { toWineRowData } from '@utils/index';
 const HERO = require('../assets/images/wine-glass.png');
 
 const TITLE = 'Qual é a ocasião?';
+
+/**
+ * Chamada abaixo do título. Duas versões: a de quem chega sem escolha (convite)
+ * e a de quem chega por um atalho, com o momento já definido (confirmação).
+ */
+const LEAD = {
+  open: 'Diga o momento e a casa escolhe a garrafa.',
+  linked: (label: string) => `Para ${label.toLowerCase()}, a casa já escolheu.`,
+} as const;
 
 /**
  * Hero mais baixo que o das telas de coleção (380). Ali a fotografia é o
@@ -82,13 +92,41 @@ const ORDER = {
  * em `Reveal`: a cascata é a tela SE APRESENTANDO (atrasos contados da montagem,
  * ver `ORDER`), enquanto aquela lista é a RESPOSTA a um toque, que precisa vir
  * imediata e se refazer a cada nova escolha.
+ *
+ * ── Exceção: a ocasião pode chegar pronta (`?occasion=`) ────────────────────
+ *
+ * Os atalhos da Home e do estado vazio da busca entram aqui já com a escolha
+ * feita, e isso muda duas coisas neste primeiro render:
+ *
+ * 1. A lista não é resposta a toque nenhum — ela faz parte da apresentação, e
+ *    por isso espera a cascata terminar (`listDelay`). Sem o atraso os vinhos
+ *    entravam ANTES dos cartões que explicam de onde vieram.
+ * 2. A chamada do hero muda (`LEAD`): "Qual é a ocasião?" sobre uma escolha já
+ *    feita é uma pergunta respondida antes de ser lida. O texto passa a
+ *    CONFIRMAR o momento que veio no link — a tela responde em vez de perguntar.
+ *
+ * Os dois voltam ao normal no primeiro toque na grade (`select`): dali em diante
+ * a escolha é de quem está aqui, não do link.
  */
 export default function SommelierScreen() {
   const router = useRouter();
   const goBack = useGoBack('/home');
   const insets = useSafeAreaInsets();
 
-  const [sel, setSel] = useState<string | null>(null);
+  /** Ocasião vinda de fora (Home, busca). Ignorada se não existir em `OCCASIONS`. */
+  const { occasion: linkedKey } = useLocalSearchParams<{ occasion?: string }>();
+  const linked = OCCASIONS.some(o => o.key === linkedKey);
+
+  const [sel, setSel] = useState<string | null>(linked ? linkedKey! : null);
+  /** Continua verdadeiro só enquanto a escolha exibida é a que veio do link. */
+  const [fromLink, setFromLink] = useState(linked);
+  const select = (key: string) => {
+    setFromLink(false);
+    setSel(key);
+  };
+  const listDelay = fromLink
+    ? (ORDER.cards + OCCASIONS.length) * REVEAL_STEP
+    : 0;
 
   const occasion = OCCASIONS.find(o => o.key === sel);
   const wines = occasion ? winesByIds(occasion.ids) : [];
@@ -145,7 +183,9 @@ export default function SommelierScreen() {
                       fontSize: 15.5,
                       lineHeight: 22,
                     }}>
-                    Diga o momento e a casa escolhe a garrafa.
+                    {fromLink && occasion
+                      ? LEAD.linked(occasion.label)
+                      : LEAD.open}
                   </Text>
                 </Reveal>
               </>
@@ -175,7 +215,7 @@ export default function SommelierScreen() {
                       style={{ width: '48%' }}>
                       <TouchableOpacityBox
                         activeOpacity={0.85}
-                        onPress={() => setSel(o.key)}
+                        onPress={() => select(o.key)}
                         backgroundColor={active ? 'accent' : 'cremeA06'}
                         borderWidth={1}
                         borderColor={active ? 'accent' : 'goldA35'}
@@ -211,7 +251,7 @@ export default function SommelierScreen() {
                 <Box paddingHorizontal="s22" paddingTop="s20">
                   <Animated.View
                     key={`${occasion.key}-label`}
-                    entering={FadeInDown.duration(300)}>
+                    entering={FadeInDown.delay(listDelay).duration(300)}>
                     <Text variant="eyebrow" marginBottom="s14">
                       Para &quot;{occasion.label}&quot;
                     </Text>
@@ -220,7 +260,9 @@ export default function SommelierScreen() {
                     {wines.map((w, i) => (
                       <Animated.View
                         key={`${occasion.key}-${w.id}`}
-                        entering={FadeInDown.delay(90 + i * 70).duration(320)}>
+                        entering={FadeInDown.delay(
+                          listDelay + 90 + i * 70,
+                        ).duration(320)}>
                         <WineRow
                           variant="dark"
                           bottleWidth={30}

@@ -78,6 +78,7 @@ export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';
 export { Pill } from './Pill';
 export { Chip } from './Chip';
+export { OccasionShortcuts } from './OccasionShortcuts';
 export { FilterSheet, type FilterSheetOption } from './FilterSheet';
 export { SectionTitle } from './SectionTitle';
 export { RareWineCard, type RareWineCardData } from './RareWineCard';

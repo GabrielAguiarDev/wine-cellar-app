@@ -10,6 +10,7 @@ import {
   FadeReentry,
   Icon,
   Logo,
+  OccasionShortcuts,
   Reappear,
   SectionTitle,
   Text,
@@ -46,6 +47,18 @@ export default function HomeScreen() {
   const goSearch = () => router.navigate('/search');
   const goCountry = (country: string) =>
     router.navigate({ pathname: '/search', params: { country } });
+  /**
+   * Sommelier virtual. Com `occasion`, a tela abre com a escolha já feita e os
+   * vinhos daquele momento na tela — o atalho entrega a RESPOSTA, não a
+   * pergunta. Sem o param (o link "Sommelier" ao lado do título), abre a tela
+   * inteira, com o hero e a grade das quatro ocasiões.
+   */
+  const goSommelier = (occasion?: string) =>
+    router.navigate(
+      occasion
+        ? { pathname: '/sommelier', params: { occasion } }
+        : '/sommelier',
+    );
   /**
    * Coleção reservada. Rota fora de `(tabs)` (push da Stack raiz) → tela cheia,
    * sem tab bar. Já foi `/search?cat=__specials`: os três rótulos de edição
@@ -152,9 +165,51 @@ export default function HomeScreen() {
               />
             </Box>
 
-            {/* atalhos por país — abrem a busca já filtrada (não filtram aqui) */}
+            {/* atalhos de ocasião — a porta do sommelier virtual, que antes
+              existia SÓ no rodapé da busca, depois da lista de resultados.
+              Uma linha, não um rail: os cartões de ocasião da tela
+              `/sommelier` têm 118px, e com título viriam a custar mais de 150 —
+              o suficiente para empurrar "Explorar por país" fora da dobra. Os
+              chips rolam na horizontal (em vez de quebrar em duas linhas) para
+              a altura do bloco não depender do tamanho dos labels. */}
             <Reappear order={1}>
-              <Box paddingHorizontal="s22" marginBottom="s14">
+              <Box
+                paddingHorizontal="s22"
+                marginBottom="s12"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between">
+                <Text
+                  variant="eyebrow"
+                  color="accentDark"
+                  style={{ letterSpacing: 2.6 }}>
+                  Escolha pelo momento
+                </Text>
+                <TouchableOpacityBox
+                  accessibilityRole="button"
+                  accessibilityLabel="Abrir o sommelier virtual"
+                  activeOpacity={0.7}
+                  onPress={() => goSommelier()}
+                  flexDirection="row"
+                  alignItems="center"
+                  paddingVertical="s4"
+                  style={{ gap: 6 }}>
+                  <Text
+                    variant="label"
+                    fontSize={9.5}
+                    color="accentDark"
+                    style={{ letterSpacing: 1.5 }}>
+                    Sommelier
+                  </Text>
+                  <Icon name="arrowRight" size={11} color={palette.goldDark} />
+                </TouchableOpacityBox>
+              </Box>
+              <OccasionShortcuts onSelect={goSommelier} />
+            </Reappear>
+
+            {/* atalhos por país — abrem a busca já filtrada (não filtram aqui) */}
+            <Reappear order={2}>
+              <Box paddingHorizontal="s22" marginTop="s28" marginBottom="s14">
                 <SectionTitle
                   right={
                     <TouchableOpacityBox
@@ -198,7 +253,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rail selecionados */}
-            <Reappear order={2}>
+            <Reappear order={3}>
               <Box marginTop="s30">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Selecionados para você</SectionTitle>
@@ -222,7 +277,7 @@ export default function HomeScreen() {
             {/* coleção reservada — texto vem de `RESERVED_COLLECTION` (@data),
               a mesma fonte da tela `/reserved`: card e tela mostram o mesmo
               eyebrow e o mesmo título, e duplicá-los aqui os faria divergir. */}
-            <Reappear order={3}>
+            <Reappear order={4}>
               <TouchableOpacityBox
                 accessibilityRole="button"
                 accessibilityLabel={`${RESERVED_COLLECTION.eyebrow}: ${RESERVED_COLLECTION.title}`}
@@ -281,7 +336,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rail mais vendidos */}
-            <Reappear order={4}>
+            <Reappear order={5}>
               <Box marginTop="s32">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Mais vendidos</SectionTitle>
@@ -300,7 +355,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rodapé */}
-            <Reappear order={5}>
+            <Reappear order={6}>
               <Text
                 textAlign="center"
                 marginTop="s40"

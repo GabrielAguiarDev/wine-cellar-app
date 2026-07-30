@@ -10,6 +10,7 @@ import {
   Chip,
   FilterSheet,
   Icon,
+  OccasionShortcuts,
   Screen,
   ScrollableSearch,
   Text,
@@ -120,6 +121,18 @@ function SearchContent() {
   const openWine = (id: string) =>
     router.navigate({ pathname: '/product/[id]', params: { id } });
 
+  /**
+   * Sommelier virtual — a terceira forma de achar vinho aqui, ao lado de nome e
+   * prato. Com `occasion`, abre já na resposta daquele momento; sem, na tela
+   * inteira com a grade das quatro ocasiões.
+   */
+  const goSommelier = (occasion?: string) =>
+    router.navigate(
+      occasion
+        ? { pathname: '/sommelier', params: { occasion } }
+        : '/sommelier',
+    );
+
   const setFilter = (key: WineFilterKey, value?: string) =>
     setFilters(current => {
       const next = { ...current };
@@ -154,6 +167,22 @@ function SearchContent() {
     // `openWine` é recriado a cada render (usa o router direto); só o id importa.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [rememberTerm, setIsFocused, term],
+  );
+
+  /**
+   * Sai da busca focada direto para o sommelier. Fecha o overlay ANTES de
+   * navegar: sem isso a volta cairia numa tela ainda desfocada, com o blur e o
+   * teclado por cima da coleção. O termo não vira "busca recente" — nada foi
+   * buscado, a pessoa desistiu de digitar e escolheu pelo momento.
+   */
+  const openSommelier = useCallback(
+    (occasion: string) => {
+      setIsFocused(false);
+      goSommelier(occasion);
+    },
+    // `goSommelier` é recriado a cada render (usa o router direto).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setIsFocused],
   );
 
   const openFilterDef = FILTER_DEFS.find(f => f.key === openFilter);
@@ -204,6 +233,14 @@ function SearchContent() {
                   />
                 ))}
               </ScrollView>
+
+              {/*
+                Fecha o bloco de ferramentas de busca (campo + filtros), antes de
+                a contagem abrir o bloco de resultados. Estava no RODAPÉ da tela,
+                depois da lista inteira: com 20+ rótulos no catálogo, a única
+                porta do sommelier ficava a vários arrastos de distância.
+              */}
+              <SommelierLink onPress={() => goSommelier()} />
 
               {/* resumo dos filtros ativos + limpar tudo */}
               <Box
@@ -306,11 +343,7 @@ function SearchContent() {
               </Box>
 
               {/* exemplos */}
-              <Box
-                flexDirection="row"
-                flexWrap="wrap"
-                marginBottom="s22"
-                style={{ gap: 8 }}>
+              <Box flexDirection="row" flexWrap="wrap" style={{ gap: 8 }}>
                 {DISH_EXAMPLES.map(d => (
                   <SuggestionChip
                     key={d}
@@ -318,6 +351,14 @@ function SearchContent() {
                     onPress={() => setDishQuery(d)}
                   />
                 ))}
+              </Box>
+
+              {/* mesma faixa do modo vinho, aqui logo depois dos exemplos: é o
+                fim das sugestões deste modo, e a lista de harmonizações que vem
+                abaixo tem tamanho variável. `inset={false}` porque este ramo já
+                roda dentro de um container com o padding da tela. */}
+              <Box marginBottom="s22">
+                <SommelierLink inset={false} onPress={() => goSommelier()} />
               </Box>
 
               {/* resultados por prato */}
@@ -339,32 +380,6 @@ function SearchContent() {
               )}
             </Box>
           )}
-
-          {/* link sommelier */}
-          <TouchableOpacityBox
-            activeOpacity={0.85}
-            onPress={() => router.navigate('/sommelier')}
-            marginTop="s26"
-            marginHorizontal="s22"
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="space-between"
-            borderWidth={1}
-            borderColor="goldA60"
-            borderRadius="r13"
-            paddingVertical="s18"
-            paddingHorizontal="s20"
-            style={{ borderStyle: 'dashed' }}>
-            <Box>
-              <Text variant="wineName" color="primary">
-                Sommelier virtual
-              </Text>
-              <Text variant="body" fontSize={11} color="inkA55" marginTop="s2">
-                Sugestões por ocasião
-              </Text>
-            </Box>
-            <Icon name="arrowRight" size={14} color={palette.gold} />
-          </TouchableOpacityBox>
         </Box>
 
         {openFilterDef && (
@@ -489,6 +504,18 @@ function SearchContent() {
                     />
                   ))}
                 </Box>
+
+                {/*
+                  Quem abriu a busca e não digitou nada está indeciso — é o
+                  público exato do sommelier, e este é o único lugar do app onde
+                  ele aparece no INSTANTE da dúvida. Em `wrap` porque aqui a
+                  altura é livre: o overlay é uma coluna de sugestões e nada
+                  disputa espaço abaixo.
+                */}
+                <Text variant="eyebrow" marginTop="s24" marginBottom="s14">
+                  Ou escolha pelo momento
+                </Text>
+                <OccasionShortcuts layout="wrap" onSelect={openSommelier} />
               </>
             )}
           </ScrollView>
@@ -541,6 +568,52 @@ function SearchContent() {
         )}
       </ScrollableSearch.SearchBar>
     </>
+  );
+}
+
+/**
+ * Porta do sommelier virtual dentro da busca — a tela cheia, com o hero e a
+ * grade das quatro ocasiões.
+ *
+ * Uma LINHA, não o card de dois andares que era antes: ela subiu para o meio da
+ * tela, onde a altura é disputada pelos resultados. A borda tracejada dourada
+ * ficou, é o que diz "isto não é um resultado, é um caminho".
+ */
+function SommelierLink({
+  onPress,
+  inset = true,
+}: {
+  onPress: () => void;
+  /** `false` quando quem renderiza já aplica o padding horizontal da tela. */
+  inset?: boolean;
+}) {
+  return (
+    <TouchableOpacityBox
+      accessibilityRole="button"
+      accessibilityLabel="Sommelier virtual: sugestões por ocasião"
+      activeOpacity={0.85}
+      onPress={onPress}
+      marginTop="s16"
+      marginHorizontal={inset ? 's22' : 's0'}
+      flexDirection="row"
+      alignItems="center"
+      justifyContent="space-between"
+      borderWidth={1}
+      borderColor="goldA60"
+      borderRadius="r11"
+      paddingVertical="s12"
+      paddingHorizontal="s16"
+      style={{ borderStyle: 'dashed' }}>
+      <Box flexDirection="row" alignItems="baseline" style={{ gap: 8 }}>
+        <Text variant="wineNameSm" color="primary">
+          Sommelier virtual
+        </Text>
+        <Text variant="body" fontSize={11} color="inkA55">
+          por ocasião
+        </Text>
+      </Box>
+      <Icon name="arrowRight" size={13} color={palette.gold} />
+    </TouchableOpacityBox>
   );
 }
 
