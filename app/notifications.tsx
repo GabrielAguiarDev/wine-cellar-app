@@ -2,9 +2,9 @@ import { useRouter } from 'expo-router';
 
 import {
   AnimatedHeaderScrollView,
+  BackButton,
   Box,
   Icon,
-  ScreenHeader,
   Text,
   TouchableOpacityBox,
   type IconName,
@@ -117,7 +117,7 @@ export default function NotificationsScreen() {
     <Box flex={1} backgroundColor="background">
       <AnimatedHeaderScrollView
         largeTitle="Notificações"
-        leftComponent={<ScreenHeader onBack={goBack} />}>
+        leftComponent={<BackButton onPress={goBack} />}>
         <Box paddingBottom="s108">
           {/* resumo + ação de marcar todas */}
           <Box

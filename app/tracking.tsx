@@ -4,12 +4,12 @@ import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 
 import {
+  BackButton,
   Blip,
   BottleGraphic,
   Box,
   Icon,
   Screen,
-  ScreenHeader,
   Text,
   TouchableOpacityBox,
 } from '@components/index';
@@ -52,7 +52,10 @@ export default function TrackingScreen() {
     <Screen scroll>
       <Box paddingBottom="s40" paddingTop="s6">
         <Box paddingHorizontal="s22">
-          <ScreenHeader label="Início" onBack={() => router.navigate('/home')} />
+          <BackButton
+            accessibilityLabel="Início"
+            onPress={() => router.navigate('/home')}
+          />
         </Box>
 
         <Text

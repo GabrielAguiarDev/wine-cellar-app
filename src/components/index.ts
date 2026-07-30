@@ -64,6 +64,7 @@ export {
   type WineCountryCardData,
 } from './WineCountryCard';
 export { WineRow, type WineRowData } from './WineRow';
+export { BackButton } from './BackButton';
 export { SegmentedToggle } from './SegmentedToggle';
 export { Toggle } from './Toggle';
 export { Toast } from './Toast';

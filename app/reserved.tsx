@@ -4,17 +4,16 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  BackButton,
   Box,
   Button,
-  Icon,
   ParallaxHeaderScrollView,
   RareWineCard,
   Text,
-  TouchableOpacityBox,
 } from '@components/index';
 import { RESERVED_COLLECTION, specials, specialsSummary } from '@data/index';
 import { useGoBack } from '@hooks/useGoBack';
-import { fonts, palette } from '@theme/index';
+import { fonts } from '@theme/index';
 import { nf, toRareWineCardData } from '@utils/index';
 
 /** Fotografia da adega da loja — o hero em parallax. */
@@ -73,23 +72,7 @@ export default function ReservedScreen() {
         <ParallaxHeaderScrollView
           image={HERO}
           compactTitle={RESERVED_COLLECTION.title}
-          leftComponent={
-            <TouchableOpacityBox
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              activeOpacity={0.8}
-              onPress={goBack}
-              width={36}
-              height={36}
-              borderRadius="rFull"
-              alignItems="center"
-              justifyContent="center"
-              borderWidth={1}
-              borderColor="goldA35"
-              backgroundColor="wineA60">
-              <Icon name="chevronLeft" size={13} color={palette.gold} />
-            </TouchableOpacityBox>
-          }
+          leftComponent={<BackButton variant="dark" onPress={goBack} />}
           overlay={
             <Animated.View entering={FadeInDown.duration(420)}>
               {/* fio curto: o mesmo remate dourado das etiquetas da marca */}

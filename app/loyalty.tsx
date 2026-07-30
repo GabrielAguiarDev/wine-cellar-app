@@ -2,8 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import {
   AnimatedHeaderScrollView,
+  BackButton,
   Box,
-  ScreenHeader,
   Text,
   TouchableOpacityBox,
 } from '@components/index';
@@ -45,7 +45,7 @@ const HISTORY = [
  * Fidelidade — push da Stack raiz, aberta do Perfil ("Ver programa").
  *
  * Header igual ao de `/notifications`: `AnimatedHeaderScrollView` (large title
- * colapsável em JS) + `ScreenHeader` no `leftComponent`. Antes usava o header
+ * colapsável em JS) + `BackButton` no `leftComponent`. Antes usava o header
  * NATIVO (`brandHeaderOptions` + `Screen nativeHeader`), que no iOS 26 não
  * desenhava o título grande e deixava o conteúdo passar por baixo da barra sem
  * fundo nem blur — a armadilha documentada em `theme/navHeader.ts`.
@@ -62,7 +62,7 @@ export default function LoyaltyScreen() {
     <Box flex={1} backgroundColor="background">
       <AnimatedHeaderScrollView
         largeTitle="Fidelidade"
-        leftComponent={<ScreenHeader onBack={goBack} />}>
+        leftComponent={<BackButton onPress={goBack} />}>
         <Box paddingBottom="s108">
           {/* hero de pontos */}
           <Box

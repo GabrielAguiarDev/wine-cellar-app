@@ -3,9 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import {
+  BackButton,
   Box,
   Screen,
-  ScreenHeader,
   Text,
   WineRow,
 } from '@components/index';
@@ -45,7 +45,7 @@ export default function VipScreen() {
       <StatusBar style="light" />
       <Box paddingBottom="s108" paddingTop="s6">
         <Box paddingHorizontal="s22">
-          <ScreenHeader onBack={() => router.back()} variant="dark" />
+          <BackButton variant="dark" onPress={() => router.back()} />
         </Box>
 
         <Box paddingHorizontal="s24" paddingTop="s14">
