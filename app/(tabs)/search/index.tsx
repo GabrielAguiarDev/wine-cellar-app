@@ -508,14 +508,12 @@ function SearchContent() {
                 {/*
                   Quem abriu a busca e não digitou nada está indeciso — é o
                   público exato do sommelier, e este é o único lugar do app onde
-                  ele aparece no INSTANTE da dúvida. Em `wrap` porque aqui a
-                  altura é livre: o overlay é uma coluna de sugestões e nada
-                  disputa espaço abaixo.
+                  ele aparece no INSTANTE da dúvida.
                 */}
                 <Text variant="eyebrow" marginTop="s24" marginBottom="s14">
                   Ou escolha pelo momento
                 </Text>
-                <OccasionShortcuts layout="wrap" onSelect={openSommelier} />
+                <OccasionShortcuts onSelect={openSommelier} />
               </>
             )}
           </ScrollView>

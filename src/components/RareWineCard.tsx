@@ -35,8 +35,8 @@ type RareWineCardProps = {
 };
 
 /**
- * Nicho e garrafa. A altura do nicho é a da garrafa (`BOTTLE_WIDTH / 46 × 150`,
- * a proporção do `BottleGraphic`) mais a folga de topo — mais alto que isso e
+ * Coluna da garrafa. A altura é a da garrafa (`BOTTLE_WIDTH / 46 × 150`, a
+ * proporção do `BottleGraphic`) mais a folga de topo — mais alto que isso e
  * sobra um vazio à direita da garrafa nos rótulos de assinatura curta.
  */
 const NICHE_WIDTH = 80;
@@ -88,14 +88,16 @@ function SpecChip({ value, label }: { value: string; label: string }) {
  * inteira, a assinatura do sommelier aparece por extenso e os dados técnicos
  * viram caixas (`SpecChip`).
  *
- * ── O nicho retroiluminado ──────────────────────────────────────────────────
+ * ── A luz sob a garrafa ─────────────────────────────────────────────────────
  *
- * A garrafa não fica sobre o card: fica dentro de uma reentrância escura com luz
- * subindo da base e um fio dourado no rodapé. É uma citação direta da foto da
- * adega usada no hero da tela — as prateleiras de lá são iluminadas por baixo,
- * e é o que faz a fotografia e as fichas parecerem o mesmo lugar. A luz é um
- * gradiente (não sombra/blur): sombra colorida no Android é irregular e caria em
- * três instâncias na mesma tela.
+ * A garrafa fica direto sobre o fundo do card, com um brilho dourado MUITO tênue
+ * subindo da base — a citação da foto da adega do hero, onde as prateleiras são
+ * iluminadas por baixo. Antes era uma reentrância fechada (fundo `wineDark2`,
+ * borda e fita dourada no rodapé): lia como um retângulo recortado no card, e o
+ * bloco escuro competia com a própria garrafa. Ficou só a luz.
+ *
+ * A luz é um gradiente (não sombra/blur): sombra colorida no Android é irregular
+ * e cairia em três instâncias na mesma tela.
  */
 export function RareWineCard({ data, position, onPress }: RareWineCardProps) {
   return (
@@ -173,24 +175,21 @@ export function RareWineCard({ data, position, onPress }: RareWineCardProps) {
         alignItems="center"
         marginTop="s16"
         style={{ gap: 18 }}>
-        {/* nicho retroiluminado */}
+        {/* base retroiluminada */}
         <Box
           width={NICHE_WIDTH}
           height={NICHE_HEIGHT}
           borderRadius="r12"
           overflow="hidden"
-          backgroundColor="videoBackdrop"
-          borderWidth={1}
-          borderColor="cremeA08"
           alignItems="center"
           justifyContent="flex-end">
           <LinearGradient
             colors={[
               'transparent',
-              'rgba(176,141,87,0.10)',
-              'rgba(176,141,87,0.34)',
+              'rgba(176,141,87,0.04)',
+              'rgba(176,141,87,0.13)',
             ]}
-            locations={[0, 0.55, 1]}
+            locations={[0, 0.6, 1]}
             style={StyleSheet.absoluteFill}
           />
           <Box marginBottom="s8">
@@ -203,15 +202,6 @@ export function RareWineCard({ data, position, onPress }: RareWineCardProps) {
               premium
             />
           </Box>
-          {/* fita de luz na base do nicho */}
-          <Box
-            position="absolute"
-            bottom={0}
-            left={0}
-            right={0}
-            height={2}
-            backgroundColor="goldA60"
-          />
         </Box>
 
         <Box flex={1}>
