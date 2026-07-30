@@ -4,7 +4,14 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 
-import { Box, Icon, Screen, Text, TouchableOpacityBox } from '@components/index';
+import {
+  Box,
+  Icon,
+  PressableScale,
+  Screen,
+  Text,
+  TouchableOpacityBox,
+} from '@components/index';
 import { StaggeredText } from '@components/organisms/animated-text';
 import { QUIZ } from '@data/index';
 import { useUserStore } from '@store/index';
@@ -110,8 +117,9 @@ export default function QuizScreen() {
             <Animated.View
               key={`${question.key}-${op.val}`}
               entering={FadeInDown.delay(OPTS_DELAY + i * 70).duration(320)}>
-              <TouchableOpacityBox
-                activeOpacity={0.85}
+              <PressableScale
+                scaleTo={0.97}
+                opacityTo={0.85}
                 onPress={() => answer(op.val)}
                 backgroundColor="cremeA05"
                 borderWidth={1}
@@ -127,7 +135,7 @@ export default function QuizScreen() {
                 <Text variant="body" fontSize={11.5} color="cremeA55">
                   {op.hint}
                 </Text>
-              </TouchableOpacityBox>
+              </PressableScale>
             </Animated.View>
           ))}
         </Box>

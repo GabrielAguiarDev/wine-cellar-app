@@ -8,6 +8,7 @@ export {
   type PressableBoxProps,
 } from './Box';
 export { Text, type TextProps } from './Text';
+export { PressableScale } from './PressableScale';
 
 // Infra de app
 export { AppProviders } from './AppProviders';
