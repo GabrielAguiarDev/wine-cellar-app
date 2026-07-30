@@ -1,4 +1,4 @@
-import { useRef, useState, type RefObject } from 'react';
+import { useRef, useState } from 'react';
 
 import { TextInput, useWindowDimensions } from 'react-native';
 
@@ -11,9 +11,10 @@ import {
   Button,
   FlipCard,
   Text,
+  TextField,
 } from '@components/index';
 import { useGoBack } from '@hooks/useGoBack';
-import { useCardsStore, useToastStore } from '@store/index';
+import { useCardsStore, useToastStore, useUserStore } from '@store/index';
 import { alpha, fonts, palette } from '@theme/index';
 import {
   CARD_BRAND_LABEL,
@@ -31,74 +32,6 @@ import {
 /** Proporção ISO 7810 ID-1 — a de um cartão de verdade. */
 const CARD_RATIO = 1.586;
 const MAX_CARD_WIDTH = 340;
-
-type FieldProps = {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder: string;
-  keyboardType?: 'number-pad' | 'default';
-  maxLength?: number;
-  autoCapitalize?: 'none' | 'characters' | 'words';
-  onFocus?: () => void;
-  onBlur?: () => void;
-  inputRef?: RefObject<TextInput | null>;
-};
-
-/**
- * Campo do formulário. Local, e não no design system: é a mesma composição
- * rótulo + `TextInput` que checkout e avaliações já fazem inline. Vira componente
- * quando houver um terceiro formulário para justificar a API.
- */
-function Field({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  keyboardType = 'default',
-  maxLength,
-  autoCapitalize = 'none',
-  onFocus,
-  onBlur,
-  inputRef,
-}: FieldProps) {
-  return (
-    <Box flex={1}>
-      <Text
-        variant="label"
-        fontSize={9.5}
-        color="inkA55"
-        style={{ letterSpacing: 1.8 }}>
-        {label}
-      </Text>
-      <TextInput
-        ref={inputRef}
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        placeholderTextColor={palette.mutedIcon}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        autoCapitalize={autoCapitalize}
-        accessibilityLabel={label}
-        style={{
-          marginTop: 6,
-          borderWidth: 1,
-          borderColor: alpha.inkBorder16,
-          backgroundColor: palette.white,
-          borderRadius: 10,
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-          fontFamily: fonts.sansRegular,
-          fontSize: 14,
-          color: palette.ink,
-        }}
-      />
-    </Box>
-  );
-}
 
 /**
  * Novo cartão — push da Stack raiz, aberta de `/payment-methods`.
@@ -127,6 +60,10 @@ export default function AddCardScreen() {
   const goBack = useGoBack('/payment-methods');
   const show = useToastStore(s => s.show);
   const addCard = useCardsStore(s => s.addCard);
+  // Só de PLACEHOLDER: o titular do cartão não é necessariamente quem compra
+  // (cartão do cônjuge, cartão da empresa), então sugerir é ajudar e preencher
+  // seria errar calado.
+  const accountName = useUserStore(s => s.profile.name);
 
   const [number, setNumber] = useState('');
   const [holder, setHolder] = useState('');
@@ -337,7 +274,7 @@ export default function AddCardScreen() {
 
           {/* formulário */}
           <Box marginHorizontal="s22" marginTop="s24" style={{ gap: 14 }}>
-            <Field
+            <TextField
               label="Número do cartão"
               value={number}
               onChangeText={v => setNumber(formatCardNumber(v))}
@@ -345,15 +282,15 @@ export default function AddCardScreen() {
               keyboardType="number-pad"
               maxLength={19}
             />
-            <Field
+            <TextField
               label="Nome impresso no cartão"
               value={holder}
               onChangeText={setHolder}
-              placeholder="Helena Prado"
+              placeholder={accountName}
               autoCapitalize="words"
             />
             <Box flexDirection="row" style={{ gap: 12 }}>
-              <Field
+              <TextField
                 label="Validade"
                 value={expiry}
                 onChangeText={v => setExpiry(formatExpiry(v))}
@@ -361,7 +298,7 @@ export default function AddCardScreen() {
                 keyboardType="number-pad"
                 maxLength={5}
               />
-              <Field
+              <TextField
                 label="CVV"
                 value={cvv}
                 onChangeText={v =>

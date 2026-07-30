@@ -8,6 +8,8 @@
  * campo pela metade.
  */
 
+import { digitsOnly } from './format';
+
 export type CardBrand = 'visa' | 'mastercard' | 'elo' | 'amex' | 'unknown';
 
 /** Rótulo de exibição da bandeira. `unknown` não diz "desconhecida" na UI. */
@@ -62,8 +64,6 @@ const ELO_PREFIXES = [
   '6516',
   '6550',
 ];
-
-export const digitsOnly = (value: string) => value.replace(/\D+/g, '');
 
 export function cardBrand(value: string): CardBrand {
   const digits = digitsOnly(value);

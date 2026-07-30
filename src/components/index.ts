@@ -72,6 +72,7 @@ export type {
   FlipCardProps,
   FlipCardTriggerProps,
 } from './FlipCard/types';
+export { TextField } from './TextField';
 export { StarRating } from './StarRating';
 export { BottleGraphic } from './BottleGraphic';
 export { Button } from './Button';

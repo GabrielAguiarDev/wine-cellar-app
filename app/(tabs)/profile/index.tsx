@@ -11,33 +11,19 @@ import {
   Text,
   TouchableOpacityBox,
 } from '@components/index';
-import { FAQ } from '@data/index';
+import { FAQ, orderWineNames, recentOrders } from '@data/index';
 import { useUserStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
+import { brl } from '@utils/format';
+import { ORDER_STATUS_LABEL, formatOrderDate, orderTitle } from '@utils/order';
+import { initials } from '@utils/person';
 
 const META = 500;
-const ORDERS = [
-  {
-    title: 'Notte Eterna + 1',
-    date: '12 jul',
-    status: 'Entregue',
-    total: 'R$ 678',
-  },
-  {
-    title: 'Lumière Blanche',
-    date: '28 jun',
-    status: 'Entregue',
-    total: 'R$ 279',
-  },
-];
-/**
- * Atalhos de conta. Sem `route` a linha é só texto (a tela ainda não existe) —
- * de propósito: uma linha que parece botão e não navega é pior que uma linha que
- * nunca se ofereceu como toque.
- */
+
+/** Atalhos de conta. */
 const LINKS: { label: string; route?: Href }[] = [
-  { label: 'Dados pessoais' },
-  { label: 'Endereços salvos' },
+  { label: 'Dados pessoais', route: '/personal-data' },
+  { label: 'Endereços salvos', route: '/addresses' },
   { label: 'Formas de pagamento', route: '/payment-methods' },
 ];
 
@@ -47,6 +33,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const points = useUserStore(s => s.points);
   const palate = useUserStore(s => s.palate);
+  const name = useUserStore(s => s.profile.name);
 
   const remaining = META - points;
   const progressPct = Math.round((points / META) * 100);
@@ -80,14 +67,15 @@ export default function ProfileScreen() {
                 <Text
                   color="textOnDark"
                   style={{ fontFamily: fonts.serifRegular, fontSize: 24 }}>
-                  HP
+                  {initials(name)}
                 </Text>
               </Box>
               <Box flex={1}>
                 <Text
                   color="textOnDark"
+                  numberOfLines={1}
                   style={{ fontFamily: fonts.serifSemiBold, fontSize: 26 }}>
-                  Helena Prado
+                  {name}
                 </Text>
                 <Text variant="eyebrow" marginTop="s6">
                   Membro Prime
@@ -222,15 +210,40 @@ export default function ProfileScreen() {
 
         {/* pedidos recentes */}
         <Box marginHorizontal="s22" marginTop="s24">
-          <Text variant="sectionTitle" fontSize={21} marginBottom="s12">
-            Pedidos recentes
-          </Text>
-          <Box style={{ gap: 10 }}>
-            {ORDERS.map(p => (
+          {/*
+            "Ver todos" no lugar de só uma seta: a seta sozinha, ao lado de um
+            título, é ambígua num rail — parece "avançar a lista". O rótulo diz
+            que existe MAIS coisa, e a seta ao lado dele diz para onde. Mesmo par
+            do "Refazer" do paladar, que já usa o slot `right` do `SectionTitle`.
+          */}
+          <SectionTitle
+            right={
               <TouchableOpacityBox
-                key={p.title}
+                accessibilityRole="button"
+                accessibilityLabel="Ver todos os pedidos"
+                activeOpacity={0.7}
+                onPress={() => router.navigate('/orders')}
+                flexDirection="row"
+                alignItems="center"
+                style={{ gap: 6 }}>
+                <Text variant="body" fontSize={11} color="accentDark">
+                  Ver todos
+                </Text>
+                <Icon name="chevronRight" size={10} color={palette.goldDark} />
+              </TouchableOpacityBox>
+            }>
+            <Text variant="sectionTitle" fontSize={21}>
+              Pedidos recentes
+            </Text>
+          </SectionTitle>
+          <Box marginTop="s12" style={{ gap: 10 }}>
+            {recentOrders(2).map(order => (
+              <TouchableOpacityBox
+                key={order.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Pedido ${order.id}, ${ORDER_STATUS_LABEL[order.status]}`}
                 activeOpacity={0.85}
-                onPress={() => router.navigate('/tracking')}
+                onPress={() => router.navigate('/orders')}
                 flexDirection="row"
                 alignItems="center"
                 justifyContent="space-between"
@@ -239,26 +252,29 @@ export default function ProfileScreen() {
                 borderColor="inkBorder09"
                 borderRadius="r12"
                 paddingVertical="s14"
-                paddingHorizontal="s16">
-                <Box>
+                paddingHorizontal="s16"
+                style={{ gap: 12 }}>
+                <Box flex={1}>
                   <Text
                     variant="body"
                     fontSize={13}
+                    numberOfLines={1}
                     style={{ fontFamily: fonts.sansMedium }}>
-                    {p.title}
+                    {orderTitle(orderWineNames(order))}
                   </Text>
                   <Text
                     variant="body"
                     fontSize={11}
                     color="inkA50"
                     marginTop="s2">
-                    {p.date} · {p.status}
+                    {formatOrderDate(order.date)} ·{' '}
+                    {ORDER_STATUS_LABEL[order.status]}
                   </Text>
                 </Box>
                 <Text
                   color="primary"
                   style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
-                  {p.total}
+                  {brl(order.total)}
                 </Text>
               </TouchableOpacityBox>
             ))}

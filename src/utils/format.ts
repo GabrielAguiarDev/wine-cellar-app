@@ -14,3 +14,10 @@ export function brl(value: number): string {
 export function nf(value: number): string {
   return value.toFixed(1).replace('.', ',');
 }
+
+/**
+ * Só os dígitos. Mora aqui porque é o primeiro passo de TODA máscara do app
+ * (cartão, CPF, telefone, CEP, datas) — em cada arquivo de máscara viraria a
+ * mesma regex copiada quatro vezes.
+ */
+export const digitsOnly = (value: string) => value.replace(/\D+/g, '');
