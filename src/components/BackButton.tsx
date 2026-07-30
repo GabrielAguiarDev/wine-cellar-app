@@ -1,19 +1,8 @@
-import { palette } from '@theme/index';
-
-import { TouchableOpacityBox } from './Box';
-import { Icon } from './Icon';
+import { IconButton } from './IconButton';
 
 type BackButtonProps = {
   onPress?: () => void;
-  /**
-   * `dark` — sobre bordô ou fotografia: vidro bordô translúcido, borda e seta
-   * douradas. É a variante que nasceu no hero de `/reserved`.
-   * `light` — sobre creme: superfície creme, borda e seta bordô.
-   *
-   * O PADRÃO é a forma (círculo de 36 com borda e seta centrada), não a cor: um
-   * vidro bordô sobre creme viraria um borrão escuro, e a seta dourada perde
-   * contraste no claro.
-   */
+  /** Ver `IconButton`: `dark` sobre bordô/fotografia, `light` sobre creme. */
   variant?: 'dark' | 'light';
   /**
    * Default "Voltar". Trocar quando o destino NÃO é a tela anterior — em
@@ -24,45 +13,27 @@ type BackButtonProps = {
 };
 
 /**
- * Voltar redondo — o padrão das telas cujo topo tem SÓ o voltar.
+ * O voltar do app — um `IconButton` com o chevron dentro.
  *
- * Existe porque `ScreenHeader` resolve outro problema: ele é uma LINHA (chevron
- * + rótulo, com slot à direita), pensada para topos que carregam uma segunda
- * ação. Onde não há segunda ação, aquela linha vira um "‹ Voltar" solto no canto,
- * competindo em peso com o título da tela logo abaixo. O círculo é uma peça só,
- * ancorada no canto, que se lê como controle de sistema e não como conteúdo.
- *
- * `ScreenHeader` continua sendo o certo onde há par (produto padrão: voltar +
- * favoritar) — os dois convivem de propósito.
+ * É o ÚNICO voltar: não existe mais a variante em linha ("‹ Voltar" com
+ * rótulo). Ela vinha do `ScreenHeader` e o problema era de peso — a palavra
+ * "Voltar" em caixa alta no canto competia com o título da tela logo abaixo, e
+ * onde o topo tinha par (produto: voltar + favoritar) ficava uma linha de texto
+ * de um lado contra um ícone nu do outro. O círculo é uma peça só, ancorada no
+ * canto, que se lê como controle de sistema e não como conteúdo.
  */
-const SIZE = 36;
-
 export function BackButton({
   onPress,
   variant = 'light',
   accessibilityLabel = 'Voltar',
 }: BackButtonProps) {
-  const dark = variant === 'dark';
-
   return (
-    <TouchableOpacityBox
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      activeOpacity={0.8}
+    <IconButton
+      icon="chevronLeft"
       onPress={onPress}
-      width={SIZE}
-      height={SIZE}
-      borderRadius="rFull"
-      alignItems="center"
-      justifyContent="center"
-      borderWidth={1}
-      borderColor={dark ? 'goldA35' : 'inkBorder14'}
-      backgroundColor={dark ? 'wineA60' : 'surface'}>
-      <Icon
-        name="chevronLeft"
-        size={13}
-        color={dark ? palette.gold : palette.wine}
-      />
-    </TouchableOpacityBox>
+      variant={variant}
+      accessibilityLabel={accessibilityLabel}
+      iconSize={13}
+    />
   );
 }

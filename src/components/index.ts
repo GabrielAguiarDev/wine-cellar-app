@@ -90,10 +90,10 @@ export {
 } from './WineCountryCard';
 export { WineRow, type WineRowData } from './WineRow';
 export { BackButton } from './BackButton';
+export { IconButton, ICON_BUTTON_SIZE } from './IconButton';
 export { SegmentedToggle } from './SegmentedToggle';
 export { Toggle } from './Toggle';
 export { Toast } from './Toast';
-export { ScreenHeader } from './ScreenHeader';
 export { TabBar } from './TabBar';
 export { Blip } from './Blip';
 export { PulseBar } from './PulseBar';

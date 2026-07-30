@@ -911,9 +911,7 @@ export function CurationBlock({
       pointerEvents={contentVisible ? 'auto' : 'none'}>
       {fullscreen && onBack && (
         <Animated.View style={secondaryStyle}>
-          {/* Voltar redondo `dark`: aqui o topo tem SÓ esta ação, e é para isso
-              que o `BackButton` existe — a linha "‹ Voltar" do `ScreenHeader`
-              competia em peso com o título da curadoria logo abaixo. */}
+          {/* Voltar `dark` — a curadoria em tela cheia abre sobre bordô. */}
           <Box marginBottom="s20" alignItems="flex-start">
             <BackButton onPress={close} variant="dark" />
           </Box>

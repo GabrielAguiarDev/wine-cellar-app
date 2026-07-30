@@ -114,8 +114,17 @@ export function BottleGraphic({
         alignItems="center"
         justifyContent="center"
         style={{ backgroundColor: labelBg, borderRadius: 3 }}>
+        {/*
+          `textAlign` explícito: "IL DIVINO" com esta entrelinha NÃO cabe na
+          largura do rótulo e quebra em duas linhas. O `alignItems="center"` do
+          rótulo centra o elemento Text, não as LINHAS dentro dele — sem isto o
+          "IL" fica encostado na borda esquerda enquanto o "DIVINO" logo abaixo
+          ocupa a largura toda, e o conjunto sai torto. Some nas garrafas
+          grandes; nas de 48–66px é o que mais salta.
+        */}
         {full && (
           <Text
+            textAlign="center"
             style={{
               fontFamily: fonts.sansRegular,
               fontSize: px(7),

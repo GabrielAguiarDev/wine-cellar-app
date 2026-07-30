@@ -1,14 +1,15 @@
 import { useState } from 'react';
 
 import {
+  BackButton,
   BottleGraphic,
   Box,
   Button,
   Chip,
   Icon,
+  IconButton,
   Pill,
   Screen,
-  ScreenHeader,
   SectionTitle,
   SegmentedToggle,
   StarRating,
@@ -178,10 +179,18 @@ export default function CatalogScreen() {
           </Box>
         </Box>
 
-        {/* Header + ícones */}
+        {/* Chrome + ícones */}
         <Box style={{ gap: 12 }}>
-          <SectionTitle>Header &amp; Ícones</SectionTitle>
-          <ScreenHeader label="Sacola" onBack={() => {}} />
+          <SectionTitle>Chrome &amp; Ícones</SectionTitle>
+          <Box flexDirection="row" style={{ gap: 12 }}>
+            <BackButton onPress={() => {}} />
+            <IconButton
+              icon="heart"
+              accessibilityLabel="Favoritar"
+              iconSize={19}
+              onPress={() => {}}
+            />
+          </Box>
           <Box flexDirection="row" style={{ gap: 16 }}>
             <Icon name="home" color={palette.wine} />
             <Icon name="search" color={palette.wine} />
