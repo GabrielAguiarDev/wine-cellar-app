@@ -99,6 +99,7 @@ export default function HomeScreen() {
           smallTitleSlot={<Logo size={18} tagline={false} />}
           rightComponent={
             <TouchableOpacityBox
+              accessibilityRole="button"
               accessibilityLabel={
                 unread === 0
                   ? 'Notificações'
@@ -129,33 +130,16 @@ export default function HomeScreen() {
             </TouchableOpacityBox>
           }>
           <Box paddingBottom="s108">
-            {/* busca (fake) */}
-            <Reappear order={1}>
-              <TouchableOpacityBox
-                activeOpacity={0.8}
-                onPress={() => router.navigate('/search')}
-                marginHorizontal="s22"
-                marginBottom="s22"
-                flexDirection="row"
-                alignItems="center"
-                backgroundColor="surface"
-                borderWidth={1}
-                borderColor="inkBorder14"
-                borderRadius="r12"
-                paddingVertical="s12"
-                paddingHorizontal="s16"
-                style={{ gap: 10 }}>
-                <Icon name="search" size={16} color={palette.mutedIcon} />
-                <Text variant="body" fontSize={13.5} color="inkA50">
-                  Buscar vinho ou prato…
-                </Text>
-              </TouchableOpacityBox>
-            </Reappear>
-
             {/* banner curadoria — a MESMA peça visual da tela /curation/[id], aqui
               em `variant="card"`. Ao tocar (no bloco ou no CTA) a forma cresce
-              até virar a tela cheia: ver src/components/CurationBlock.tsx. */}
-            <Box marginHorizontal="s22" marginBottom="s24">
+              até virar a tela cheia: ver src/components/CurationBlock.tsx.
+
+              É o primeiro elemento do corpo: aqui havia um campo de busca —
+              falso, um TouchableOpacity com cara de input que só empurrava para
+              a aba `Buscar` (que, além de estar no tab bar, tem o próprio
+              pull-to-focus). A busca virou ícone no header e a curadoria ganhou
+              o espaço logo abaixo da marca. */}
+            <Box marginHorizontal="s22" marginTop="s6" marginBottom="s24">
               <CurationBlock
                 variant="card"
                 transitionId={WEEKLY_CURATION.id}
@@ -169,7 +153,7 @@ export default function HomeScreen() {
             </Box>
 
             {/* atalhos por país — abrem a busca já filtrada (não filtram aqui) */}
-            <Reappear order={2}>
+            <Reappear order={1}>
               <Box paddingHorizontal="s22" marginBottom="s14">
                 <SectionTitle
                   right={
@@ -189,7 +173,11 @@ export default function HomeScreen() {
                         style={{ letterSpacing: 1.5 }}>
                         Ver tudo
                       </Text>
-                      <Icon name="arrowRight" size={11} color={palette.goldDark} />
+                      <Icon
+                        name="arrowRight"
+                        size={11}
+                        color={palette.goldDark}
+                      />
                     </TouchableOpacityBox>
                   }>
                   Explorar por país
@@ -210,7 +198,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rail selecionados */}
-            <Reappear order={3}>
+            <Reappear order={2}>
               <Box marginTop="s30">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Selecionados para você</SectionTitle>
@@ -234,7 +222,7 @@ export default function HomeScreen() {
             {/* coleção reservada — texto vem de `RESERVED_COLLECTION` (@data),
               a mesma fonte da tela `/reserved`: card e tela mostram o mesmo
               eyebrow e o mesmo título, e duplicá-los aqui os faria divergir. */}
-            <Reappear order={4}>
+            <Reappear order={3}>
               <TouchableOpacityBox
                 accessibilityRole="button"
                 accessibilityLabel={`${RESERVED_COLLECTION.eyebrow}: ${RESERVED_COLLECTION.title}`}
@@ -293,7 +281,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rail mais vendidos */}
-            <Reappear order={5}>
+            <Reappear order={4}>
               <Box marginTop="s32">
                 <Box paddingHorizontal="s22" marginBottom="s14">
                   <SectionTitle>Mais vendidos</SectionTitle>
@@ -312,7 +300,7 @@ export default function HomeScreen() {
             </Reappear>
 
             {/* rodapé */}
-            <Reappear order={6}>
+            <Reappear order={5}>
               <Text
                 textAlign="center"
                 marginTop="s40"

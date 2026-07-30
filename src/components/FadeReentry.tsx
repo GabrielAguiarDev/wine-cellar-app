@@ -39,9 +39,8 @@ import { useTransitionStore } from '@store/index';
  *
  *   <FadeReentry transitionId={WEEKLY_CURATION.id}>
  *     <Reappear order={0}>{header}</Reappear>
- *     <Reappear order={1}>{busca}</Reappear>
  *     {card}                          ← o shared element NÃO entra em fade
- *     <Reappear order={2}>{pills}</Reappear>
+ *     <Reappear order={1}>{pills}</Reappear>
  *   </FadeReentry>
  *
  * O próprio shared element fica FORA de `Reappear`: a forma que encolhe
