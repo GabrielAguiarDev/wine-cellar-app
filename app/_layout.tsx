@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { AnimatedSplash, AppProviders, TabBar } from '@components/index';
 import { ToastProviderWithViewport } from '@components/molecules/Toast';
 import { useAppFonts } from '@hooks/useAppFonts';
+import { useAuthStore, useUserStore } from '@store/index';
 import { palette } from '@theme/index';
 
 // Mantém o splash nativo (cor sólida bordô) visível enquanto as fontes carregam.
@@ -17,6 +18,11 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
   const [splashFinished, setSplashFinished] = useState(false);
+
+  // Etapas de entrada: quem já venceu uma não deve poder voltar a ela (nem por
+  // gesto, nem por deep link) — ver as guardas na Stack abaixo.
+  const welcomeSeen = useUserStore(s => s.welcomeSeen);
+  const signedIn = !!useAuthStore(s => s.session);
 
   const ready = fontsLoaded || fontError;
 
@@ -35,6 +41,29 @@ export default function RootLayout() {
       <ToastProviderWithViewport>
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false }}>
+          {/*
+            ── Etapas de entrada ─────────────────────────────────────────────
+
+            `Stack.Protected` (expo-router 57) REMOVE a rota da pilha quando o
+            `guard` é falso; se a rota removida for a ativa, a navegação cai na
+            rota-âncora — `index`, que é justamente o portão e reavalia tudo.
+
+            As guardas são "esta etapa ainda pode ser visitada?", não "é a etapa
+            atual?". Quem manda ir para a próxima é `resolveGateRoute`
+            (`@domain/auth/authGate`), consultado tanto pelo `index` quanto pelas
+            telas — os dois caminhos dão o MESMO destino, então o pior caso de
+            uma corrida é um quadro em branco, nunca um destino errado.
+
+            `quiz` NÃO é protegido de propósito: é a única etapa que faz sentido
+            refazer depois (atalho do Perfil). O que impede de vê-la duas vezes
+            no primeiro acesso é a flag `palateDone`, não a pilha.
+          */}
+          <Stack.Protected guard={!welcomeSeen}>
+            <Stack.Screen name="(onboarding)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
           {/*
             Curadoria: a tela cresce a partir do card da Home (shared element em
             `CurationBlock`), então a Stack não pode animar por cima —

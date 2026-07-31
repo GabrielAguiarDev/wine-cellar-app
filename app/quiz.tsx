@@ -19,11 +19,18 @@ import { fonts, palette } from '@theme/index';
 
 const DEFAULT_PALATE = 'encorpado';
 
-/** Quiz de paladar (3 perguntas) — grava o paladar e segue para a Home. */
+/**
+ * Quiz de paladar (3 perguntas) — grava o paladar e segue para a Home.
+ *
+ * É a ÚLTIMA etapa de entrada (slides → entrar → paladar), e a única refazível:
+ * a rota não é protegida no layout raiz, então um atalho do Perfil pode trazer a
+ * pessoa de volta aqui. Por isso o fim marca `palateDone` e manda para `/home`
+ * direto — não há etapa depois dele.
+ */
 export default function QuizScreen() {
   const router = useRouter();
   const setPalate = useUserStore(s => s.setPalate);
-  const completeOnboarding = useUserStore(s => s.completeOnboarding);
+  const markPalateDone = useUserStore(s => s.markPalateDone);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -39,7 +46,7 @@ export default function QuizScreen() {
 
   const finish = (allAnswers: Record<string, string>) => {
     setPalate(allAnswers.corpo ?? DEFAULT_PALATE);
-    completeOnboarding();
+    markPalateDone();
     router.replace('/home');
   };
 

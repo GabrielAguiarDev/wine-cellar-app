@@ -36,12 +36,25 @@ type UserState = {
   palate: string;
   /** Pontos de fidelidade. */
   points: number;
-  /** True após concluir/pular o quiz de preferências (1º acesso). */
-  onboarded: boolean;
+  /**
+   * Etapas de entrada JÁ VENCIDAS. Duas flags e não uma (`onboarded`, como era
+   * até 2026-07-31) porque agora há três etapas — slides, login, paladar — e o
+   * login não é nosso para marcar: quem responde por ele é a sessão em
+   * `useAuthStore`. Com flags separadas, quem é interrompido no meio volta de
+   * onde parou, e quem sai da conta não refaz os slides nem o quiz.
+   *
+   * Moram aqui, e não num store novo, pelo mesmo motivo que `profile`: são
+   * atributos DESTA pessoa, e um store persistido a mais é uma hidratação a mais
+   * para o gate esperar. Quem lê as duas é `resolveGateRoute` (`@domain/auth`).
+   */
+  welcomeSeen: boolean;
+  palateDone: boolean;
   profile: UserProfile;
   setPalate: (palate: string) => void;
-  /** Marca o onboarding como concluído (chamado ao fim do quiz). */
-  completeOnboarding: () => void;
+  /** Fim dos slides de boas-vindas. */
+  markWelcomeSeen: () => void;
+  /** Fim do quiz de paladar — inclusive quando é "Pular". */
+  markPalateDone: () => void;
   setProfile: (profile: UserProfile) => void;
 };
 
@@ -58,10 +71,12 @@ export const useUserStore = create<UserState>()(
     set => ({
       palate: 'encorpado',
       points: 320,
-      onboarded: false,
+      welcomeSeen: false,
+      palateDone: false,
       profile: DEFAULT_PROFILE,
       setPalate: palate => set({ palate }),
-      completeOnboarding: () => set({ onboarded: true }),
+      markWelcomeSeen: () => set({ welcomeSeen: true }),
+      markPalateDone: () => set({ palateDone: true }),
       setProfile: profile => set({ profile }),
     }),
     {
@@ -70,19 +85,34 @@ export const useUserStore = create<UserState>()(
       partialize: state => ({
         palate: state.palate,
         points: state.points,
-        onboarded: state.onboarded,
+        welcomeSeen: state.welcomeSeen,
+        palateDone: state.palateDone,
         profile: state.profile,
       }),
       /*
-        `version` sobe porque o estado gravado pelas versões anteriores NÃO tem
-        `profile`: sem migração, quem já abriu o app hidrataria `profile`
-        indefinido e a tela de dados pessoais quebraria ao ler `profile.name` —
-        um bug que não aparece em instalação limpa, só em quem já usava.
+        Histórico de versões (bugs que só aparecem em quem JÁ usava o app, nunca
+        em instalação limpa — por isso cada salto tem de continuar tratado):
+
+        v1: `profile` passou a existir. Sem migração, quem já tinha estado gravado
+            hidratava `profile` indefinido e `/personal-data` quebrava ao ler
+            `profile.name`.
+        v2: `onboarded` virou `welcomeSeen` + `palateDone` (login entrou no meio).
+            Quem já fez o quiz não pode ver slide nem quiz de novo — mas VAI ver o
+            login, porque sessão não existia antes e não há o que inventar.
       */
-      version: 1,
+      version: 2,
       migrate: persisted => {
-        const state = (persisted ?? {}) as Partial<UserState>;
-        return { ...state, profile: state.profile ?? DEFAULT_PROFILE };
+        const state = (persisted ?? {}) as Partial<UserState> & {
+          onboarded?: boolean;
+        };
+        const { onboarded, ...rest } = state;
+
+        return {
+          ...rest,
+          profile: state.profile ?? DEFAULT_PROFILE,
+          welcomeSeen: state.welcomeSeen ?? onboarded ?? false,
+          palateDone: state.palateDone ?? onboarded ?? false,
+        };
       },
     },
   ),

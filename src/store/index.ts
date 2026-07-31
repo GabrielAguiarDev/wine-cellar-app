@@ -1,4 +1,5 @@
 export { useAddressesStore } from './useAddressesStore';
+export { useAuthStore, type AuthStatus } from './useAuthStore';
 export { useCardsStore } from './useCardsStore';
 export { useCartStore } from './useCartStore';
 export { useFavoritesStore } from './useFavoritesStore';
