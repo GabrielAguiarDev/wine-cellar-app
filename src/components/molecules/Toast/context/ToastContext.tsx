@@ -1,17 +1,13 @@
 import type { Toast, ToastContextValue, ToastOptions } from "../Toast.types";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 const DEFAULT_TOAST_OPTIONS: Required<ToastOptions> = {
   duration: 3000,
   type: "default",
   position: "bottom",
-  backgroundColor: "#262626",
+  // `null`: a cor vem do `type` (ver `Toast.skins.ts`). Um hex fixo aqui
+  // sobrescrevia SEMPRE a paleta do tipo, e nenhum toast saía do cinza.
+  backgroundColor: null,
   onClose: () => {},
   action: null,
   expandedContent: null,
@@ -106,22 +102,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
-  useEffect(() => {
-    if (toasts.length === 0) return;
-    const timeouts: NodeJS.Timeout[] = [];
-    toasts.forEach((toast) => {
-      if (toast.options.duration > 0) {
-        const timeout = setTimeout(() => {
-          dismiss(toast.id);
-          toast.options.onClose?.();
-        }, toast.options.duration);
-        timeouts.push(timeout as any);
-      }
-    });
-    return () => {
-      timeouts.forEach(clearTimeout);
-    };
-  }, [toasts, dismiss]);
+  // O tempo de vida de cada toast é contado pelo próprio balão (`Toast.tsx`).
+  // Aqui em cima ele era refeito a cada mudança na lista, o que reiniciava a
+  // contagem dos toasts que já estavam na tela, fechava sem animação e ainda
+  // rodava `onClose` em dobro com o balão. Também é lá que o relógio PAUSA
+  // enquanto o dedo está arrastando.
 
   const value: ToastContextValue = {
     toasts,

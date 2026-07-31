@@ -23,7 +23,11 @@ export interface ToastOptions {
   expandedContent?:
     | React.ReactNode
     | ((props: ExpandedContentProps) => React.ReactNode);
-  backgroundColor?: string;
+  /**
+   * Sobrescreve o fundo do balão. `null` (o padrão) = quem manda é o `type`,
+   * via `TOAST_SKINS`. Só passe cor aqui para um caso realmente fora da régua.
+   */
+  backgroundColor?: string | null;
   style?: StyleProp<ViewStyle>;
 }
 

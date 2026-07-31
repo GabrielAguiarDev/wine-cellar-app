@@ -37,6 +37,12 @@ export const palette = {
   ink: '#2A211C', // texto principal sobre creme
   mutedIcon: '#8A7D70', // cinza-marrom (ícone de busca)
 
+  // Estados SOBRE FUNDO ESCURO (toasts). Os semânticos do tema (`success`,
+  // `error`) são versões escuras, para uso sobre creme; sobre o bordô eles
+  // somem. Erro e atenção reaproveitam os líquidos (rosé e espumante) — já são
+  // um vermelho e um âmbar da paleta, não cores novas.
+  sage: '#8FAE8C', // sucesso sobre bordô (verde acinzentado, não o verde puro)
+
   white: '#FFFFFF',
   black: '#000000',
 } as const;

@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 
-import { Toast } from '@components/molecules/Toast';
-import { palette } from '@theme/index';
+import { Toast, type ToastType } from '@components/molecules/Toast';
 
 type ToastState = {
-  /** Exibe um toast (delegado ao Toast do reacticx, com a cor da marca). */
-  show: (message: string) => void;
+  /**
+   * Exibe um toast. O `type` escolhe o ACENTO (ícone/borda) — o balão é sempre
+   * o mesmo bordô, ver `Toast.skins.ts`. Sem `type`, recado neutro.
+   */
+  show: (message: string, type?: ToastType) => void;
 };
 
 /**
@@ -14,9 +16,9 @@ type ToastState = {
  * as chamadas existentes passam a usar o toast novo sem nenhuma alteração.
  */
 export const useToastStore = create<ToastState>(() => ({
-  show: message =>
+  show: (message, type = 'default') =>
     Toast.show(message, {
-      backgroundColor: palette.wine,
+      type,
       position: 'top',
       duration: 2600,
     }),

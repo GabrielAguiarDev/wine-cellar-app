@@ -19,7 +19,9 @@ export type IconName =
   | 'phone'
   | 'check'
   | 'plus'
-  | 'close';
+  | 'close'
+  | 'alert'
+  | 'info';
 
 type IconProps = {
   name: IconName;
@@ -297,6 +299,42 @@ const ICONS: Record<IconName, IconSpec> = {
         strokeWidth={strokeWidth}
         strokeLinecap="round"
       />
+    ),
+  },
+  /**
+   * Atenção e informação — os glifos dos toasts de `warning`/`info`.
+   * Desenhados sem círculo em volta para casar com `check`/`close`, que também
+   * são traços soltos: dentro do balão quem separa o ícone do texto é a cor.
+   * O ponto é um `Circle` (um `Path` de comprimento zero não pinta no Android).
+   */
+  alert: {
+    viewBox: '0 0 20 20',
+    strokeWidth: 1.7,
+    render: ({ color, strokeWidth }) => (
+      <>
+        <Path
+          d="M10 4.4v6.8"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
+        <Circle cx={10} cy={14.9} r={0.95} fill={color} />
+      </>
+    ),
+  },
+  info: {
+    viewBox: '0 0 20 20',
+    strokeWidth: 1.7,
+    render: ({ color, strokeWidth }) => (
+      <>
+        <Circle cx={10} cy={5.1} r={0.95} fill={color} />
+        <Path
+          d="M10 8.8v6.8"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
+      </>
     ),
   },
   /** Fechar — o "×" do story em tela cheia (não é o voltar de uma pilha). */
