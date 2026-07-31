@@ -10,6 +10,7 @@ export {
   type Curation,
 } from './curations';
 export { RESERVED_COLLECTION } from './collections';
+export { sommelierStory, storySeconds } from './sommelierStories';
 export { FAQ, type FaqEntry } from './faq';
 export {
   ORDERS,

@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -9,14 +7,13 @@ import {
   BottleGraphic,
   Box,
   Button,
-  Icon,
   IconButton,
-  PulseBar,
   Screen,
   StarRating,
   Text,
   TouchableOpacityBox,
 } from '@components/index';
+import { SommelierStoryPreview } from '@components/organisms/sommelier-story';
 import { findWine, type Wine } from '@data/index';
 import { useCartStore, useFavoritesStore, useToastStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
@@ -47,6 +44,9 @@ export default function ProductScreen() {
   const goReviews = () =>
     router.navigate({ pathname: '/reviews/[id]', params: { id: wine.id } });
 
+  const goStory = () =>
+    router.navigate({ pathname: '/story/[id]', params: { id: wine.id } });
+
   const shared = {
     wine,
     favorite,
@@ -54,6 +54,7 @@ export default function ProductScreen() {
     onToggleFav: () => toggleFav(wine.id),
     onBuy: buy,
     onReviews: goReviews,
+    onStory: goStory,
   };
 
   return wine.featured ? (
@@ -72,6 +73,8 @@ type LayoutProps = {
   onToggleFav: () => void;
   onBuy: () => void;
   onReviews: () => void;
+  /** Abrir o story do sommelier. Só o layout premium tem vídeo. */
+  onStory: () => void;
 };
 
 /**
@@ -167,9 +170,8 @@ function ProductPremium({
   onToggleFav,
   onBuy,
   onReviews,
+  onStory,
 }: LayoutProps) {
-  const [playing, setPlaying] = useState(false);
-
   const footer = (
     <Box
       flexDirection="row"
@@ -269,58 +271,19 @@ function ProductPremium({
           &quot;{wine.signature}&quot;
         </Text>
 
-        {/* vídeo sommelier */}
+        {/*
+          Vídeo do sommelier em formato de STORY.
+          Era um player deitado de 196 de altura com um ▶ no meio, que ao tocar
+          trocava por um "Reproduzindo…" no mesmo retângulo — o vídeo nunca saía
+          daquela moldura. Agora o preview é uma MINIATURA da tela do story (ver
+          `organisms/sommelier-story`) e o toque a faz crescer até ocupar a
+          janela, com barra de progresso por trecho e o nome do rótulo no topo.
+        */}
         <Box marginTop="s28">
-          <Text variant="eyebrow" marginBottom="s12">
+          <Text variant="eyebrow" marginBottom="s14">
             Palavra do sommelier
           </Text>
-          <TouchableOpacityBox
-            activeOpacity={0.9}
-            onPress={() => setPlaying(p => !p)}
-            height={196}
-            borderRadius="r6"
-            overflow="hidden"
-            borderWidth={1}
-            borderColor="goldA30"
-            backgroundColor="videoBackdrop"
-            alignItems="center"
-            justifyContent="center">
-            {playing ? (
-              <Box alignItems="center">
-                <Text variant="label" fontSize={11} color="cremeA82" style={{ letterSpacing: 2 }}>
-                  Reproduzindo…
-                </Text>
-                <Box flexDirection="row" alignItems="flex-end" marginTop="s12" style={{ gap: 4, height: 22 }}>
-                  {[14, 22, 10, 18].map((h, i) => (
-                    <PulseBar key={i} height={h} delay={i * 120} duration={800 + i * 100} />
-                  ))}
-                </Box>
-              </Box>
-            ) : (
-              <Box alignItems="center">
-                <Box
-                  width={56}
-                  height={56}
-                  borderRadius="rFull"
-                  borderWidth={1}
-                  borderColor="goldA60"
-                  alignItems="center"
-                  justifyContent="center">
-                  <Box marginLeft="s4">
-                    <Icon name="play" size={18} color={palette.gold} />
-                  </Box>
-                </Box>
-                <Text
-                  variant="label"
-                  fontSize={10}
-                  color="cremeA70"
-                  marginTop="s14"
-                  style={{ letterSpacing: 1.8 }}>
-                  Conheça o {wine.name} · {wine.videoDuration}
-                </Text>
-              </Box>
-            )}
-          </TouchableOpacityBox>
+          <SommelierStoryPreview wine={wine} onOpen={onStory} />
         </Box>
 
         {/* harmoniza */}

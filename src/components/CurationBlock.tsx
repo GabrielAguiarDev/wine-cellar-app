@@ -35,6 +35,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useTransitionStore } from '@store/index';
 import { fonts, palette } from '@theme/index';
+import { measureNode } from '@utils/measure';
 
 import { BackButton } from './BackButton';
 import { Box, TouchableOpacityBox } from './Box';
@@ -346,21 +347,6 @@ const BASE_TEXT = {
   subWidth: 210,
   subMargin: 12,
 } as const;
-
-type Measurement = { x: number; y: number; width: number; height: number };
-
-/** `measureInWindow` como promise, para medir vários nós antes de navegar. */
-function measureNode(node: View | null): Promise<Measurement | undefined> {
-  return new Promise(resolve => {
-    if (!node) {
-      resolve(undefined);
-      return;
-    }
-    node.measureInWindow((x, y, width, height) =>
-      resolve({ x, y, width, height }),
-    );
-  });
-}
 
 export function CurationBlock({
   transitionId,

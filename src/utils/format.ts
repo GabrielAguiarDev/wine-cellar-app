@@ -16,6 +16,18 @@ export function nf(value: number): string {
 }
 
 /**
+ * Duração em segundos no formato do player: 48 → "0:48"; 65 → "1:05".
+ *
+ * Mora aqui (e não no story) porque é o mesmo relógio do catálogo: é ele que
+ * escreve o `videoDuration` dos destaques a partir do roteiro do sommelier.
+ */
+export function mmss(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(total / 60);
+  return `${minutes}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/**
  * Só os dígitos. Mora aqui porque é o primeiro passo de TODA máscara do app
  * (cartão, CPF, telefone, CEP, datas) — em cada arquivo de máscara viraria a
  * mesma regex copiada quatro vezes.

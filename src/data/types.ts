@@ -23,6 +23,23 @@ export interface Wine {
   videoDuration?: string; // só destaques
 }
 
+/**
+ * Um trecho do vídeo do sommelier — e, na tela, UM segmento da barra de
+ * progresso do story (a barra do Instagram tem um segmento por trecho).
+ *
+ * A soma dos `seconds` de um vinho é exatamente o `videoDuration` dele; há um
+ * teste guardando isso (`src/data/__tests__/sommelierStories.test.ts`), porque
+ * é a única coisa que liga o roteiro à duração exibida no preview.
+ */
+export interface SommelierChapter {
+  /** Duração do trecho, em segundos. */
+  seconds: number;
+  /** Etiqueta curta do trecho, em caixa alta na tela. Ex.: "Na taça". */
+  cue: string;
+  /** A fala do sommelier naquele trecho — a legenda do story. */
+  caption: string;
+}
+
 export interface Review {
   name: string;
   rating: number; // 1..5

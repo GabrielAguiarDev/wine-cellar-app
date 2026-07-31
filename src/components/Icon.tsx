@@ -18,7 +18,8 @@ export type IconName =
   | 'star'
   | 'phone'
   | 'check'
-  | 'plus';
+  | 'plus'
+  | 'close';
 
 type IconProps = {
   name: IconName;
@@ -292,6 +293,19 @@ const ICONS: Record<IconName, IconSpec> = {
     render: ({ color, strokeWidth }) => (
       <Path
         d="M10 4v12M4 10h12"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    ),
+  },
+  /** Fechar — o "×" do story em tela cheia (não é o voltar de uma pilha). */
+  close: {
+    viewBox: '0 0 20 20',
+    strokeWidth: 1.5,
+    render: ({ color, strokeWidth }) => (
+      <Path
+        d="M5 5l10 10M15 5L5 15"
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"

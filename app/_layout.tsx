@@ -66,6 +66,31 @@ export default function RootLayout() {
               gestureEnabled: false,
             }}
           />
+          {/*
+            Story do sommelier: cresce a partir do preview na tela de produto
+            premium (shared element em `organisms/sommelier-story`), então de
+            novo a Stack não pode animar por cima — `animation: 'none'`.
+
+            Aqui, ao contrário da curadoria, É um `transparentModal`: a tela de
+            produto continua VIVA por baixo, apenas escurecida pelo scrim do
+            story, e é isso que faz a peça ler como algo que sai de dentro
+            daquela tela. O defeito que tirou o `transparentModal` da curadoria
+            (no iOS, tudo que é empilhado depois de um modal também é apresentado
+            como modal) não nos atinge: do story não se navega para lugar nenhum
+            — só se fecha.
+
+            `gestureEnabled: false` porque o swipe-back da Stack pularia a
+            animação de fechamento. Quem faz o papel dele é o ARRASTO VERTICAL
+            do próprio story.
+          */}
+          <Stack.Screen
+            name="story/[id]"
+            options={{
+              presentation: 'transparentModal',
+              animation: 'none',
+              gestureEnabled: false,
+            }}
+          />
         </Stack>
         {/* iOS usa Native Tabs (em (tabs)/_layout); Android usa a TabBar custom. */}
         {Platform.OS !== 'ios' && <TabBar />}
