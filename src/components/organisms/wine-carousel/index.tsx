@@ -1,22 +1,26 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
+// Reanimated 4: `runOnJS` está deprecado em favor do `scheduleOnRN` do worklets.
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { type Wine } from '@data/types';
 import { fonts } from '@theme/index';
 import { capColorFor, typeAndGrape } from '@utils/index';
 import { brl } from '@utils/format';
 
-import { Box, TouchableOpacityBox } from '../../Box';
+import { Box } from '../../Box';
 import { BottleGraphic } from '../../BottleGraphic';
 import { Text } from '../../Text';
 import {
@@ -31,6 +35,9 @@ import {
   FRAME_INSET,
   NEIGHBOR_OPACITY,
   NEIGHBOR_ROTATION,
+  TAP_MAX_DISTANCE,
+  PRESS_OPACITY,
+  PRESS_RELEASE_DURATION,
 } from './conf';
 import {
   type WineCarouselProps,
@@ -215,6 +222,50 @@ function WineSlide({
     };
   });
 
+  /**
+   * TOQUE NO SLIDE — `Gesture.Tap`, e não um `TouchableOpacity`.
+   *
+   * Esta tela toda pode ser arrastada para baixo para fechar (o `Gesture.Pan`
+   * do `CurationBlock`), e o arrasto move o bloco 1:1 com o dedo. Com um
+   * touchable de RN, o dedo nunca "saía" do card — ele viajava colado —, então
+   * a Pressability não cancelava o toque e soltar disparava DUAS ações: abria o
+   * produto E fechava a curadoria, deixando a tela num estado inválido.
+   *
+   * `maxDistance` corta o problema na raiz: o handler mede o deslocamento em
+   * coordenadas de janela (iOS) / da root view (Android), portanto imune ao
+   * transform do bloco. Passou de `TAP_MAX_DISTANCE`, o toque FALHA — não
+   * importa o que aconteça depois com o arrasto ou com o scroll horizontal.
+   * Nada aqui depende de arbitragem entre gestos: os dois limites (12 e 14) não
+   * se sobrepõem.
+   */
+  const pressOpacity = useSharedValue(1);
+  const tap = useMemo(
+    () =>
+      Gesture.Tap()
+        .maxDistance(TAP_MAX_DISTANCE)
+        .onBegin(() => {
+          pressOpacity.set(PRESS_OPACITY);
+        })
+        .onFinalize(() => {
+          pressOpacity.set(
+            withTiming(1, { duration: PRESS_RELEASE_DURATION }),
+          );
+        })
+        .onEnd((_e, success) => {
+          if (success) {
+            scheduleOnRN(onPress);
+          }
+        }),
+    [onPress, pressOpacity],
+  );
+
+  /**
+   * A opacidade de toque fica num nó SEPARADO do `style` de profundidade: as
+   * duas animam `opacity` e, na mesma View, o segundo estilo sobrescreveria o
+   * primeiro. Aninhadas, elas se multiplicam — que é a leitura desejada.
+   */
+  const pressStyle = useAnimatedStyle(() => ({ opacity: pressOpacity.get() }));
+
   // A altura vem medida do espaço real disponível (ver `WineCarousel`), não
   // de uma fração da tela: com fração a legenda era cortada em telas curtas.
   // Da altura tiro a legenda e um respiro, e o que sobra dimensiona a garrafa
@@ -228,58 +279,62 @@ function WineSlide({
   return (
     <Animated.View
       style={[{ width, height, marginRight: SPACING }, style]}>
-      <TouchableOpacityBox
-        activeOpacity={0.9}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={`${wine.name}, ${typeAndGrape(wine)}`}
-        flex={1}>
-        <Box
-          height={frameHeight}
-          borderRadius="r18"
-          borderWidth={1}
-          borderColor="goldA28"
-          backgroundColor="cremeA06"
-          alignItems="center"
-          justifyContent="center"
-          overflow="hidden">
-          <BottleGraphic
-            width={bottleWidth}
-            color={wine.color}
-            capColor={capColorFor(wine)}
-            initials={wine.initials}
-            vintage={wine.vintage}
-            premium={wine.featured}
-            labelMode="full"
-          />
-        </Box>
+      <GestureDetector gesture={tap}>
+        {/* `onAccessibilityTap` porque o gesto não é um touchable: sem ele a
+            ativação por leitor de tela não chegaria ao `onPress`. */}
+        <Animated.View
+          style={[{ flex: 1 }, pressStyle]}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={`${wine.name}, ${typeAndGrape(wine)}`}
+          onAccessibilityTap={onPress}>
+          <Box
+            height={frameHeight}
+            borderRadius="r18"
+            borderWidth={1}
+            borderColor="goldA28"
+            backgroundColor="cremeA06"
+            alignItems="center"
+            justifyContent="center"
+            overflow="hidden">
+            <BottleGraphic
+              width={bottleWidth}
+              color={wine.color}
+              capColor={capColorFor(wine)}
+              initials={wine.initials}
+              vintage={wine.vintage}
+              premium={wine.featured}
+              labelMode="full"
+            />
+          </Box>
 
-        <Box alignItems="center" justifyContent="center" flex={1}>
-          <Text
-            variant="eyebrow"
-            color="cremeA50"
-            style={{ letterSpacing: 2.4 }}>
-            {typeAndGrape(wine)}
-          </Text>
-          <Text
-            color="textOnDark"
-            textAlign="center"
-            marginTop="s6"
-            style={{
-              fontFamily: fonts.serifSemiBold,
-              fontSize: 23,
-              lineHeight: 26,
-            }}>
-            {wine.name}
-          </Text>
-          <Text
-            color="accent"
-            marginTop="s4"
-            style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
-            {brl(wine.price)}
-          </Text>
-        </Box>
-      </TouchableOpacityBox>
+          <Box alignItems="center" justifyContent="center" flex={1}>
+            <Text
+              variant="eyebrow"
+              color="cremeA50"
+              style={{ letterSpacing: 2.4 }}>
+              {typeAndGrape(wine)}
+            </Text>
+            <Text
+              color="textOnDark"
+              textAlign="center"
+              marginTop="s6"
+              style={{
+                fontFamily: fonts.serifSemiBold,
+                fontSize: 23,
+                lineHeight: 26,
+              }}>
+              {wine.name}
+            </Text>
+            <Text
+              color="accent"
+              marginTop="s4"
+              style={{ fontFamily: fonts.serifRegular, fontSize: 16 }}>
+              {brl(wine.price)}
+            </Text>
+          </Box>
+        </Animated.View>
+      </GestureDetector>
     </Animated.View>
   );
 }

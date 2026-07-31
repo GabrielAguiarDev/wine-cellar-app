@@ -147,7 +147,15 @@ import { Text } from './Text';
  *     Stack fica desligado (`gestureEnabled: false` em `app/_layout.tsx`)
  *     porque ele pularia a animação da forma.
  * O gesto só é armado DEPOIS da abertura e respeita a mesma trava `closing`,
- * então nenhum par de caminhos consegue navegar duas vezes.
+ * então nenhum par de caminhos consegue navegar duas vezes. Enquanto a saída
+ * roda, a camada de conteúdo sai do caminho dos toques (`exiting`).
+ *
+ * ⚠️ CONTEÚDO CLICÁVEL DENTRO DO BLOCO EM TELA CHEIA: use gestos do
+ * gesture-handler com limite de distância (`Gesture.Tap().maxDistance(...)`),
+ * NUNCA `TouchableOpacity`/`Pressable` do RN. O arrasto leva o bloco junto com
+ * o dedo, então em coordenadas do filho o dedo nunca sai de cima dele — a
+ * Pressability não cancela o toque e soltar dispara DUAS ações (a do filho e o
+ * fechamento). Ver `WineSlide` em `organisms/wine-carousel`.
  */
 
 export type BlockVariant = 'card' | 'fullscreen';
@@ -410,6 +418,14 @@ export function CurationBlock({
    * do gesto — na UI thread um `ref.current` não existe.
    */
   const closing = useSharedValue(false);
+  /**
+   * Espelho em estado React da trava acima, só para tirar a camada de conteúdo
+   * do caminho dos toques enquanto o fechamento roda: são ~420ms em que a tela
+   * ainda está inteira na frente do usuário e um toque num filho (um card do
+   * carrossel, p.ex.) navegaria para o lugar errado, com a saída já em curso.
+   * `closing` não serve aqui porque shared value não re-renderiza.
+   */
+  const [exiting, setExiting] = useState(false);
 
   /**
    * Fecha animando de volta até o card e só então navega. É o ÚNICO caminho de
@@ -424,6 +440,7 @@ export function CurationBlock({
       return;
     }
     closing.set(true);
+    setExiting(true);
     const dragged = dragY.get();
     if (!source) {
       // Sem card de origem (deep link) não existe retângulo para onde encolher.
@@ -908,7 +925,10 @@ export function CurationBlock({
         paddingHorizontal: fullscreen ? FULLSCREEN_PADDING : CARD_PADDING,
         opacity: contentVisible ? 1 : 0,
       }}
-      pointerEvents={contentVisible ? 'auto' : 'none'}>
+      // Fora do caminho dos toques enquanto a saída roda (ver `exiting`). Não
+      // afeta o arrasto: o `GestureDetector` está no nó de fora, e o gesto já
+      // respeita a trava `closing`.
+      pointerEvents={contentVisible && !exiting ? 'auto' : 'none'}>
       {fullscreen && onBack && (
         <Animated.View style={secondaryStyle}>
           {/* Voltar `dark` — a curadoria em tela cheia abre sobre bordô. */}

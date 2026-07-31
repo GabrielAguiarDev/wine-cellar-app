@@ -31,6 +31,25 @@ export const NEIGHBOR_ROTATION = 7;
 export const TINT_HEIGHT_FRACTION = 0.66;
 
 /**
+ * Distância máxima (pt) que o dedo pode andar sem invalidar o toque no slide.
+ *
+ * Existe porque esta tela pode ser ARRASTADA para baixo para fechar (ver
+ * `CurationBlock`) e o arrasto leva o bloco junto com o dedo: em coordenadas do
+ * card, o dedo nunca sai de dentro dele, então um touchable de RN não cancela o
+ * toque e soltar disparava duas ações (abrir o produto E fechar a curadoria).
+ * Fica abaixo do `activeOffsetY(14)` do arrasto, para que o toque já tenha
+ * falhado quando o gesto de fechar nasce — nunca há um ponto em que os dois
+ * valham ao mesmo tempo.
+ */
+export const TAP_MAX_DISTANCE = 12;
+
+/** Opacidade do slide enquanto está pressionado (era o `activeOpacity`). */
+export const PRESS_OPACITY = 0.9;
+
+/** Tempo para a opacidade de toque voltar ao normal ao soltar. */
+export const PRESS_RELEASE_DURATION = 120;
+
+/**
  * Alpha máximo da tinta de fundo, antes da correção por luminância. Mantido
  * baixo de propósito: o fundo bordô continua sendo o dono da tela, a cor do
  * vinho só "sugere" a tonalidade.
