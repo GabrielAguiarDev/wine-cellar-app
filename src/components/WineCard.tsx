@@ -3,6 +3,7 @@ import { palette } from '@theme/index';
 import { BottleGraphic } from './BottleGraphic';
 import { Box, TouchableOpacityBox } from './Box';
 import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
 
@@ -28,7 +29,10 @@ type WineCardProps = {
 /** Card vertical do rail "Selecionados para você". */
 export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
   return (
-    <TouchableOpacityBox activeOpacity={0.9} onPress={onPress} width={150}>
+    <PressableScale
+      accessibilityLabel={`${data.name}, ${data.category}, ${data.priceFmt}`}
+      onPress={onPress}
+      width={150}>
       {/* moldura da garrafa */}
       <Box
         height={210}
@@ -103,6 +107,6 @@ export function WineCard({ data, onPress, onToggleFav }: WineCardProps) {
           ★ {data.ratingFmt}
         </Text>
       </Box>
-    </TouchableOpacityBox>
+    </PressableScale>
   );
 }

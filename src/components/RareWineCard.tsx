@@ -6,8 +6,9 @@ import { fonts, palette } from '@theme/index';
 
 import { Blip } from './Blip';
 import { BottleGraphic } from './BottleGraphic';
-import { Box, TouchableOpacityBox } from './Box';
+import { Box } from './Box';
 import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
 export type RareWineCardData = {
@@ -101,10 +102,10 @@ function SpecChip({ value, label }: { value: string; label: string }) {
  */
 export function RareWineCard({ data, position, onPress }: RareWineCardProps) {
   return (
-    <TouchableOpacityBox
-      accessibilityRole="button"
+    <PressableScale
       accessibilityLabel={`${data.name}, ${data.category}, ${data.priceFmt}`}
-      activeOpacity={0.9}
+      /* Ficha de largura cheia — mesma escala contida do `WineRow`. */
+      scaleTo={0.98}
       onPress={onPress}
       borderRadius="r18"
       borderWidth={1}
@@ -284,6 +285,6 @@ export function RareWineCard({ data, position, onPress }: RareWineCardProps) {
           <Icon name="arrowRight" size={11} color={palette.gold} />
         </Box>
       </Box>
-    </TouchableOpacityBox>
+    </PressableScale>
   );
 }

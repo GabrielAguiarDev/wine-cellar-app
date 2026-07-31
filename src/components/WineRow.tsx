@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 
 import { BottleGraphic } from './BottleGraphic';
-import { Box, TouchableOpacityBox } from './Box';
+import { Box } from './Box';
+import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
 export type WineRowData = {
@@ -44,8 +45,13 @@ export function WineRow({
   const dark = variant === 'dark';
 
   return (
-    <TouchableOpacityBox
-      activeOpacity={0.9}
+    <PressableScale
+      /*
+        Linha de largura cheia: 0.96 aqui percorre uns 15 px de cada lado e lê
+        como um salto. 0.98 é o mesmo gesto na escala da peça.
+      */
+      scaleTo={0.98}
+      accessibilityLabel={`${data.name}, ${data.category}${data.priceFmt ? `, ${data.priceFmt}` : ''}`}
       onPress={onPress}
       flexDirection="row"
       alignItems="center"
@@ -99,6 +105,6 @@ export function WineRow({
             {data.priceFmt}
           </Text>
         ) : null)}
-    </TouchableOpacityBox>
+    </PressableScale>
   );
 }

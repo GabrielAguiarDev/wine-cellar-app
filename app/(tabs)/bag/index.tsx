@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Icon,
+  PressableScale,
   Screen,
   Text,
   TouchableOpacityBox,
@@ -124,7 +125,7 @@ export default function BagScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 22, gap: 14 }}>
                 {suggestions.map(w => (
-                  <TouchableOpacityBox key={w.id} activeOpacity={0.9} width={120} onPress={() => openWine(w.id)}>
+                  <PressableScale key={w.id} width={120} onPress={() => openWine(w.id)}>
                     <Box
                       height={150}
                       borderRadius="r12"
@@ -143,7 +144,7 @@ export default function BagScreen() {
                     <Text variant="price" fontSize={12} marginTop="s2">
                       {brl(w.price)}
                     </Text>
-                  </TouchableOpacityBox>
+                  </PressableScale>
                 ))}
               </ScrollView>
             </Box>
